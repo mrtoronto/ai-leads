@@ -73,7 +73,7 @@ def _test_connection_string(flask_app):
 	db_user = flask_app.config['DB_USER']
 	db_pass = flask_app.config['DB_PASS']
 	db_name = flask_app.config['DB_NAME']
-	db_port = os.environ.get("DB_PORT", 3306)
+	db_port = os.environ.get("DB_PORT", 5432)
 	connection_string = flask_app.config['SQLALCHEMY_DATABASE_URI']
 	logger.info(f'SQLALCHEMY_DATABASE_URI: {flask_app.config["SQLALCHEMY_DATABASE_URI"]}')
 	logger.info(f"Attempting to connect to database: {db_host}:{db_port} as {db_user}")
