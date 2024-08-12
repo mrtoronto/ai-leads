@@ -25,8 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
             source_collection_model_preference: sourceCollectionModelPreference,
             lead_validation_model_preference: leadValidationModelPreference,
             industry: industry,
-            preferred_org_size: pref_org_size,
-            credits: credits
+            preferred_org_size: pref_org_size
 
         };
 
