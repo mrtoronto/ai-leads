@@ -235,7 +235,7 @@ def _llm(user_input, template, parser, parse_output=True, user=None, previous_le
 		else:
 			return response.json()['choices'][0]['message']['content'], tokens_used_usd
 	else:
-		print(f'Error: {response.status_code}')
+		print(f'LLM Error: {response.status_code}')
 		return None, 0
 
 
