@@ -156,8 +156,6 @@ def create_minimal_app(config_class=Config):
 
 	worker_socketio.init_app(flask_app, message_queue=flask_app.config['SOCKETIO_REDIS_URL'])
 
-	connection_string = _get_connection_string(flask_app)
-	flask_app.config['SQLALCHEMY_DATABASE_URI'] = connection_string
 	_test_connection_string(flask_app)
 
 	logger.info(f'Running on {flask_app.config["FLASK_ENV"]} environment')
