@@ -1,0 +1,262 @@
+a {
+	color: #000;
+}
+
+label {
+	margin-bottom: 0px;
+}
+
+small {
+	margin-top: 0px !important;
+}
+
+.fa-icon {
+    pointer-events: none;
+    font-size: 22px;
+}
+
+.socket-btn {
+    cursor: pointer;
+    transition: opacity: 0.3s;
+}
+
+/* Table container */
+.table-container {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    width: 100%;
+    max-height: 600px;
+    min-height: 600px;
+    overflow-y: scroll;
+}
+
+#requests-table {
+	min-height: 300px;
+	max-height: 300px;
+}
+
+.table-body-container {
+    flex-grow: 1;
+}
+
+/* Table rows */
+.table-row {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    width: 100%;
+    justify-content: space-between;
+    gap: 1em;
+
+    transition: background-color 0.3s;
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+/* Table header */
+.table-header {
+    font-weight: bold;
+    background-color: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.header-cell {
+    white-space: normal !important;
+    vertical-align: middle !important;
+    margin: auto 0;
+    background-color: #f8f9fa;
+    border-top: none;
+}
+
+/* Table cells */
+.table-cell {
+    padding: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table-cell:last-child {
+    text-align: right;
+    margin-right: 1em;
+}
+
+/* Specific cell styles */
+.table-cell[data-field="description"] {
+    max-width: 300px;
+}
+
+.table-cell[data-field="description"] div {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table-cell[data-field="contact"] {
+    flex-direction: column;
+}
+
+.table-cell[data-field="name"],
+.table-cell[data-field="user_query"],
+.table-cell[data-field="reformatted_query"] {
+    justify-content: flex-start;
+}
+
+
+
+.table-cell[data-field="checked"] {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Expanded row styles */
+.table-row.expanded .table-cell div {
+    height: auto;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+/* Spinner */
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.2em;
+}
+
+/* Styles for name and URL containers */
+.table-cell[data-field="name"] > div {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Styles for name span and URL link */
+.table-cell[data-field="name"] span,
+.table-cell[data-field="name"] a {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table-cell[data-field="name"] span,
+.table-cell[data-field="name"] a {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table-row.expanded .table-cell[data-field="name"] span,
+.table-row.expanded .table-cell[data-field="name"] a {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+    word-break: break-word;
+    hyphens: none;
+}
+
+
+
+/* Ensure description cell doesn't grow to accommodate overflow */
+.table-cell[data-field="description"] {
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.invalid-table-row {
+	background-color: #ff000038;
+}
+
+.contactable-table-row {
+	background-color: #00800042;
+}
+
+.lead-name {
+	max-width: 150px;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	font-weight: bold;
+	text-decoration: none;
+	line-height: 1.1;
+	margin-bottom: 0.25em;
+}
+
+.source-name {
+	max-width: 150px; overflow-wrap: break-word; word-wrap: break-word;
+	font-weight: bold;
+	text-decoration: none;
+	line-height: 1.1;
+	margin-bottom: 0.25em;
+}
+
+.valid-table-row {
+	background-color: #00800026;
+}
+
+.unchecked-table-row {
+	background-color: #0000001f;
+}
+
+.checking-table-row {
+	background-color: #ffff0038;
+}
+
+.loading-icon-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+
+.select-all-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.select-all-container label {
+    margin-right: 10px;
+}
+
+.dropdown {
+    margin-left: 10px;
+}
+
+.table-row-selected {
+	border: 2px solid #4CAF50;
+	border-bottom: none;
+}
+
+.table-row-selected:last-child {
+	border-bottom: 2px solid #4CAF50;
+}
+
+
+.selected-count {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.select-all-checkbox {
+	margin-right: 5px;
+}
+
+.table-search-input {
+	height: fit-content;
+}
+
+
+.card-text-name {
+	font-weight: bold;
+	font-size: 1.5em;
+}

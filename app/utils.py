@@ -1,0 +1,118 @@
+
+def get_standard_url(url):
+	if not url.startswith('http'):
+		base_url = 'https://' + url
+	if 'http:' in url:
+		url = url.replace('http:', 'https:')
+
+	if 'www.' not in url and '://' in url:
+		protocol, rest = url.split('://', 1)
+		url = f'{protocol}://www.{rest}'
+	elif 'www.' not in url:
+		url = f'https://www.{url}'
+
+	return url
+
+
+def get_base_url(url):
+	url = get_standard_url(url)
+	base_url = url.split('/')
+	base_url = '/'.join(base_url[:3])
+	### Add www. if it's missing, assume https is present
+	return base_url
+
+
+def _tidy_url(example_url, to_be_fixed):
+	"""
+	Fixes URLs like '/contact' to 'https://example.com/contact'
+
+	"""
+	if to_be_fixed.startswith('/'):
+		base_url = example_url.split('/')
+		base_url = '/'.join(base_url[:3])
+		output = base_url + to_be_fixed
+	else:
+		output = to_be_fixed
+
+	if not output.startswith('http'):
+		output = 'https://' + output
+
+	return output
+
+
+def _useful_url_check(url):
+	if 'facebook.com' in url:
+		return False
+	if 'twitter.com' in url:
+		return False
+	if 'instagram.com' in url:
+		return False
+	if 'linkedin.com' in url:
+		return False
+	if 'youtube.com' in url:
+		return False
+	if 'maps.google.com' in url:
+		return False
+	if 'goo.gl/maps' in url:
+		return False
+	if url == 'https://www.':
+		return False
+	if url == 'http://www.':
+		return False
+	if url == 'http://www':
+		return False
+	if url == 'https://www':
+		return False
+	else:
+		return True
+
+
+from google.cloud import storage
+from google.oauth2 import service_account
+def upload_blob(bucket_name, source_file_name, destination_blob_name):
+    """Uploads a file to the bucket."""
+
+    credentials = service_account.Credentials.from_service_account_file('google_creds.json')
+    storage_client = storage.Client(credentials=credentials)
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    blob.upload_from_filename(source_file_name)
+
+    print(
+        f"File {source_file_name} uploaded to {destination_blob_name}."
+    )
+
+
+def download_blob(bucket_name, source_blob_name, destination_file_name):
+    """Downloads a blob from the bucket."""
+
+    credentials = service_account.Credentials.from_service_account_file('google_creds.json')
+    storage_client = storage.Client(credentials=credentials)
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(source_blob_name)
+
+    blob.download_to_filename(destination_file_name)
+
+    print(
+        f"Blob {source_blob_name} downloaded to {destination_file_name}."
+    )
+
+
+def download_blob_if_exists(bucket_name, source_blob_name, destination_file_name):
+	"""Downloads a blob from the bucket."""
+
+	credentials = service_account.Credentials.from_service_account_file('google_creds.json')
+	storage_client = storage.Client(credentials=credentials)
+	bucket = storage_client.bucket(bucket_name)
+	blob = bucket.blob(source_blob_name)
+
+	if blob.exists():
+		blob.download_to_filename(destination_file_name)
+		print(
+			f"Blob {source_blob_name} downloaded to {destination_file_name}."
+		)
+	else:
+		print(
+			f"Blob {source_blob_name} does not exist."
+		)

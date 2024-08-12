@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-5">Frequently Asked Questions</h1>
+
+    <div class="accordion" id="faqAccordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    How does the lead generation process work?
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Our lead generation process works as follows:
+                    <ol>
+                        <li>We search the internet for your query.</li>
+                        <li>Our AI looks through the results.</li>
+                        <li>Each result is classified as either a lead or a lead source.</li>
+                        <li>Both leads and sources are presented to you.</li>
+                        <li>Sources are searched again to find additional leads.</li>
+                        <li>Leads are checked for contact information, descriptions and quality.</li>
+                        <li>Finally, you can like or hide leads to refine the quality scores and train your model further.</li>
+                    </ol>
+                    This comprehensive approach ensures you get high-quality leads relevant to your query.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    What is the Lead Quality Prediction model?
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    The Lead Quality Prediction model is a machine learning algorithm that helps you identify <b>high-quality leads</b>. Here's how it works:
+                    <ul>
+                        <li>You like at least 50 leads and hide at least 50 leads.</li>
+                        <li>Once you meet this criteria, you can train a model.</li>
+                        <li>The model learns from your preferences based on your liked and hidden leads.</li>
+                        <li>After training, it scores each of your leads with a probability of being a good lead.</li>
+                        <li>This helps you focus on the most promising leads, saving you time and effort.</li>
+                    </ul>
+                    Each new lead you check will be automatically scored by the model, helping you make better decisions. You can also retrain this model at any time with updated data to improve its accuracy.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                    How does the pricing work?
+                </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    We use a credit-based pricing system:
+                    <ul>
+                        <li>You can purchase credits in packages of 10,000, 25,000, 50,000, or 100,000.</li>
+                        <li>Most actions cost around 100 credits, but this can vary based on the length and number of results.</li>
+                        <li>You can switch to gpt-4o-mini in the settings menu to reduce costs by 10x, with slightly lower accuracy.</li>
+                        <li>Credits are deducted as you use the service, allowing you to pay only for what you use.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingFour">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                    What's the difference between a lead and a lead source?
+                </button>
+            </h2>
+            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    <ul>
+                        <li><strong>Lead:</strong> A potential customer or client. Our system identifies leads and provides their contact information and a description of what they do.</li>
+                        <li><strong>Lead Source:</strong> A site where multiple leads can be found. We search lead sources to find additional leads for you.</li>
+                    </ul>
+                    Both are valuable for your lead generation efforts, but we handle all this to ensure you get the best results.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingFive">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                    How can I optimize my credit usage?
+                </button>
+            </h2>
+            <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    To get the most out of your credits:
+                    <ol>
+                        <li>Use <b>specific, targeted queries</b> to get more relevant results.</li>
+                        <li>Use our <b>Lead Quality Prediction models</b> to focus on high-quality leads.</li>
+                        <li>Consider using the <b>gpt-4o-mini</b> option to save credits.</li>
+                        <li>Regularly review and refine your preferences to improve the AI's understanding of your needs.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingSix">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
+                    Is my data safe and confidential?
+                </button>
+            </h2>
+            <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    We take data privacy and security seriously:
+                    <ul>
+                        <li>We do not share your queries or leads with third parties.</li>
+                        <li>Your Lead Quality Prediction model is unique to your account and not shared.</li>
+                        <li>We comply with relevant data protection regulations.</li>
+                    </ul>
+                    For more details, please refer to our Privacy Policy.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

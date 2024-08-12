@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Credit Ledger Entries</h1>
+<table>
+    <thead>
+        <tr>
+            <th>User ID</th>
+            <th>Amount</th>
+            <th>Transaction Type</th>
+            <th>Description</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.user_id }}</td>
+            <td>{{ entry.amount }}</td>
+            <td>{{ entry.transaction_type }}</td>
+            <td>{{ entry.transaction_description }}</td>
+            <td>{{ entry.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

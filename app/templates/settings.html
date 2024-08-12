@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container mt-5">
+        <h2>Settings</h2>
+        <form id="settings-form" style="margin-top: 2em;">
+            <div class="form-group mb-3">
+	            <label for="industry">Organization Type</label>
+	            <small class="form-text text-muted">What type of organization are you looking for?</small>
+                <input class="form-control" id="industry" name="industry" value="{{ current_user.industry }}">
+            </div>
+            <div class="form-group mb-3">
+                <label for="preferred_org_size">Preferred Organization Size</label>
+	            <small class="form-text text-muted">What size organization are you looking for?</small>
+                <input class="form-control" id="preferred_org_size" name="preferred_org_size" value="{{ current_user.preferred_org_size }}">
+            </div>
+            <div class="form-group mb-3">
+                <label for="user-description">Description</label>
+	            <small class="form-text text-muted">Tell us more about the type of organization you're looking for.</small>
+                <textarea class="form-control" id="user-description" name="user_description" rows="3" maxlength="2000">{{ current_user.user_description }}</textarea>
+            </div>
+            <div class="form-group mb-3">
+                <label for="search-model-preference">Search Model</label>
+                <select class="form-select" id="search-model-preference" name="search_model_preference">
+                    <option value="gpt-4o" {{ 'selected' if current_user.search_model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
+                    <option value="gpt-4o-mini" {{ 'selected' if current_user.search_model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
+                </select>
+            </div>
+            <div class="form-group mb-3">
+                <label for="source-collection-model-preference">Source Collection Model</label>
+                <select class="form-select" id="source-collection-model-preference" name="source_collection_model_preference">
+                    <option value="gpt-4o" {{ 'selected' if current_user.source_collection_model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
+                    <option value="gpt-4o-mini" {{ 'selected' if current_user.source_collection_model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
+                </select>
+            </div>
+            <div class="form-group mb-3">
+                <label for="lead-validation-model-preference">Lead Validation Model</label>
+                <select class="form-select" id="lead-validation-model-preference" name="lead_validation_model_preference">
+                    <option value="gpt-4o" {{ 'selected' if current_user.lead_validation_model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
+                    <option value="gpt-4o-mini" {{ 'selected' if current_user.lead_validation_model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
+                </select>
+            </div>
+            <!-- add int input for credits -->
+            <div class="form-group mb-3">
+				<label for="credits">Credits</label>
+				<input class="form-control" id="credits" name="credits" value="{{ current_user.credits }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+        </form>
+    </div>
+    <script src="/static/js/settings_script.js"></script>
+{% endblock %}

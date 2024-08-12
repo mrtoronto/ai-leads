@@ -1,0 +1,8 @@
+*.py[cod]
+*$py.class
+.*pycache.*
+*cpython*
+google_creds.json
+.DS_Store
+.env
+local_settings.py

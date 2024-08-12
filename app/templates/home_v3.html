@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="height: 60vh; display: flex; justify-content: center; align-items: center; background-color: #00ffa030; width: 100%;">
+	<div style="width: 50%; min-width: 300px; margin: auto;">
+		{% if current_user.is_authenticated %}
+		<h1 class="text-center">What are you looking for?</h1>
+		<form id="lead-form" class="text-center">
+			<div class="form-group mb-0">
+				<input type="text" class="form-control" id="query" name="query" size="32">
+			</div>
+			<button type="submit" class="btn btn-primary submit-request-btn w-100">✨&nbsp;&nbsp;&nbsp;✨&nbsp;&nbsp;&nbsp;✨</button>
+		</form>
+		{% else %}
+		<h1 class="text-center">Convert queries to leads in minutes</h1>
+		{% endif %}
+	</div>
+</div>
+<div style="height: 50px; background: linear-gradient(to top, transparent, #00ffa030);"></div>
+{% if current_user.is_authenticated %}
+<div class="container d-flex justify-content-center align-items-center">
+	<div style="width: 100%;">
+		<hr>
+		<div>
+			<div>
+				<h2 style="text-align: center;">Queries</h2>
+				<div style="display: flex; justify-content: space-between; margin-top: 1em;">
+					<input type="text" id="requests-search" placeholder="Search requests..."  class="table-search-input form-control" style="width: 50%;">
+					<div class="select-all-container">
+						<span class="selected-count" id="requests-table-selected-count"></span>
+						<input type="checkbox" class="select-all-checkbox" id="requests-table-select-all">
+						<label for="requests-table-select-all">Select All</label>
+						<div class="dropdown">
+							<button class="btn btn-secondary dropdown-toggle" type="button" id="requests-table-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+								Actions
+							</button>
+							<ul class="dropdown-menu" aria-labelledby="requests-table-dropdown">
+								<li><a class="dropdown-item select-all" href="#">Select All</a></li>
+								<li><a class="dropdown-item unselect-all" href="#">Unselect All</a></li>
+								<li><a class="dropdown-item select-checked" href="#">Select Checked</a></li>
+								<li><a class="dropdown-item select-unchecked" href="#">Select Unchecked</a></li>
+								<li><a class="dropdown-item select-invalid" href="#">Select Invalid</a></li>
+								<li><a class="dropdown-item check-all" href="#">Check Selected</a></li>
+								<li><a class="dropdown-item hide-all" href="#">Hide Selected</a></li>
+								<li><a class="dropdown-item export-csv" href="#">Export to CSV</a></li>
+							</ul>
+						</div>
+					</div>
+
+				</div>
+				<div id="requests-table" class="table-container" style="width: 100%;">
+					<div class="loading-icon-container">
+						<img class="loading-icon" src="/static/assets/chunk-loader.svg">
+					</div>
+				</div>
+				<div id="requests-table-count" class="text-center small mt-2"></div>
+			</div>
+
+			<hr style="margin-top: 5em; margin-bottom: 2em; opacity: 1;">
+
+			<div>
+				<h2 style="text-align: center;">Lead Sources</h2>
+				<div style="display: flex; justify-content: space-between; margin-top: 1em;">
+					<input type="text" id="sources-search" placeholder="Search sources..."  class="table-search-input form-control" style="width: 50%;">
+					<div class="select-all-container">
+						<span class="selected-count" id="sources-table-selected-count"></span>
+						<input type="checkbox" class="select-all-checkbox" id="sources-table-select-all">
+						<label for="sources-table-select-all">Select All</label>
+						<div class="dropdown">
+							<button class="btn btn-secondary dropdown-toggle" type="button" id="sources-table-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+								Actions
+							</button>
+							<ul class="dropdown-menu" aria-labelledby="sources-table-dropdown">
+								<li><a class="dropdown-item select-all" href="#">Select All</a></li>
+								<li><a class="dropdown-item unselect-all" href="#">Unselect All</a></li>
+								<li><a class="dropdown-item select-checked" href="#">Select Checked</a></li>
+								<li><a class="dropdown-item select-unchecked" href="#">Select Unchecked</a></li>
+								<li><a class="dropdown-item select-invalid" href="#">Select Invalid</a></li>
+								<li><hr class="dropdown-divider"></li>
+								<li><a class="dropdown-item check-all" href="#">Check Selected</a></li>
+								<li><a class="dropdown-item hide-all" href="#">Hide Selected</a></li>
+								<li><a class="dropdown-item export-csv" href="#">Export to CSV</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div id="sources-table" class="table-container" style="width: 100%;">
+					<div class="loading-icon-container">
+						<img class="loading-icon" src="/static/assets/chunk-loader.svg">
+					</div>
+				</div>
+				<div id="sources-table-count" class="text-center small mt-2"></div>
+			</div>
+
+			<hr style="margin-top: 5em; margin-bottom: 2em; opacity: 1;">
+
+			<div>
+				<h2 style="text-align: center;">Leads</h2>
+				<div style="display: flex; justify-content: space-between; margin-top: 1em;">
+					<input type="text" id="leads-search" placeholder="Search leads..." class="table-search-input form-control" style="width: 50%;">
+					<div class="select-all-container">
+						<span class="selected-count" id="leads-table-selected-count"></span>
+						<input type="checkbox" class="select-all-checkbox" id="leads-table-select-all">
+						<label for="leads-table-select-all">Select All</label>
+						<div class="dropdown">
+							<button class="btn btn-secondary dropdown-toggle" type="button" id="leads-table-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+								Actions
+							</button>
+							<ul class="dropdown-menu" aria-labelledby="leads-table-dropdown">
+								<li><a class="dropdown-item select-all" href="#">Select All</a></li>
+								<li><a class="dropdown-item unselect-all" href="#">Unselect All</a></li>
+								<li><a class="dropdown-item select-checked" href="#">Select Checked</a></li>
+								<li><a class="dropdown-item select-unchecked" href="#">Select Unchecked</a></li>
+								<li><a class="dropdown-item select-invalid" href="#">Select Invalid</a></li>
+								<li><a class="dropdown-item check-all" href="#">Check Selected</a></li>
+								<li><a class="dropdown-item hide-all" href="#">Hide Selected</a></li>
+								<li><a class="dropdown-item export-csv" href="#">Export to CSV</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div id="leads-table" class="table-container" style="width: 100%;">
+					<div class="loading-icon-container">
+						<img class="loading-icon" src="/static/assets/chunk-loader.svg">
+					</div>
+				</div>
+				<div id="leads-table-count" class="text-center small mt-2"></div>
+			</div>
+
+			<hr style="margin-top: 5em; margin-bottom: 2em; opacity: 1;">
+			<div>
+				<h2 style="text-align: center;">Liked Leads</h2>
+				<input type="text" id="liked-leads-search" placeholder="Search liked leads...">
+				<div id="liked-leads-table" class="table-container" style="width: 100%;"></div>
+				<div id="liked-leads-table-count" class="text-center small mt-2"></div>
+			</div>
+			<hr style="margin-top: 5em; margin-bottom: 2em; opacity: 1;">
+		</div>
+	</div>
+</div>
+
+<div class="container mt-5 bg-light p-4 rounded shadow">
+	<h2 class="text-center mb-4">Lead Quality Prediction</h2>
+	<div class="row justify-content-center">
+		<div class="col-md-4 text-center">
+			<div class="card mb-3">
+				<div class="card-body">
+					<h5 class="card-title">Liked Leads</h5>
+					<p class="card-text display-4" id="liked-leads-count">
+						<div class="spinner-border spinner-border-lg count-spinner" role="status" style="width: 3rem; height: 3rem;">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4 text-center">
+			<div class="card mb-3">
+				<div class="card-body">
+					<h5 class="card-title">Hidden Leads</h5>
+					<p class="card-text display-4" id="hidden-leads-count">
+						<div class="spinner-border spinner-border-lg count-spinner" role="status" style="width: 3rem; height: 3rem;">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="text-center mt-3">
+		<button id="retrain-model-btn" class="btn btn-primary btn-lg">Retrain Model</button>
+		<div class="text-center mt-3 small">Like 50 leads and hide 50 leads to train a lead quality model.</div>
+	</div>
+	<div class="text-center mt-3 small" id="last-trained-time">Last trained: {{ current_user.last_trained_lead_model_at.strftime('%m/%d/%Y, %I:%M:%S %p') if current_user.last_trained_lead_model_at else 'Never' }}</div>
+</div>
+
+{% else %}
+
+<div class="container mt-5">
+	<div class="row">
+		<div class="col-md-6">
+			<h2>What is Lead?</h2>
+			<p>Lead is a potential customer who has shown interest in your product or service. For example, someone who has filled out a form on your website to request more information about your product is a lead.</p>
+		</div>
+		<div class="col-md-6">
+			<h2>What is Query?</h2>
+			<p>Query is a question or request for information about a product or service. For example, someone who searches for "best laptop for programming" is a query.</p>
+		</div>
+	</div>
+
+	<div class="row mt-5">
+		<div class="col-md-6">
+			<h2>What is Lead Quality Prediction?</h2>
+			<p>Lead quality prediction is a machine learning model that predicts the quality of a lead. For example, the model can predict whether a lead is likely to convert into a customer or not.</p>
+		</div>
+		<div class="col-md-6">
+			<h2>How to use Lead Quality Prediction?</h2>
+			<p>1. Sign up or log in to your account.<br>2. Enter a query in the search box and click on the submit button.<br>3. View the results and manage your leads.</p>
+		</div>
+	</div>
+</div>
+
+{% endif %}
+
+
+<script src="/static/js/home_script_v3.js" type="module"></script>
+{% endblock %}

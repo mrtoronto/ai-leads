@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Admin Panel</h1>
+<ul>
+    <li><a href="{{ url_for('main.admin_credit_ledger') }}">Credit Ledger Entries</a></li>
+    <li><a href="{{ url_for('main.admin_users') }}">User List</a></li>
+</ul>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+	<div class="loading-icon-container">
+		<img class="loading-icon" src="/static/assets/chunk-loader.svg">
+	</div>
+</div>
+<input type="hidden" id="query-id" value="{{ query.id }}">
+<script src="/static/js/view_query_script.js" type="module"></script>
+{% endblock %}

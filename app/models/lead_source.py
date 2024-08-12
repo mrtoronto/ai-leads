@@ -1,0 +1,203 @@
+import time
+from app.utils import get_base_url, get_standard_url
+import pytz
+from datetime import datetime
+from app.models.user_models import ModelTypes
+import uuid
+import requests
+import json
+from app import db
+from app.models.lead import Lead
+
+class LeadSource(db.Model):
+	__tablename__ = 'lead_source'
+
+	id = db.Column(db.Integer, primary_key=True)
+	guid = db.Column(db.String(36), default=lambda: str(uuid.uuid4()), unique=True)
+	name = db.Column(db.String(255))
+	description = db.Column(db.Text)
+	url = db.Column(db.String(255))
+	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+	query_id = db.Column(db.Integer, db.ForeignKey('query.id'))
+	valid = db.Column(db.Boolean, default=False)
+	hidden = db.Column(db.Boolean, default=False)
+	created_at = db.Column(db.DateTime, default=lambda: datetime.now(pytz.utc))
+	hidden_at = db.Column(db.DateTime)
+	checked = db.Column(db.Boolean, default=False)
+	checking = db.Column(db.Boolean, default=False)
+	og_image = db.Column(db.String(255))
+	quality_score = db.Column(db.Float)
+
+	jobs = db.relationship('Job', backref='lead_source', lazy='dynamic')
+	leads = db.relationship('Lead', backref='lead_source', lazy='dynamic')
+
+	def to_dict(self):
+		return {
+			'id': self.id,
+			'guid': self.guid,
+			'name': self.name,
+			'description': self.description,
+			'url': self.url,
+			'user_id': self.user_id,
+			'query_id': self.query_id,
+			'checked': self.checked,
+			'valid': self.valid,
+			'hidden': self.hidden,
+			'created_at': self.created_at.isoformat() if self.created_at else None,
+			'hidden_at': self.hidden_at.isoformat() if self.hidden_at else None,
+			'checking': self.checking,
+			'og_image': self.og_image,
+			'quality_score': self.quality_score,
+			'n_leads': self.leads.count()
+		}
+
+	@classmethod
+	def get_by_id(cls, source_id):
+		return cls.query.get(source_id)
+
+	@classmethod
+	def get_by_guid(cls, source_guid):
+		return cls.query.filter_by(guid=source_guid).first()
+
+	@classmethod
+	def get_user_sources(cls, user_id):
+		return cls.query.filter_by(user_id=user_id, hidden=False).all()
+
+	@classmethod
+	def batch_update_quality_scores(cls, user_id, user, model, source_ids=None):
+		if not source_ids or source_ids == 'all':
+			sources = cls.get_visible_sources(user_id)
+		else:
+			sources = cls.query.filter(cls.id.in_(source_ids)).all()
+		start_time = time.time()
+		print(f'Updating quality scores for {len(sources)} sources')
+
+		updates = []
+		failed_updates = []
+
+		for source in sources:
+			quality_score = model.predict_source(user, source)
+			if quality_score is not None:
+				source.quality_score = quality_score
+				updates.append(source)
+			else:
+				failed_updates.append(source.id)
+
+		db.session.bulk_save_objects(updates)
+		db.session.commit()
+
+		user.last_trained_source_model_at = datetime.now(pytz.utc)
+		user.save()
+
+		print(f'Quality scores updated in {time.time() - start_time} seconds')
+		print(f'Failed to update quality score for sources: {failed_updates}')
+
+		return updates, failed_updates, user.last_trained_source_model_at
+
+	def save(self):
+		if not self.id:
+			db.session.add(self)
+		db.session.commit()
+
+	@classmethod
+	def get_hidden_sources(cls, user_id):
+		return cls.query.filter_by(user_id=user_id, hidden=True).all()
+
+	@classmethod
+	def get_visible_sources(cls, user_id):
+		return cls.query.filter_by(user_id=user_id, hidden=False, valid=True).all()
+
+	@classmethod
+	def check_and_add(cls, url, user_id, query_id):
+		url = get_standard_url(url)
+		existing_source = cls.query.filter_by(url=url, hidden=False).first()
+		if existing_source:
+			return None
+		new_source = cls(
+			url=url,
+			user_id=user_id,
+			query_id=query_id
+		)
+		try:
+			new_source.save()
+			return new_source
+		except Exception as e:
+			print(f'Failed to save source {url} - {e}')
+			db.session.rollback()
+			return None
+
+	def _finished(self):
+		self.checking = False
+		self.checked = True
+
+	def _hide(self):
+		self.hidden = True
+		db.session.add(self)
+		hidden_lead_ids = []
+		for lead in self.get_leads():
+			lead.hidden = True
+			hidden_lead_ids.append(lead.id)
+			db.session.add(lead)
+		db.session.commit()
+		return hidden_lead_ids
+
+	def get_leads(self):
+		return Lead.query.filter_by(source_id=self.id).all()
+
+	def save_checked_source(self, lead_batch, source_batch):
+		db.session.add(self)
+		for lead in lead_batch:
+			try:
+				db.session.add(lead)
+			except Exception as e:
+				print(f'Failed to add lead source {self.id} - {e}')
+		for source in source_batch:
+			try:
+				db.session.add(source)
+			except Exception as e:
+				print(f'Failed to add source to source {self.id} - {e}')
+
+		self._finished()
+		db.session.commit()
+
+	@classmethod
+	def batch_get_sources(cls, source_ids):
+		return cls.query.filter(cls.id.in_(source_ids)).all()
+
+	@classmethod
+	def get_user_source_count(cls, user_id):
+		return cls.query.filter_by(user_id=user_id, hidden=False).count()
+
+	@classmethod
+	def train_sources_model(cls, user, liked_leads, hidden_leads, hidden_sources, model):
+		lead_source_ids = [lead.source_id for lead in liked_leads + hidden_leads if lead.source_id]
+		lead_sources = LeadSource.batch_get_sources(lead_source_ids)
+		lead_source_dict = {source.id: source for source in lead_sources}
+
+		data_path = f"source_training_data_user_{user.id}.txt"
+
+		with open(data_path, "w") as f:
+			for lead in liked_leads:
+				if lead.source_id and lead.source_id in lead_source_dict:
+					source = lead_source_dict[lead.source_id]
+					input_text = model.make_source_input_text(user, source)
+					if input_text and input_text.strip():
+						f.write(f"__label__good {input_text}\n")
+				else:
+					input_text = model.make_lead_input_text(user, lead)
+					if input_text and input_text.strip():
+						f.write(f"__label__good {input_text}\n")
+
+			for lead in hidden_leads:
+				if lead.source_id and lead.source_id in lead_source_dict:
+					source = lead_source_dict[lead.source_id]
+					input_text = model.make_source_input_text(user, source)
+					if input_text and input_text.strip():
+						f.write(f"__label__bad {input_text}\n")
+
+			for source in hidden_sources:
+				input_text = model.make_source_input_text(user, source)
+				if input_text and input_text.strip():
+					f.write(f"__label__bad {input_text}\n")
+
+		model.train_grid_search(data_path)
