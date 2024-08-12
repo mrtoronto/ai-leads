@@ -33,3 +33,5 @@ class Config(object):
 	DB_PORT = os.environ.get('DB_PORT', 5432)
 
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+	SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'

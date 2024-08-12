@@ -50,7 +50,7 @@ def _get_connection_string(flask_app):
     db_user = flask_app.config['DB_USER']
     db_pass = flask_app.config['DB_PASS']
     db_name = flask_app.config['DB_NAME']
-    db_port = os.environ.get("DB_PORT", 5432)  # Default port for PostgreSQL is 5432
+    db_port = flask_app.config['DB_PORT']
 
     logger.info(f'DB_HOST: {db_host}')
     logger.info(f'DB_PORT: {db_port}')
@@ -58,7 +58,7 @@ def _get_connection_string(flask_app):
     logger.info(f'DB_USER: {db_user}')
 
     connection_string = URL.create(
-        drivername="postgresql+psycopg2",
+        drivername="postgresql",
         username=db_user,
         password=db_pass,
         host=db_host,
@@ -73,7 +73,7 @@ def _test_connection_string(flask_app):
 	db_user = flask_app.config['DB_USER']
 	db_pass = flask_app.config['DB_PASS']
 	db_name = flask_app.config['DB_NAME']
-	db_port = os.environ.get("DB_PORT", 5432)
+	db_port = flask_app.config['DB_PORT']
 	connection_string = flask_app.config['SQLALCHEMY_DATABASE_URI']
 	logger.info(f'SQLALCHEMY_DATABASE_URI: {flask_app.config["SQLALCHEMY_DATABASE_URI"]}')
 	logger.info(f"Attempting to connect to database: {db_host}:{db_port} as {db_user}")
@@ -95,9 +95,6 @@ def create_app(config_class=Config):
 
 	logger.info(f'Running on {flask_app.config["FLASK_ENV"]} environment')
 	logger.info(f'Running redis at {flask_app.config["REDIS_URL"]}')
-
-	connection_string = _get_connection_string(flask_app)
-	flask_app.config['SQLALCHEMY_DATABASE_URI'] = connection_string
 	_test_connection_string(flask_app)
 
 	db.init_app(flask_app)
