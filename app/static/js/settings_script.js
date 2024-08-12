@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchModelPreference = document.getElementById('search-model-preference').value;
         const sourceCollectionModelPreference = document.getElementById('source-collection-model-preference').value;
         const leadValidationModelPreference = document.getElementById('lead-validation-model-preference').value;
-        const credits = document.getElementById('credits').value;
 
         const settingsData = {
             user_description: description,

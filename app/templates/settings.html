@@ -39,11 +39,6 @@
                     <option value="gpt-4o-mini" {{ 'selected' if current_user.lead_validation_model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
                 </select>
             </div>
-            <!-- add int input for credits -->
-            <div class="form-group mb-3">
-				<label for="credits">Credits</label>
-				<input class="form-control" id="credits" name="credits" value="{{ current_user.credits }}">
-            </div>
             <button type="submit" class="btn btn-primary">Save changes</button>
         </form>
     </div>
