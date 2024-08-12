@@ -46,7 +46,7 @@ convention = {
 from sqlalchemy.engine.url import URL
 
 def _get_connection_string(flask_app):
-    db_host = os.environ.get("DB_INSTANCE_HOST", "localhost")
+    db_host = flask_app.config['DB_HOST']
     db_user = flask_app.config['DB_USER']
     db_pass = flask_app.config['DB_PASS']
     db_name = flask_app.config['DB_NAME']
@@ -69,7 +69,7 @@ def _get_connection_string(flask_app):
     return str(connection_string)
 
 def _test_connection_string(flask_app):
-	db_host = os.environ.get("DB_INSTANCE_HOST", "172.17.0.1")
+	db_host = flask_app.config['DB_HOST']
 	db_user = flask_app.config['DB_USER']
 	db_pass = flask_app.config['DB_PASS']
 	db_name = flask_app.config['DB_NAME']
