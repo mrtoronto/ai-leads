@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+        /* General email styles */
+        body, table, td, a {
+            -webkit-text-size-adjust: 100%; /* Prevent adjustments of font size after orientation changes in iOS */
+            -ms-text-size-adjust: 100%; /* Prevent adjustments of font size after orientation changes in Windows Phone */
+        }
+
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            -ms-interpolation-mode: bicubic;
+        }
+        a[x-apple-data-detectors] {
+            font-family: inherit !important;
+            font-size: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+        body {
+            width: 100% !important;
+            height: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+        /* Grid layout */
+        table {
+            border-collapse: collapse !important;
+        }
+        /* Responsive styles */
+        @media screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                padding: 10px !important;
+            }
+        }
+        .button {
+            display: inline-block;
+            background-color: #00ffa0;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 10px;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td bgcolor="#1774c3a3" align="center" style="padding: 20px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;" class="email-container">
+                    <tr>
+                        <td align="center" style="font-size: 24px; font-family: Arial, sans-serif; color: #ffffff;">
+                            <strong>ai-LEADS</strong>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td bgcolor="#ffffff" align="center" style="padding: 20px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;" class="email-container">
+                    <tr>
+                        <td align="left" style="font-size: 16px; font-family: Arial, sans-serif; color: #333333;">
+                            {% block content %}{% endblock %}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td bgcolor="#f4f4f4" align="center" style="padding: 20px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;" class="email-container">
+                    <tr>
+                        <td align="center" style="font-size: 14px; font-family: Arial, sans-serif; color: #999999;">
+                            <p>ai-LEADS | Your go-to solution for lead generation.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -23,6 +23,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		const fetchData = () => {
         return new Promise(resolve => {
             socket.once('initial_data', data => {
+            		// check if data is an empty object
+              	if (Object.keys(data).length === 0) {
+                        if (!window.is_auth) {
+                            return;
+                        }
+               	}
+
                 dataCache.requests = data.requests.reduce((acc, request) => ({ ...acc, [request.id]: request }), {});
                 dataCache.sources = data.lead_sources.reduce((acc, source) => ({ ...acc, [source.id]: source }), {});
                 dataCache.leads = data.leads.reduce((acc, lead) => ({ ...acc, [lead.id]: lead }), {});
@@ -31,6 +38,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('.count-spinner').remove();
                 $('#liked-leads-count').text(data.n_liked);
                 $('#hidden-leads-count').text(data.n_hidden);
+
+                if ((data.n_liked > 50) && (data.n_hidden > 50)) {
+                		$('#retrain-model-btn').prop('disabled', false);
+                }
                 resolve(data);
             });
             socket.emit('get_initial_data');
@@ -94,6 +105,17 @@ document.addEventListener('DOMContentLoaded', function() {
         socket.emit('create_lead_source', { url });
     });
 
+    // Toggle Lead Source Form
+    document.getElementById('toggle-lead-source-form').addEventListener('click', function() {
+        const formContainer = document.getElementById('lead-source-form-container');
+        formContainer.style.display = (formContainer.style.display === 'none' || formContainer.style.display === '') ? 'block' : 'none';
+    });
+
+    document.getElementById('toggle-lead-form').addEventListener('click', function() {
+        const formContainer = document.getElementById('lead-form-container');
+        formContainer.style.display = (formContainer.style.display === 'none' || formContainer.style.display === '') ? 'block' : 'none';
+    });
+
     document.getElementById('create-lead-form').addEventListener('submit', function(event) {
         event.preventDefault();
         const url = document.getElementById('lead-url').value;
@@ -116,9 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }).then(response => response.json())
           .then(data => {
               if (data.message) {
-                  iziToast.success({ title: 'Success', message: data.message });
-              } else if (data.error) {
-                  iziToast.error({ title: 'Error', message: data.error });
+                iziToast.success({ title: 'Success', message: data.message });
               }
           }).catch((error) => {
               console.error('Error:', error);

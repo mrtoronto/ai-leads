@@ -16,8 +16,8 @@ class User(UserMixin, db.Model):
 	__tablename__ = 'user'
 	id = db.Column(db.Integer, primary_key=True)
 	guid = db.Column(db.String(36), default=lambda: str(uuid.uuid4()))
-	username = db.Column(db.String(150), unique=True, nullable=False)
 	email = db.Column(db.String(150), unique=True, nullable=False)
+	email_verified = db.Column(db.Boolean, default=False)
 	password = db.Column(db.String(128), nullable=False)
 	industry = db.Column(db.String(150))
 	preferred_org_size = db.Column(db.String(150))

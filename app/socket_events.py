@@ -2,7 +2,9 @@ from . import socketio
 from flask_login import login_required, current_user
 from .models import LeadSource, Lead, Query, User
 from flask_socketio import join_room, emit
+import logging
 
+logger = logging.getLogger('BDB-2EB')
 @socketio.on('connect')
 def on_connect():
 	if current_user.is_authenticated:
@@ -20,10 +22,10 @@ from .tasks import (
 )
 
 @socketio.on('get_initial_data')
-@login_required
 def handle_get_initial_data():
-	initial_data = current_user.get_initial_data()
-	socketio.emit('initial_data', initial_data, to=f"user_{current_user.id}")
+	if current_user.is_authenticated:
+		initial_data = current_user.get_initial_data()
+		socketio.emit('initial_data', initial_data, to=f"user_{current_user.id}")
 
 @socketio.on('check_lead_source')
 @login_required
@@ -146,6 +148,24 @@ def handle_create_lead(data):
 		socketio.emit('new_lead', {'lead': new_lead.to_dict()}, to=f'user_{new_lead.user_id}')
 
 
+@socketio.on('update_email')
+@login_required
+def handle_update_email(data):
+	if current_user and current_user.is_authenticated:
+		user = User.get_by_id(current_user.id)
+		logger.info(f"Updating email wit h{data}")
+		if user:
+			input_email = data.get('email', '').lower().strip()
+			if user.email != input_email:
+				if User.get_by_email(input_email):
+					emit('email_updated', {'success': False, 'message': 'This email is already in use.'}, to=f"user_{current_user.id}")
+					return
+				logger.info(f"Updating email for user {current_user.id}")
+				user.email_verified = False
+				user.email = input_email
+			user.save()
+			socketio.emit('email_updated', {'success': True, 'email': user.email}, to=f"user_{user.id}")
+
 @socketio.on('update_user_settings')
 @login_required
 def handle_update_user_settings(data):
@@ -158,6 +178,13 @@ def handle_update_user_settings(data):
 			user.lead_validation_model_preference = data.get('lead_validation_model_preference', user.lead_validation_model_preference)
 			user.industry = data.get('industry', user.industry)
 			user.preferred_org_size = data.get('preferred_org_size', user.preferred_org_size)
+
+			if user.email != data.get('email', user.email):
+				if User.get_by_email(data['email']):
+					emit('update_user_settings_response', {'success': False, 'message': 'Email already in use'}, to=f"user_{current_user.id}")
+					return
+				user.email_verified = False
+				user.email = data.get('email', user.email)
 			user.save()
 			emit('update_user_settings_response', {'success': True}, to=f"user_{user.id}")
 	else:
@@ -213,3 +240,17 @@ def handle_get_lead_data(data):
         socketio.emit('lead_data', lead_data, to=f"user_{current_user.id}")
     else:
         socketio.emit('error', {'message': 'Lead not found'}, to=f"user_{current_user.id}")
+
+
+@socketio.on('check_email_availability')
+@login_required
+def handle_check_email_availability(data):
+    email = data['email']
+
+    # Check if the email is valid
+    import re
+    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    is_valid = re.match(email_regex, email) is not None
+
+    is_available = is_valid and User.get_by_email(email) is None
+    emit('email_check_response', {'available': is_available, 'valid': is_valid}, to=f"user_{current_user.id}")

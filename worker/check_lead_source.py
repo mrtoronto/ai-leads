@@ -1,10 +1,11 @@
 from app import worker_socketio, create_minimal_app
-from app.models import LeadSource, Lead, User
+from app.models import LeadSource, Lead, User, ModelTypes, UserModels
 from rq import get_current_job
 from app.llm import collect_leads_from_url
 from app.utils import _tidy_url, _useful_url_check
 from flask_socketio import emit
 from worker import _make_min_app
+from worker.fasttext import FastTextModel
 
 import logging
 
@@ -42,9 +43,6 @@ def check_lead_source_task(lead_source_id):
 		lead_source.checked = True
 		lead_source.checking = False
 
-		lead_batch = []
-		source_batch = []
-
 		if validation_output.leads:
 			for new_lead in validation_output.leads:
 				if new_lead and new_lead.url and _useful_url_check(new_lead.url):
@@ -55,7 +53,7 @@ def check_lead_source_task(lead_source_id):
 						source_id=lead_source.id
 					)
 					if new_lead_obj:
-						lead_batch.append(new_lead_obj)
+						worker_socketio.emit('new_lead', {'lead': new_lead_obj.to_dict()}, to=f'user_{lead_source.user_id}')
 
 		if validation_output.lead_sources:
 			for new_lead_source in validation_output.lead_sources:
@@ -66,16 +64,11 @@ def check_lead_source_task(lead_source_id):
 						query_id=lead_source.query_id
 					)
 					if new_source_obj:
-						source_batch.append(new_source_obj)
+						worker_socketio.emit('new_lead_source', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
 
-		lead_source.save_checked_source(lead_batch=lead_batch, source_batch=source_batch)
+		lead_source._finished()
 
-		for lead in lead_batch:
-			if lead:
-				worker_socketio.emit('new_lead', {'lead': lead.to_dict()}, to=f'user_{lead_source.user_id}')
-
-		for source in source_batch:
-			if source:
-				worker_socketio.emit('new_lead_source', {'source': source.to_dict()}, to=f'user_{lead_source.user_id}')
+		model = FastTextModel(lead_source.user_id, ModelTypes.LEAD_SOURCE)
+		lead_source.quality_score = model.predict_lead(lead_source.user, lead_source)
 
 		worker_socketio.emit('source_checked', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')

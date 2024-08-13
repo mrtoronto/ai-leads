@@ -111,50 +111,42 @@ def check_lead_task(lead_id):
 
 		lead.save()
 
-		new_sources_batch = []
-		new_leads_batch = []
-
 		if final_validation_output.lead_sources:
 			for new_lead_source in final_validation_output.lead_sources:
 				if new_lead_source and new_lead_source.url and _useful_url_check(new_lead_source.url):
-					new_source = LeadSource(
+					new_source = LeadSource.check_and_add(
 						url=new_lead_source.url,
 						user_id=lead.user_id,
 						query_id=lead.query_id
 					)
-					new_sources_batch.append(new_source)
+					if new_source:
+						worker_socketio.emit('new_lead_source', {'source': new_source.to_dict()}, to=f'user_{lead.user_id}')
 
 
 		### If lead check had leads in to,
 		### Add lead as a source and save new leads to that source
 		if final_validation_output.leads:
-			new_source = LeadSource(
+			new_source = LeadSource.check_and_add(
 				url=lead.url,
 				user_id=lead.user_id,
 				query_id=lead.query_id
 			)
-			new_sources_batch.append(new_source)
+			if new_source:
+				worker_socketio.emit('new_lead_source', {'source': new_source.to_dict()}, to=f'user_{lead.user_id}')
 
 			for new_lead in final_validation_output.leads:
 				if new_lead and new_lead.url and _useful_url_check(new_lead.url):
-					new_lead_obj = Lead(
+					new_lead_obj = Lead.check_and_add(
 						url=new_lead.url,
 						user_id=lead.user_id,
 						query_id=lead.query_id,
-						source_id=new_source.id
+						source_id=new_source.id if new_source else lead.source_id
 					)
-					new_leads_batch.append(new_lead_obj)
+					if new_lead_obj:
+						worker_socketio.emit('new_lead', {'lead': new_lead_obj.to_dict()}, to=f'user_{lead.user_id}')
 
 		model = FastTextModel(lead.user_id, ModelTypes.LEAD)
 		lead.quality_score = model.predict_lead(lead_user, lead)
-
-		for source in new_sources_batch:
-			worker_socketio.emit('new_lead_source', {'source': source.to_dict()}, to=f'user_{lead.user_id}')
-			db.session.add(source)
-
-		for new_lead in new_leads_batch:
-			worker_socketio.emit('new_lead', {'lead': new_lead.to_dict()}, to=f'user_{lead.user_id}')
-			db.session.add(new_lead)
 
 		db.session.commit()
 

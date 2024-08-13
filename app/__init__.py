@@ -15,6 +15,7 @@ import time
 import logging
 from sqlalchemy.exc import OperationalError
 import sqlalchemy
+from flask_mail import Mail, Message
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('BDB-2EB')
@@ -25,6 +26,7 @@ login_manager = LoginManager()
 cache = Cache()
 db = SQLAlchemy()
 migrate = Migrate()
+mail = Mail()
 
 if not os.path.exists('data'):
 	os.makedirs('data')
@@ -90,9 +92,10 @@ def _test_connection_string(flask_app):
 
 def create_app(config_class=Config):
 	# Initialize the Flask application
+	start_time = time.time()
 	flask_app = Flask(__name__)
 	flask_app.config.from_object(config_class)
-
+	logger.info(f'Config loaded in {time.time() - start_time} seconds')
 	logger.info(f'Running on {flask_app.config["FLASK_ENV"]} environment')
 	logger.info(f'Running redis at {flask_app.config["REDIS_URL"]}')
 	_test_connection_string(flask_app)
@@ -102,8 +105,9 @@ def create_app(config_class=Config):
 	socketio.init_app(flask_app, message_queue=flask_app.config['SOCKETIO_REDIS_URL'])
 	login_manager.init_app(flask_app)
 	cache.init_app(flask_app)
+	mail.init_app(flask_app)
 
-	logger.info('Initialized extensions')
+	logger.info(f'Initialized plugins in {time.time() - start_time} seconds')
 
 	redis_conn = redis.from_url(os.environ.get('REDIS_URL', flask_app.config['REDIS_URL']))
 	task_queue = Queue('default', connection=redis_conn)
@@ -122,9 +126,7 @@ def create_app(config_class=Config):
 	logger.info(f'Running redis at {flask_app.config["REDIS_URL"]}')
 	logger.info(f'Running with SQL instance: {flask_app.config["SQLALCHEMY_DATABASE_URI"]}')
 
-	logger.info('Returned app')
-
-	logger.info('Making DB')
+	logger.info(f'Making DB after {time.time() - start_time} seconds')
 
 
 	with flask_app.app_context():
@@ -138,6 +140,9 @@ def create_app(config_class=Config):
 					logger.info(f"{key}: {value}")
 
 
+	logger.info(f'Returning app after {time.time() - start_time} seconds')
+
+
 	return flask_app
 
 
@@ -147,6 +152,7 @@ def create_minimal_app(config_class=Config):
 
 	db.init_app(flask_app)
 	migrate.init_app(flask_app, db)
+	mail.init_app(flask_app)
 
 	redis_conn = redis.from_url(os.environ.get('REDIS_URL', flask_app.config['REDIS_URL']))
 

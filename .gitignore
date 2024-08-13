@@ -6,3 +6,4 @@ google_creds.json
 .DS_Store
 .env
 local_settings.py
+*venv

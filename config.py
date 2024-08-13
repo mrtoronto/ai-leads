@@ -5,6 +5,8 @@ import socket
 import logging
 import certifi
 
+import local_settings
+
 logger = logging.getLogger('BDB-2EB')
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -35,3 +37,14 @@ class Config(object):
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 	SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+
+
+	MAIL_SERVER = 'smtp.sendgrid.net'
+	MAIL_PORT = 587
+	MAIL_USE_TLS = True
+	MAIL_USE_SSL = False
+	MAIL_USERNAME = 'apikey'  # This is the literal string 'apikey', not your API key
+	MAIL_PASSWORD = local_settings.SENDGRID_API_KEY
+	MAIL_DEFAULT_SENDER = 'matt@ai-leads.xyz'
+
+	SECURITY_PASSWORD_SALT = local_settings.SECURITY_PASSWORD_SALT

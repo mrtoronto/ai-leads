@@ -5,20 +5,37 @@
         <h1 class="text-center">Register</h1>
         <form method="POST" action="{{ url_for('main.register') }}">
             <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" class="form-control" id="username" name="username">
-            </div>
-            <div class="form-group">
                 <label for="email">Email:</label>
+                {% if email %}
+                <input type="text" class="form-control" id="email" name="email" value="{{ email }}">
+                {% else %}
                 <input type="text" class="form-control" id="email" name="email">
+                {% endif %}
             </div>
             <div class="form-group">
                 <label for="password">Password:</label>
                 <input type="password" class="form-control" id="password" name="password">
+            </div>
+            <div class="form-group">
+                <label for="password">Retype Password:</label>
+                <input type="password" class="form-control" id="password2" name="password2">
             </div>
             <button type="submit" class="btn btn-primary btn-block">Register</button>
         </form>
         <p class="text-center mt-3">Already have an account? <a href="{{ url_for('main.login') }}">Login here</a></p>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var emailInput = document.getElementById('email');
+    var passwordInput = document.getElementById('password');
+
+    if (emailInput.value) {
+        passwordInput.focus();
+    } else {
+    	emailInput.focus();
+    }
+});
+</script>
 {% endblock %}

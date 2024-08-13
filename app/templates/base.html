@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Your App{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.12.0/sweetalert2.min.css" integrity="sha512-uE3H1RGE5HkSD6RqI8zbKiSCevsWKVi/74GXOSiu0+IcHO3pkLG+Ouzmn1sB6Be5Y6f+3fuIkGxsieEIUrgMTA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css" integrity="sha512-O03ntXoVqaGUTAeAmvQ2YSzkCvclZEcPQu1eqloPaHfJ5RuNGiS4l+3duaidD801P50J28EHyonCV06CUlTSag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.12.0/sweetalert2.min.js" integrity="sha512-iTSP2McqQzzin4TwBzVD2vGe2cKB9VxC6zouXB3J7enM/dblekPHIsJBMm0YGrZnyq1sTv/dGwo7oLY4nuRPGQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js" integrity="sha512-Zq9o+E00xhhR/7vJ49mxFNJ0KQw1E1TMWkPTxrWcnpfEFDEXgUiwJHIKit93EW/XxE31HSI5GEOW06G6BF1AtA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="/static/css/style.css">
@@ -21,7 +23,7 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top" style="background-color: #ccd8e3 !important; padding-left: 1em; padding-right: 1em;">
     	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 	        <span class="navbar-toggler-icon"></span>
 	    </button>
@@ -50,7 +52,7 @@
         </div>
     </nav>
 
-    <div style="margin-bottom: 5em;">
+    <div style="margin-bottom: 5em; min-height: 80vh;">
         {% block content %}{% endblock %}
     </div>
 
@@ -61,34 +63,16 @@
     </div>
 
     <!-- Footer -->
-    <div style="height: 50px; background: linear-gradient(to bottom, transparent, #00ffa030);"></div>
-    <footer class="footer mt-auto py-3" style="background-color: #00ffa030;">
+    <div style="height: 50px; background: linear-gradient(to bottom, transparent, #3E8CFF);"></div>
+    <footer class="footer mt-auto py-3" style="background-color: #3E8CFF;">
 
         <div class="container text-center">
-        	{% if current_user.is_authenticated %}
-	        <div style="padding: 20px;">
-	            <h2>Create Lead</h2>
-	            <form id="create-lead-form">
-	                <div class="form-group">
-	                    <input type="text" class="form-control" id="lead-url" name="lead_url" placeholder="Enter Lead URL" required>
-	                </div>
-	                <button type="submit" class="btn btn-primary">Create Lead</button>
-	            </form>
-	        </div>
-	       	<div style="padding: 20px;">
-	            <h2>Create Lead Source</h2>
-	            <form id="create-lead-source-form">
-	                <div class="form-group">
-	                    <input type="text" class="form-control" id="lead-source-url" name="lead_source_url" placeholder="Enter Lead Source URL" required>
-	                </div>
-	                <button type="submit" class="btn btn-primary">Create Lead Source</button>
-	            </form>
-	        </div>
-			<hr style="margin-top: 5em; margin-bottom: 2em; opacity: 1;">
-			{% endif %}
-        <div class="container text-center">
-        <span class="text-muted">aiLEADS</span>
-        </div>
+			<div class="container text-center" style="color: #fff;">
+				<span style="color: #fff; text-decoration: none; " >aiLEADS</span> |
+		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.faqs') }}">FAQs</a> |
+		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.contact') }}">Contact Us</a> |
+		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.privacy_policy') }}">Privacy Policy</a>
+		    </div>
         </div>
     </footer>
 

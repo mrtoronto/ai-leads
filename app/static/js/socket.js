@@ -9,14 +9,6 @@ function initializeSocket() {
 	};
 
 	socket = io(options);
-
-	socket.on('connect', () => {
-		socket.emit('connect_user', { 'user_id': window.user_id });
-	});
-
-	socket.on('disconnect', (reason) => {
-		console.log('Socket disconnected:', reason);
-	});
 }
 
 initializeSocket();

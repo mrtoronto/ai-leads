@@ -1,21 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="height: 60vh; display: flex; justify-content: center; align-items: center; background-color: #00ffa030; width: 100%;">
-	<div style="width: 50%; min-width: 300px; margin: auto;">
+<div style="height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #00ffa030; width: 100%; background-image: url('/static/assets/hero_waves.svg'); background-size: cover;">
+	<div style="width: 50%; min-width: 300px; margin: auto;    margin-top: 200px; background-color: #fff; padding: 2em; border-radius: 1em; line-height: 1;">
 		{% if current_user.is_authenticated %}
-		<h1 class="text-center">What are you looking for?</h1>
+		<h1 class="text-center">Enter a query below</h1>
 		<form id="lead-form" class="text-center">
 			<div class="form-group mb-0">
-				<input type="text" class="form-control" id="query" name="query" size="32">
+				<input type="text" class="form-control" id="query" name="query" size="32" style="border-bottom-left-radius: 0px;border-bottom-right-radius: 0px">
 			</div>
-			<button type="submit" class="btn btn-primary submit-request-btn w-100">✨&nbsp;&nbsp;&nbsp;✨&nbsp;&nbsp;&nbsp;✨</button>
+			<button type="submit" class="btn btn-primary submit-request-btn w-100"  style="border-top-right-radius: 0px;border-top-left-radius: 0px;">✨&nbsp;&nbsp;&nbsp;✨&nbsp;&nbsp;&nbsp;✨</button>
 		</form>
 		{% else %}
-		<h1 class="text-center">Convert queries to leads in minutes</h1>
+		<div class="d-flex flex-column align-items-center" style="width: fit-content; margin: auto;">
+			<h1 class="text-center" style="font-size: 3em; line-height: 1;">
+				Convert
+			</h1>
+			<div class="d-flex align-items-center">
+				<span style="font-size: 4rem; font-family: 'Courier New', Courier, monospace; font-weight: bold; letter-spacing: -6px;">Queries</span>
+				<span style="font-size: 2rem; margin: 0 1rem;">→</span>
+				<b style="font-size: 4rem; font-family: TBF">leads</b>
+			</div>
+			<h1 class="text-center" style="font-size: 2em; line-height: 1; margin: auto;">
+				in minutes
+			</h1>
+		</div>
 		{% endif %}
 	</div>
 </div>
-<div style="height: 50px; background: linear-gradient(to top, transparent, #00ffa030);"></div>
+<div style="height: 50px; background: linear-gradient(to top, transparent, #1774c3a3);"></div>
 {% if current_user.is_authenticated %}
 <div class="container d-flex justify-content-center align-items-center">
 	<div style="width: 100%;">
@@ -60,35 +72,46 @@
 			<div>
 				<h2 style="text-align: center;">Lead Sources</h2>
 				<div style="display: flex; justify-content: space-between; margin-top: 1em;">
-					<input type="text" id="sources-search" placeholder="Search sources..."  class="table-search-input form-control" style="width: 50%;">
-					<div class="select-all-container">
-						<span class="selected-count" id="sources-table-selected-count"></span>
-						<input type="checkbox" class="select-all-checkbox" id="sources-table-select-all">
-						<label for="sources-table-select-all">Select All</label>
-						<div class="dropdown">
-							<button class="btn btn-secondary dropdown-toggle" type="button" id="sources-table-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
-								Actions
-							</button>
-							<ul class="dropdown-menu" aria-labelledby="sources-table-dropdown">
-								<li><a class="dropdown-item select-all" href="#">Select All</a></li>
-								<li><a class="dropdown-item unselect-all" href="#">Unselect All</a></li>
-								<li><a class="dropdown-item select-checked" href="#">Select Checked</a></li>
-								<li><a class="dropdown-item select-unchecked" href="#">Select Unchecked</a></li>
-								<li><a class="dropdown-item select-invalid" href="#">Select Invalid</a></li>
-								<li><hr class="dropdown-divider"></li>
-								<li><a class="dropdown-item check-all" href="#">Check Selected</a></li>
-								<li><a class="dropdown-item hide-all" href="#">Hide Selected</a></li>
-								<li><a class="dropdown-item export-csv" href="#">Export to CSV</a></li>
-							</ul>
-						</div>
-					</div>
-				</div>
+			        <input type="text" id="sources-search" placeholder="Search sources..." class="table-search-input form-control" style="width: 50%;">
+
+			        <div class="select-all-container">
+			            <span class="selected-count" id="sources-table-selected-count"></span>
+			            <input type="checkbox" class="select-all-checkbox" id="sources-table-select-all">
+			            <label for="sources-table-select-all">Select All</label>
+			            <div class="dropdown">
+			                <button class="btn btn-secondary dropdown-toggle" type="button" id="sources-table-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+			                    Actions
+			                </button>
+			                <ul class="dropdown-menu" aria-labelledby="sources-table-dropdown">
+			                    <li><a class="dropdown-item select-all" href="#">Select All</a></li>
+			                    <li><a class="dropdown-item unselect-all" href="#">Unselect All</a></li>
+			                    <li><a class="dropdown-item select-checked" href="#">Select Checked</a></li>
+			                    <li><a class="dropdown-item select-unchecked" href="#">Select Unchecked</a></li>
+			                    <li><a class="dropdown-item select-invalid" href="#">Select Invalid</a></li>
+			                    <li><hr class="dropdown-divider"></li>
+			                    <li><a class="dropdown-item check-all" href="#">Check Selected</a></li>
+			                    <li><a class="dropdown-item hide-all" href="#">Hide Selected</a></li>
+			                    <li><a class="dropdown-item export-csv" href="#">Export to CSV</a></li>
+			                </ul>
+			            </div>
+			        </div>
+			    </div>
 				<div id="sources-table" class="table-container" style="width: 100%;">
 					<div class="loading-icon-container">
 						<img class="loading-icon" src="/static/assets/chunk-loader.svg">
 					</div>
 				</div>
 				<div id="sources-table-count" class="text-center small mt-2"></div>
+
+				<button id="toggle-lead-source-form" class="btn btn-primary">Add Link</button>
+			    <div id="lead-source-form-container" style="display:none; margin-top: 1em;">
+			        <form id="create-lead-source-form">
+			            <div class="form-group">
+			                <input type="text" class="form-control" id="lead-source-url" name="lead_source_url" placeholder="Enter Lead Source URL" required>
+			            </div>
+			            <button type="submit" class="btn btn-primary">Create Lead Source</button>
+			        </form>
+			    </div>
 			</div>
 
 			<hr style="margin-top: 5em; margin-bottom: 2em; opacity: 1;">
@@ -124,6 +147,17 @@
 					</div>
 				</div>
 				<div id="leads-table-count" class="text-center small mt-2"></div>
+
+				<button id="toggle-lead-form" class="btn btn-primary">Add Link</button>
+
+				<div id="lead-form-container" style="display:none;">
+			        <form id="create-lead-form">
+			            <div class="form-group">
+			                <input type="text" class="form-control" id="lead-url" name="lead_url" placeholder="Enter Lead URL" required>
+			            </div>
+			            <button type="submit" class="btn btn-primary">Create Lead</button>
+			        </form>
+			    </div>
 			</div>
 
 			<hr style="margin-top: 5em; margin-bottom: 2em; opacity: 1;">
@@ -167,39 +201,67 @@
 		</div>
 	</div>
 	<div class="text-center mt-3">
-		<button id="retrain-model-btn" class="btn btn-primary btn-lg">Retrain Model</button>
+		<button id="retrain-model-btn" class="btn btn-primary btn-lg" disabled>Retrain Model</button>
 		<div class="text-center mt-3 small">Like 50 leads and hide 50 leads to train a lead quality model.</div>
 	</div>
 	<div class="text-center mt-3 small" id="last-trained-time">Last trained: {{ current_user.last_trained_lead_model_at.strftime('%m/%d/%Y, %I:%M:%S %p') if current_user.last_trained_lead_model_at else 'Never' }}</div>
 </div>
 
+
+<div style="text-align: center; margin: auto;width: 50%; margin-bottom: 5em;">
+	    <div style="padding: 20px;">
+	        <h2>Create Lead</h2>
+	        <form id="create-lead-form">
+	            <div class="form-group">
+	                <input type="text" class="form-control" id="lead-url" name="lead_url" placeholder="Enter Lead URL" required>
+	            </div>
+	            <button type="submit" class="btn btn-primary">Create Lead</button>
+	        </form>
+	    </div>
+	   	<div style="padding: 20px;">
+	        <h2>Create Lead Source</h2>
+	        <form id="create-lead-source-form">
+	            <div class="form-group">
+	                <input type="text" class="form-control" id="lead-source-url" name="lead_source_url" placeholder="Enter Lead Source URL" required>
+	            </div>
+	            <button type="submit" class="btn btn-primary">Create Lead Source</button>
+	        </form>
+	    </div>
+
+</div>
+
+
 {% else %}
 
 <div class="container mt-5">
 	<div class="row">
-		<div class="col-md-6">
-			<h2>What is Lead?</h2>
-			<p>Lead is a potential customer who has shown interest in your product or service. For example, someone who has filled out a form on your website to request more information about your product is a lead.</p>
-		</div>
+  		<div class="col-md-6">
+            <h2>Turn <b>Queries</b> into <b>Leads</b></h2>
+            <p>
+                Our platform transforms search queries into valuable leads quickly and easily. Whether you need "marketing agencies in NYC", "global web design communities" or "fishing stores in Nebraska" our AI-driven tool identifies and delivers potential customers straight to your dashboard.
+            </p>
+        </div>
 		<div class="col-md-6">
 			<h2>What is Query?</h2>
-			<p>Query is a question or request for information about a product or service. For example, someone who searches for "best laptop for programming" is a query.</p>
+			<p>On AI-Leads, a query is a broad search that your leads may fall under. Starting from the query, we'll crawl search results looking for potential customers specifically for your business. </p>
 		</div>
 	</div>
 
 	<div class="row mt-5">
 		<div class="col-md-6">
 			<h2>What is Lead Quality Prediction?</h2>
-			<p>Lead quality prediction is a machine learning model that predicts the quality of a lead. For example, the model can predict whether a lead is likely to convert into a customer or not.</p>
+			<p>Lead quality prediction is our in-house machine learning model that will predicts the quality of a lead or lead source for you. These models are trained on your interactions so as you like and hide more leads, the predictions will get better. Use these predictions to hone in on the most interesting results.</p>
 		</div>
 		<div class="col-md-6">
-			<h2>How to use Lead Quality Prediction?</h2>
-			<p>1. Sign up or log in to your account.<br>2. Enter a query in the search box and click on the submit button.<br>3. View the results and manage your leads.</p>
+			<h2>How It Works</h2>
+			<p>1. Sign up or log in to your account.<br>2. Enter a query in the search box and click on the submit button.<br>3. Select which sources to dig into.<br>4. View the results and manage your leads.</p>
 		</div>
 	</div>
 </div>
 
 {% endif %}
+
+
 
 
 <script src="/static/js/home_script_v3.js" type="module"></script>

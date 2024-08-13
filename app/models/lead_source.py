@@ -144,22 +144,6 @@ class LeadSource(db.Model):
 	def get_leads(self):
 		return Lead.query.filter_by(source_id=self.id).all()
 
-	def save_checked_source(self, lead_batch, source_batch):
-		db.session.add(self)
-		for lead in lead_batch:
-			try:
-				db.session.add(lead)
-			except Exception as e:
-				print(f'Failed to add lead source {self.id} - {e}')
-		for source in source_batch:
-			try:
-				db.session.add(source)
-			except Exception as e:
-				print(f'Failed to add source to source {self.id} - {e}')
-
-		self._finished()
-		db.session.commit()
-
 	@classmethod
 	def batch_get_sources(cls, source_ids):
 		return cls.query.filter(cls.id.in_(source_ids)).all()
