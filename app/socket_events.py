@@ -1,6 +1,6 @@
-from . import socketio
+from app import socketio, db
 from flask_login import login_required, current_user
-from .models import LeadSource, Lead, Query, User
+from app.models import LeadSource, Lead, Query, User
 from flask_socketio import join_room, emit
 import logging
 
