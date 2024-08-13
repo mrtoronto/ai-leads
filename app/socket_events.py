@@ -178,14 +178,6 @@ def handle_update_user_settings(data):
 			user.lead_validation_model_preference = data.get('lead_validation_model_preference', user.lead_validation_model_preference)
 			user.industry = data.get('industry', user.industry)
 			user.preferred_org_size = data.get('preferred_org_size', user.preferred_org_size)
-
-			if user.email != data.get('email', user.email):
-				if User.get_by_email(data['email']):
-					emit('update_user_settings_response', {'success': False, 'message': 'Email already in use'}, to=f"user_{current_user.id}")
-					return
-				user.email_verified = False
-				user.email = data.get('email', user.email)
-			user.save()
 			emit('update_user_settings_response', {'success': True}, to=f"user_{user.id}")
 	else:
 		emit('update_user_settings_response', {'success': False}, to=f"user_{current_user.id}")
