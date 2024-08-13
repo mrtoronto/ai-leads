@@ -178,6 +178,8 @@ def handle_update_user_settings(data):
 			user.lead_validation_model_preference = data.get('lead_validation_model_preference', user.lead_validation_model_preference)
 			user.industry = data.get('industry', user.industry)
 			user.preferred_org_size = data.get('preferred_org_size', user.preferred_org_size)
+
+			db.session.commit()
 			emit('update_user_settings_response', {'success': True}, to=f"user_{user.id}")
 	else:
 		emit('update_user_settings_response', {'success': False}, to=f"user_{current_user.id}")
