@@ -80,12 +80,20 @@ export function initializeLikeButtons() {
             const button = event.target.closest('.liked-lead-btn');
             const leadId = button.getAttribute('data-id');
             socket.emit('liked_lead', { lead_id: leadId });
+        } else if (event.target.closest('.liked-source-btn')) {
+            const button = event.target.closest('.liked-source-btn');
+            const sourceId = button.getAttribute('data-id');
+            socket.emit('liked_source', { source_id: sourceId });
         }
     });
 
     // Handle socket events for updating the like status
     socket.on('lead_liked', function(data) {
         updateLikeButton('.liked-lead-btn', data.lead);
+    });
+
+    socket.on('source_liked', function(data) {
+        updateLikeButton('.liked-source-btn', data.source);
     });
 }
 
@@ -99,5 +107,7 @@ function updateLikeButton(buttonSelector, item) {
         if (likedStatus) {
             likedStatus.textContent = `Liked: ${item.liked ? 'Yes' : 'No'}`;
         }
+    } else {
+    		console.error(`Could not find button with selector: ${buttonSelector}[data-id="${item.id}"]`);
     }
 }

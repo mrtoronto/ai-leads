@@ -1,6 +1,6 @@
 import os
 import redis
-from flask import Flask
+from flask import Flask, request
 from flask_socketio import SocketIO
 from flask_login import LoginManager
 from rq import Queue
@@ -15,7 +15,11 @@ import time
 import logging
 from sqlalchemy.exc import OperationalError
 import sqlalchemy
+from flask import g
 from flask_mail import Mail, Message
+
+from sqlalchemy.engine.url import URL
+from user_agents import parse
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('BDB-2EB')
@@ -45,31 +49,6 @@ convention = {
 	"pk": "pk_%(table_name)s"
 }
 
-from sqlalchemy.engine.url import URL
-
-def _get_connection_string(flask_app):
-    db_host = flask_app.config['DB_HOST']
-    db_user = flask_app.config['DB_USER']
-    db_pass = flask_app.config['DB_PASS']
-    db_name = flask_app.config['DB_NAME']
-    db_port = flask_app.config['DB_PORT']
-
-    logger.info(f'DB_HOST: {db_host}')
-    logger.info(f'DB_PORT: {db_port}')
-    logger.info(f'DB_PASS: {db_pass}')
-    logger.info(f'DB_USER: {db_user}')
-
-    connection_string = URL.create(
-        drivername="postgresql",
-        username=db_user,
-        password=db_pass,
-        host=db_host,
-        port=db_port,
-        database=db_name
-    )
-
-    return str(connection_string)
-
 def _test_connection_string(flask_app):
 	db_host = flask_app.config['DB_HOST']
 	db_user = flask_app.config['DB_USER']
@@ -77,12 +56,9 @@ def _test_connection_string(flask_app):
 	db_name = flask_app.config['DB_NAME']
 	db_port = flask_app.config['DB_PORT']
 	connection_string = flask_app.config['SQLALCHEMY_DATABASE_URI']
-	logger.info(f'SQLALCHEMY_DATABASE_URI: {flask_app.config["SQLALCHEMY_DATABASE_URI"]}')
-	logger.info(f"Attempting to connect to database: {db_host}:{db_port} as {db_user}")
 	try:
 		engine = sqlalchemy.create_engine(str(connection_string))
 		connection = engine.connect()
-		logger.info("Successfully connected to the database")
 		if hasattr(connection, 'close'):
 			connection.close()
 	except Exception as e:
@@ -90,10 +66,21 @@ def _test_connection_string(flask_app):
 		logger.error(f"Connection string: {connection_string}")
 
 
+
+
+def mobile_middleware(app):
+    @app.before_request
+    def detect_mobile():
+        user_agent = request.headers.get('User-Agent')
+        user_agent_parsed = parse(user_agent)
+        g.is_mobile = user_agent_parsed.is_mobile
+
+
 def create_app(config_class=Config):
 	# Initialize the Flask application
 	start_time = time.time()
 	flask_app = Flask(__name__)
+	mobile_middleware(flask_app)
 	flask_app.config.from_object(config_class)
 	logger.info(f'Config loaded in {time.time() - start_time} seconds')
 	logger.info(f'Running on {flask_app.config["FLASK_ENV"]} environment')
@@ -124,7 +111,6 @@ def create_app(config_class=Config):
 
 	logger.info(f'Running on {flask_app.config["FLASK_ENV"]} environment')
 	logger.info(f'Running redis at {flask_app.config["REDIS_URL"]}')
-	logger.info(f'Running with SQL instance: {flask_app.config["SQLALCHEMY_DATABASE_URI"]}')
 
 	logger.info(f'Making DB after {time.time() - start_time} seconds')
 
@@ -166,7 +152,6 @@ def create_minimal_app(config_class=Config):
 
 	logger.info(f'Running on {flask_app.config["FLASK_ENV"]} environment')
 	logger.info(f'Running redis at {flask_app.config["REDIS_URL"]}')
-	logger.info(f'Running with SQL instance: {flask_app.config["SQLALCHEMY_DATABASE_URI"]}')
 
 
 	return flask_app

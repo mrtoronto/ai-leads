@@ -46,11 +46,12 @@
 								Actions
 							</button>
 							<ul class="dropdown-menu" aria-labelledby="requests-table-dropdown">
-								<li><a class="dropdown-item select-all" href="#">Select All</a></li>
-								<li><a class="dropdown-item unselect-all" href="#">Unselect All</a></li>
+								<li><a class="dropdown-item select-all" href="#">Select Visible</a></li>
+								<li><a class="dropdown-item unselect-all" href="#">Unselect Visible</a></li>
 								<li><a class="dropdown-item select-checked" href="#">Select Checked</a></li>
 								<li><a class="dropdown-item select-unchecked" href="#">Select Unchecked</a></li>
 								<li><a class="dropdown-item select-invalid" href="#">Select Invalid</a></li>
+								<li><hr class="dropdown-divider"></li>
 								<li><a class="dropdown-item check-all" href="#">Check Selected</a></li>
 								<li><a class="dropdown-item hide-all" href="#">Hide Selected</a></li>
 								<li><a class="dropdown-item export-csv" href="#">Export to CSV</a></li>
@@ -83,8 +84,8 @@
 			                    Actions
 			                </button>
 			                <ul class="dropdown-menu" aria-labelledby="sources-table-dropdown">
-			                    <li><a class="dropdown-item select-all" href="#">Select All</a></li>
-			                    <li><a class="dropdown-item unselect-all" href="#">Unselect All</a></li>
+			                    <li><a class="dropdown-item select-all" href="#">Select Visible</a></li>
+			                    <li><a class="dropdown-item unselect-all" href="#">Unselect Visible</a></li>
 			                    <li><a class="dropdown-item select-checked" href="#">Select Checked</a></li>
 			                    <li><a class="dropdown-item select-unchecked" href="#">Select Unchecked</a></li>
 			                    <li><a class="dropdown-item select-invalid" href="#">Select Invalid</a></li>
@@ -129,11 +130,12 @@
 								Actions
 							</button>
 							<ul class="dropdown-menu" aria-labelledby="leads-table-dropdown">
-								<li><a class="dropdown-item select-all" href="#">Select All</a></li>
-								<li><a class="dropdown-item unselect-all" href="#">Unselect All</a></li>
+								<li><a class="dropdown-item select-all" href="#">Select Visible</a></li>
+								<li><a class="dropdown-item unselect-all" href="#">Unselect Visible</a></li>
 								<li><a class="dropdown-item select-checked" href="#">Select Checked</a></li>
 								<li><a class="dropdown-item select-unchecked" href="#">Select Unchecked</a></li>
 								<li><a class="dropdown-item select-invalid" href="#">Select Invalid</a></li>
+								<li><hr class="dropdown-divider"></li>
 								<li><a class="dropdown-item check-all" href="#">Check Selected</a></li>
 								<li><a class="dropdown-item hide-all" href="#">Hide Selected</a></li>
 								<li><a class="dropdown-item export-csv" href="#">Export to CSV</a></li>
@@ -150,7 +152,7 @@
 
 				<button id="toggle-lead-form" class="btn btn-primary">Add Link</button>
 
-				<div id="lead-form-container" style="display:none;">
+				<div id="lead-form-container" style="display:none; margin-top: 1em">
 			        <form id="create-lead-form">
 			            <div class="form-group">
 			                <input type="text" class="form-control" id="lead-url" name="lead_url" placeholder="Enter Lead URL" required>

@@ -31,7 +31,7 @@ class Lead(db.Model):
 	checking = db.Column(db.Boolean, default=False)
 	hidden_at = db.Column(db.DateTime)
 	quality_score = db.Column(db.Float)
-	og_image = db.Column(db.String(255))
+	image_url = db.Column(db.String(255))
 	jobs = db.relationship('Job', backref='lead', lazy='dynamic')
 
 	def to_dict(self):
@@ -56,7 +56,7 @@ class Lead(db.Model):
 			'checking': self.checking,
 			'hidden_at': self.hidden_at.isoformat() if self.hidden_at else None,
 			'quality_score': self.quality_score,
-			'og_image': self.og_image,
+			'image_url': self.image_url,
 			'lead_source': self.lead_source.to_dict() if self.lead_source else None,
 			'query_obj': self.query_obj.to_dict() if self.query_obj else None,
 		}
@@ -163,6 +163,9 @@ class Lead(db.Model):
 	def _finished(self):
 		self.checked = True
 		self.checking = False
+
+		self.save()
+
 
 	@classmethod
 	def batch_get_leads(cls, lead_ids):

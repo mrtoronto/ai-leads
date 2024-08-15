@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from bs4 import BeautifulSoup
 from langchain.prompts import PromptTemplate
-
+from app.utils import _tidy_url
 from app.models import Lead, LeadSource, CreditLedgerType
 
 
@@ -65,6 +65,7 @@ class ValidationOutput(BaseModel):
 		[],
 		description="A list of URLs that point to sites may contain leads. These sites may not be directly applicable to the user's query but may contain links to relevant sites."
 	)
+
 
 rewriting_parser = PydanticOutputParser(pydantic_object=RewrittenQuery)
 collection_parser = PydanticOutputParser(pydantic_object=CollectionOutput)
@@ -241,23 +242,24 @@ def _llm(user_input, template, parser, parse_output=True, user=None, previous_le
 
 
 
+
 def get_visible_text_and_links(link):
 	headers = {
-	    'User-Agent': random.choice(user_agents)
+		'User-Agent': random.choice(user_agents)
 	}
 	session = requests.Session()
 	try:
-		resp = session.get(link, headers=headers, timeout=10)
+		resp = session.get(link, headers=headers, timeout=10, allow_redirects=True)
 		resp.raise_for_status()  # Raises an HTTPError for bad responses
 	except requests.exceptions.RequestException as e:
-		return None
+		return None, None
 
 	if resp.status_code != 200:
-		return None
+		return None, None
 	html = resp.text
 
 	if not html:
-		return None
+		return None, None
 
 	soup = BeautifulSoup(html, 'html.parser')
 	rendered_text = []
@@ -277,9 +279,16 @@ def get_visible_text_and_links(link):
 			link_url = element.get('href')
 			rendered_text.append(f"{link_text} ({link_url})")
 
+	# Get OpenGraph image
+	og_image = soup.find('meta', property='og:image')
+	if og_image and og_image.get('content'):
+		og_image_url = og_image.get('content')
+	else:
+		og_image_url = None
+
 	rendered_text = ' '.join(rendered_text)
 	rendered_text = rendered_text[:200000]
-	return rendered_text
+	return rendered_text, og_image_url
 
 
 def search_serpapi(query):
@@ -350,19 +359,24 @@ def search_and_validate_leads(new_request, previous_leads, socketio_obj, search_
 def _llm_validate_lead(link, user, link_val_mult=2):
 	print(f'Validating lead from link: {link}')
 	if user.credits < 1:
-		return None
-	visible_text = get_visible_text_and_links(link)
+		return None, None
+	visible_text, opengraph_img_url = get_visible_text_and_links(link)
+	opengraph_img_url = _tidy_url(link, opengraph_img_url)
 	if visible_text:
 		output, tokens_used_usd = _llm(visible_text, lead_validation_prompt, validation_parser, user)
 		user.move_credits(
 			tokens_used_usd * -1000 * link_val_mult,
 			CreditLedgerType.CHECK_LEAD
 		)
-		return output
+		if not output:
+			output = ValidationOutput(
+				invalid_lead=True,
+			)
+		return output, opengraph_img_url
 	else:
 		return ValidationOutput(
 			invalid_link=True
-		)
+		), opengraph_img_url
 
 # def collect_leads_from_query(user_query, user, previous_leads, query_collection_mult=3):
 # 	print(f'Collecting leads from query: {user_query}')
@@ -378,9 +392,9 @@ def _llm_validate_lead(link, user, link_val_mult=2):
 def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3):
 	print(f'Collecting leads from URL: {url}')
 	if user.credits < 1:
-		return None
+		return None, None
 
-	visible_text = get_visible_text_and_links(url)
+	visible_text, opengraph_img_url = get_visible_text_and_links(url)
 	if visible_text:
 		output, tokens_used_usd = _llm(
 			user_input=visible_text,
@@ -393,11 +407,11 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3):
 			tokens_used_usd * -1000 * url_collection_mult,
 			CreditLedgerType.CHECK_SOURCE
 		)
-		return output
+		return output, opengraph_img_url
 	else:
 		return CollectionOutput(
 			invalid_link=True
-		)
+		), opengraph_img_url
 
 def rewrite_query(user_query, user, rewrite_query_mult=3):
 	print(f'Rewriting query: {user_query}')

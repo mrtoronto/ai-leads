@@ -27,6 +27,9 @@ def _tidy_url(example_url, to_be_fixed):
 	Fixes URLs like '/contact' to 'https://example.com/contact'
 
 	"""
+
+	if not to_be_fixed:
+		return ''
 	if to_be_fixed.startswith('/'):
 		base_url = example_url.split('/')
 		base_url = '/'.join(base_url[:3])

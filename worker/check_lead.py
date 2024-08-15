@@ -31,7 +31,7 @@ def check_lead_task(lead_id):
 		if not lead:
 			return
 		lead_user = User.get_by_id(lead.user_id)
-		first_validation_output = _llm_validate_lead(lead.url, lead_user)
+		first_validation_output, opengraph_img_url = _llm_validate_lead(lead.url, lead_user)
 		final_validation_output = first_validation_output
 
 		if not first_validation_output:
@@ -52,7 +52,7 @@ def check_lead_task(lead_id):
 					base_url = '/'.join(base_url[:3])
 					next_link = base_url + next_link
 
-				validation_output = _llm_validate_lead(next_link, lead_user)
+				validation_output, opengraph_img_url = _llm_validate_lead(next_link, lead_user)
 				logger.info(validation_output)
 				if validation_output:
 					if not final_validation_output:
@@ -102,13 +102,13 @@ def check_lead_task(lead_id):
 			return
 
 		lead.name = final_validation_output.name or lead.name
+		lead.image_url = opengraph_img_url or lead.image_url
 		lead.description = final_validation_output.description or lead.description
 		lead.contact_info = final_validation_output.email_address or lead.contact_info
 		lead.valid = bool(final_validation_output.email_address or final_validation_output.contact_page or final_validation_output.next_link or final_validation_output.no_email_found)
 		lead.contact_page = _tidy_url(lead.url, final_validation_output.contact_page or final_validation_output.next_link) if (final_validation_output.contact_page or final_validation_output.next_link) else ""
 		lead.checked = True
 		lead.checking = False
-
 		lead.save()
 
 		if final_validation_output.lead_sources:
@@ -147,7 +147,7 @@ def check_lead_task(lead_id):
 
 		model = FastTextModel(lead.user_id, ModelTypes.LEAD)
 		lead.quality_score = model.predict_lead(lead_user, lead)
-
+		lead._finished()
 		db.session.commit()
 
 		worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')

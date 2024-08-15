@@ -7,6 +7,64 @@ const dataCache = {
     leads: {}
 };
 
+window.confirmHides = true;
+
+const desktopLeadNameFormatter = (cell, row) => {
+    const content = cell ? cell : row.url;
+    const isUrl = !cell;
+    const percentage = row.quality_score !== null ? Math.floor(row.quality_score * 100) : 0;
+    const color = `rgb(${Math.floor(255 - (percentage * 2.55))}, ${Math.floor(percentage * 2.55)}, 0)`;
+    const containerStyle = 'text-align: left; padding: 5px; display: flex; flex-direction: row; align-items: center; gap: 1em;';
+    const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
+    const linkStyle = 'font-size: 12px; display: block;';
+    const qualityBar = percentage > 0 ? `
+        <div style="display: flex; align-items: center;">
+	        <div class="quality-bar-container">
+	            <div class="quality-bar" style="height: ${percentage}%; background-color: ${color};"></div>
+	        </div>
+        </div>` : '';
+    return cell
+        ? `<div style="${containerStyle}">${qualityBar}<div style="display: flex; flex-direction: column;"><a href="/lead/${row.guid}" class="lead-name" data-id="${row.id}" style="${style}">${content}</a><a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a></div></div>`
+        : `<div style="${containerStyle}">${qualityBar}<a href="${row.url}" target="_blank" style="${style}">${content}</a></div>`;
+}
+
+const mobileLeadNameFormatter = (cell, row) => {
+	const content = cell ? cell : row.url;
+	const isUrl = !cell;
+	const percentage = row.quality_score !== null ? Math.floor(row.quality_score * 100) : 0;
+	const color = `rgb(${Math.floor(255 - (percentage * 2.55))}, ${Math.floor(percentage * 2.55)}, 0)`;
+	const containerStyle = 'text-align: left; padding: 5px; display: flex; flex-direction: column;';
+	const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
+	const linkStyle = 'font-size: 12px; display: block;';
+	const qualityBar = percentage > 0 ? `
+					<div style="display: flex; align-items: center;">
+							<div class="quality-bar-container">
+                  <div class="quality-bar" style="height: ${percentage}%; background-color: ${color};"></div>
+              </div>
+					</div>` : '';
+	const imageUrl = row.image_url
+					? row.image_url
+					: row.checked
+					? '/static/assets/ai-leads-checkMark.png'
+					: '/static/assets/placeholder_img.png';
+	return cell
+					? `<div style="${containerStyle}">
+									<div style="display: flex; align-items: center; gap: 0.5em;">
+										${qualityBar}
+										<div>
+											<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+										</div>
+										<div>
+											<a href="/lead/${row.guid}" class="lead-name" data-id="${row.id}" style="${style}">${content}</a>
+											<a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a>
+										</div>
+									</div>
+								</div>`
+					: `<div style="${containerStyle}">
+									<div style="display: flex; align-items: center;">${qualityBar}<a href="${row.url}" target="_blank" style="${style}">${content}</a></div>
+								</div>`;
+}
+
 const getTableColumnsById = (tableId) => {
     switch(tableId) {
         case 'requests-table':
@@ -116,7 +174,8 @@ function sortTable(tableId, columnIndex) {
 
 
 // Column definitions
-const getQueryTableColumns = () => [
+let getQueryTableColumns;
+getQueryTableColumns = () => [
     { id: 'id', name: 'ID', field: 'id', hidden: true },
     { id: 'user_query', width: '200px', name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
     { id: 'reformatted_query', width: '200px', name: 'Reformatted Query', field: 'reformatted_query' },
@@ -126,40 +185,69 @@ const getQueryTableColumns = () => [
     { id: 'hidden', name: 'Hide', width: '90px', field: 'hidden', formatter: (_, row) => `<div class="hide-request-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>` }
 ];
 
-const getSourceTableColumns = () => [
-    { id: 'id', name: 'ID', field: 'id', hidden: true },
-    { id: 'checking', name: 'Checking', field: 'checking', hidden: true },
-    { id: 'name', width: '200px', textAlign: 'left !important', name: 'Name', field: 'name', formatter: (cell, row) => {
-        const content = cell ? cell : row.url;
-        const isUrl = !cell;
-        const containerStyle = 'text-align: left; padding: 5px;';
-        const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
-        const linkStyle = 'font-size: 10px; display: block; ';
-        return cell
-        ? `<div style="${containerStyle}"><a href="/source/${row.guid}" class="source-name" data-id="${row.id}" style="${style}">${content}</a><a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a></div>`
-            : `<div style="${containerStyle}"><a href="${row.url}" target="_blank" style="${style}" class="name-url">${content}</a></div>`;
-    }},
-    { id: 'description', whiteSpace: 'wrap !important', width: '300px',  name: 'Description', field: 'description', formatter: (cell) => `<div style="font-size: 12px; max-width: 250px; overflow-wrap: break-word; word-wrap: break-word;">${cell || "---"}</div>` },
-    { id: 'n_leads', width: '90px', name: '# of Leads', field: 'n_leads' },
-    { id: 'quality_score', width: '90px', name: 'Quality', field: 'quality_score', formatter: (cell, row) => (cell !== null ? Math.floor(cell * 100) : 0) },
-    { id: 'checked', width: '90px', name: 'Checked', field: 'checked', formatter: (cell, row) => row.checking ? '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>' : (cell ? '<i class="fa-solid fa-check fa-icon"></i>' : `<div class="check-source-btn socket-btn" data-id="${row.id}"><i class="fa-brands fa-searchengin fa-icon"></i></div>`) },
-    { id: 'hidden', width: '90px', name: 'Hide', field: 'hidden', formatter: (_, row) => `<div class="hide-source-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>` }
-];
-
-const getLeadTableColumns = () => [
+let getSourceTableColumns;
+getSourceTableColumns = () => [
     { id: 'id', name: 'ID', field: 'id', hidden: true },
     { id: 'checking', name: 'Checking', field: 'checking', hidden: true },
     {
-    	id: 'name', width: '200px',  textAlign: 'left !important', name: 'Name', field: 'name', formatter: (cell, row) => {
-        const content = cell ? cell : row.url;
-        const isUrl = !cell;
-        const containerStyle = 'text-align: left; padding: 5px;';
-        const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
-        const linkStyle = 'font-size: 12px; display: block; ';
-        return cell
-        ? `<div style="${containerStyle}"><a href="/lead/${row.guid}" class="lead-name" data-id="${row.id}" style="${style}">${content}</a><a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a></div>`
-            : `<div style="${containerStyle}"><a href="${row.url}" target="_blank" style="${style}">${content}</a></div>`;
-    }},
+        id: 'name',
+        width: '200px',
+        textAlign: 'left !important',
+        name: 'Name',
+        field: 'name',
+        formatter: (cell, row) => {
+            const content = cell ? cell : row.url;
+            const isUrl = !cell;
+            const containerStyle = 'text-align: left; padding: 5px; display: flex; flex-direction: row; gap: 1em;';
+            const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
+            const linkStyle = 'font-size: 10px; display: block;';
+					return cell
+									? `<div style="${containerStyle}; display: flex; align-items: center;">
+													<div style="display: flex; flex-direction: column;">
+													<a href="/source/${row.guid}" class="source-name" data-id="${row.id}" style="${style}">${content}</a>
+													<a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a>
+													</div>
+										</div>`
+									: `<div style="${containerStyle}; display: flex; align-items: center;">
+												<a href="${row.url}" target="_blank" style="${style}" class="name-url">${content}</a>
+										</div>`;
+        }
+    },
+    { id: 'description', whiteSpace: 'wrap !important', width: '300px',  name: 'Description', field: 'description', formatter: (cell) => `<div style="font-size: 12px; max-width: 250px; overflow-wrap: break-word; word-wrap: break-word;">${cell || "---"}</div>` },
+    { id: 'n_leads', width: '90px', name: '# of Leads', field: 'n_leads' },
+    {
+        id: 'actions',
+        width: '120px',
+        name: 'Actions',
+        field: 'actions',
+        formatter: (cell, row) => {
+            if (row.checking) {
+                return `<div class="actions-container">
+                            <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
+                            <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                        </div>`;
+            } else if (row.checked) {
+                return `<div class="actions-container">
+                            <div class="socket-btn" style="width: 22px"></div>
+                            <div class="hide-source-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                        </div>`;
+            } else {
+                return `<div class="actions-container">
+                            <div class="check-source-btn socket-btn" data-id="${row.id}"><i class="fa-brands fa-searchengin fa-icon"></i></div>
+                            <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                        </div>`;
+            }
+        }
+    }
+];
+
+let getLeadTableColumns;
+getLeadTableColumns = () => [
+    { id: 'id', name: 'ID', field: 'id', hidden: true },
+    { id: 'checking', name: 'Checking', field: 'checking', hidden: true },
+    {
+        id: 'name', width: '200px', textAlign: 'left !important', name: 'Name', field: 'name', formatter: (cell, row) => desktopLeadNameFormatter(cell, row)
+    },
     { id: 'description', whiteSpace: 'wrap !important', width: '300px', name: 'Description', field: 'description', formatter: (cell) => `<div style="font-size: 12px;">${cell || "---"}</div>` },
     {
         id: 'contact',
@@ -177,7 +265,7 @@ const getLeadTableColumns = () => [
             if (isEmail) {
                 contactInfoHtml = `
                     <div style="font-size: 12px; display: flex; align-items: center;">
-                        <div class="copy-email-btn socket-btn" data-email="${contactInfo}" style="margin-right: 5px; padding: 2px 5px; font-size: 10px;"><i class="fa-solid fa-clipboard fa-icon"></i></i></div>
+                        <div class="copy-email-btn socket-btn" data-email="${contactInfo}" style="margin-right: 5px; padding: 2px 5px; font-size: 10px;"><i class="fa-solid fa-clipboard fa-icon"></i></div>
                         <span>${contactInfo}</span>
                     </div>`;
             } else {
@@ -190,11 +278,247 @@ const getLeadTableColumns = () => [
             `;
         }
     },
-    { id: 'quality_score', width: '90px', name: 'Quality', field: 'quality_score', formatter: (cell, row) => (cell !== null ? Math.floor(cell * 100) : 0) },
-    { id: 'checked', width: '90px', name: 'Checked', field: 'checked', formatter: (cell, row) => row.checking ? '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>' : (cell ? '<i class="fa-solid fa-check fa-icon"></i>' : `<div class="check-lead-btn socket-btn" data-id="${row.id}"><i class="fa-brands fa-searchengin fa-icon"></i></div>`) },
-    { id: 'liked', width: '90px', name: 'Like', field: 'liked', formatter: (cell, row) => `<div class="liked-lead-btn socket-btn" data-id="${row.id}"><i class="fa-${cell ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>` },
-    { id: 'hidden', width: '90px', name: 'Hide', field: 'hidden', formatter: (_, row) => `<div class="hide-lead-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>` }
+    {
+        id: 'actions',
+        width: '120px',
+        name: 'Actions',
+        field: 'actions',
+        formatter: (cell, row) => {
+            if (row.checking) {
+                return `<div class="actions-container" style="display: flex; gap: 1em;">
+                            <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
+                            <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                        </div>`;
+            } else if (row.checked) {
+                return `<div class="actions-container" style="display: flex; gap: 1em;">
+                            <div class="liked-lead-btn socket-btn" data-id="${row.id}"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
+                            <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                        </div>`;
+            } else {
+                return `<div class="actions-container" style="display: flex; gap: 1em;">
+                            <div class="check-lead-btn socket-btn" data-id="${row.id}"><i class="fa-brands fa-searchengin fa-icon"></i></div>
+                            <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                        </div>`;
+            }
+        }
+    }
 ];
+
+if (window.is_mobile) {
+	getQueryTableColumns = () => [
+		{ id: 'id', name: 'ID', field: 'id', hidden: true },
+		{ id: 'user_query', name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
+		{ id: 'reformatted_query', name: 'Reformatted Query', field: 'reformatted_query' },
+		{
+			id: 'totals',
+			name: 'Totals',
+			formatter: (cell, row) => {
+				const nLeads = row.n_leads || 0;
+				const nSources = row.n_sources || 0;
+				const leadsFontSize = nLeads > 9 ? '18px' : '24px';
+				const sourcesFontSize = nSources > 9 ? '18px' : '24px';
+				const leadsFontWeight = nLeads > 100 ? 'bold' : 'normal';
+				const sourcesFontWeight = nSources > 100 ? 'bold' : 'normal';
+				return `<div style="display: flex; justify-content: space-between; width: 100%;">
+								<div style="width: 50%; font-size: ${leadsFontSize}; font-weight: ${leadsFontWeight}; text-align: center;">
+										${nLeads}
+										<div style="font-size: 12px;">Leads</div>
+								</div>
+								<div style="width: 50%; font-size: ${sourcesFontSize}; font-weight: ${sourcesFontWeight}; text-align: center;">
+										${nSources}
+										<div style="font-size: 12px;">Sources</div>
+								</div>
+				</div>`;
+			}
+		},
+		{
+						id: 'actions',
+						name: 'Actions',
+						field: 'actions',
+						formatter: (_, row) => `
+							<div class="actions-container" style="display: flex; margin-top: 0px;">
+										<div style="width: 50%;margin: auto; text-align: center;" class="socket-btn">
+											${row.finished ? '<i class="fa-solid fa-check fa-icon">' : '<i class="fa-solid fa-x fa-icon">'}</i>
+										</div>
+										<div style="width: 50%;margin: auto; text-align: center;" class="hide-request-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+							</div>`
+		}
+	];
+
+	getSourceTableColumns = () => [
+        { id: 'id', name: 'ID', field: 'id', hidden: true },
+        { id: 'checking', name: 'Checking', field: 'checking', hidden: true },
+        {
+            id: 'name',
+            width: '100%',
+            textAlign: 'left !important',
+            name: 'Name',
+            field: 'name',
+            formatter: (cell, row) => {
+                const content = cell ? cell : row.url;
+                const isUrl = !cell;
+                const percentage = row.quality_score !== null ? Math.floor(row.quality_score * 100) : 0;
+                const color = `rgb(${Math.floor(255 - (percentage * 2.55))}, ${Math.floor(percentage * 2.55)}, 0)`;
+                const containerStyle = 'text-align: left; padding: 5px; display: flex; flex-direction: column; gap: 0.5em;';
+                const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
+                const qualityBar = percentage > 0 ? `
+                    <div style="display: flex; align-items: center;">
+                        <div style="width: 10px; height: 40px; background-color: #e0e0e0; display: flex;">
+                            <div style="align-self: flex-end; width: 100%; height: ${percentage}%; background-color: ${color};"></div>
+                        </div>
+                    </div>` : '';
+                return cell
+                    ? `<div style="${containerStyle}">
+                        <div style="display: flex; align-items: center; gap: 0.5em;">
+                            ${qualityBar}
+                            <div style="width: 100%;">
+                                <a href="/source/${row.guid}" class="source-name" data-id="${row.id}" style="${style}">${content}</a>
+                                <a class="link-below-name" href="${row.url}" target="_blank">${row.url}</a>
+                            </div>
+                        </div>
+                        <div class="description-text">
+                        	${row.description || ''}
+                        </div>
+                    </div>`
+                    : `<div style="${containerStyle}">
+                        <div style="display: flex; align-items: center;">
+                            <a href="${row.url}" target="_blank" style="${style}" class="name-url">${content}</a>
+                        </div>
+                    </div>`;
+            }
+        },
+        {
+					id: 'totals',
+					name: 'Totals',
+					field: 'n_leads',
+					formatter: (cell, row) => {
+						const nLeads = row.n_leads || 0;
+						if (!nLeads) {
+							return ``;
+						}
+						const leadsFontSize = nLeads > 9 ? '18px' : '24px';
+						const leadsFontWeight = nLeads > 100 ? 'bold' : 'normal';
+						return `<div style="display: flex; justify-content: space-between; width: 100%;">
+											<div style="width: 100%; font-size: ${leadsFontSize}; font-weight: ${leadsFontWeight}; text-align: center;">
+												${nLeads}
+												<div style="font-size: 12px;">Leads</div>
+											</div>
+										</div>`;
+					}
+				},
+        {
+            id: 'actions',
+            width: '100%',
+            name: 'Actions',
+            field: 'actions',
+            formatter: (cell, row) => {
+                if (row.checking) {
+                    return `<div class="actions-container" style="display: flex;">
+                                <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
+                                <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            </div>`;
+                } else if (row.checked) {
+                    return `<div class="actions-container" style="display: flex;">
+                    						<div class="hide-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
+                                	<i class="fa-solid fa-trash fa-icon  btn-danger-outline-light"></i>
+                                </div>
+                            </div>`;
+                } else {
+                    return `<div class="actions-container" style="display: flex;">
+                                <div class="check-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
+                                <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
+                                	<i class="fa-solid fa-trash fa-icon btn-danger-outline-light"></i>
+                                </div>
+                            </div>`;
+                }
+            }
+        }
+    ];
+	getLeadTableColumns = () => [
+					{ id: 'id', name: 'ID', field: 'id', hidden: true },
+					{ id: 'checking', name: 'Checking', field: 'checking', hidden: true },
+					{
+						id: 'name', width: '100%', textAlign: 'left !important', name: 'Name', field: 'name', formatter: (cell, row) => mobileLeadNameFormatter(cell, row)
+					},
+					{ id: 'description', whiteSpace: 'wrap !important', width: '100%', name: 'Description', field: 'description', formatter: (cell) => {
+							if (cell) {
+								return `<div style="font-size: 12px;">${cell}</div>`
+							} else {
+								return ``
+							}
+						}
+					},
+					{
+									id: 'contact',
+									width: '100%',
+									name: 'Contact',
+									field: 'contact',
+									formatter: (cell, row) => {
+													if (!row.contact_info && !row.contact_page) {
+														return ``;
+													}
+
+													// Check if contactInfo is an email address
+													const isEmail = /\S+@\S+\.\S+/.test(row.contact_info);
+
+													let contactInfoHtml = '';
+													if ((row.contact_info) && (isEmail)) {
+																	contactInfoHtml = `
+																					<div style="font-size: 12px; display: flex; align-items: center;">
+																									<span>${row.contact_info}</span>
+																									<div class="copy-email-btn socket-btn" data-email="${row.contact_info}" style="margin-right: 8px; padding: 2px 5px; font-size: 9px;">
+																									<i class="fa-solid fa-clipboard fa-icon"></i>
+																									</div>
+																					</div>`;
+													} else if (row.contact_info) {
+																	contactInfoHtml = `<div style="font-size: 12px;">${row.contact_info}</div>`;
+													}
+													let contactPageHtml = '';
+													if (row.contact_page) {
+														contactPageHtml = `<div style="font-size: 12px;"><a href="${row.contact_page}" target="_blank">Contact Page</a></div>`;
+													}
+
+													if ((contactInfoHtml == ``) && (contactPageHtml == ``)) {
+														return ``;
+													}
+
+													return `
+																	${contactInfoHtml}
+																	${contactPageHtml}
+													`;
+									}
+					},
+					{
+									id: 'actions',
+									width: '100%',
+									name: 'Actions',
+									field: 'actions',
+									formatter: (cell, row) => {
+													if (row.checking) {
+																	return `<div class="actions-container" style="display: flex;">
+																						<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
+																						<div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+																					</div>`;
+													} else if ((row.checked) && (row.valid)) {
+																	return `<div class="actions-container" style="display: flex;">
+																								<div class="liked-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
+																								<div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+																				</div>`;
+													} else if (!row.checked) {
+																	return `<div class="actions-container" style="display: flex;">
+																						<div class="check-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
+																						<div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+																					</div>`;
+													} else {
+																	return `<div class="actions-container" style="display: flex;">
+																						<div class="hide-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+																					</div>`;
+
+													}
+									}
+					}
+	];
+}
 
 const getLikedLeadTableColumns = () => getLeadTableColumns();
 
@@ -204,39 +528,42 @@ const createTable = (tableId, columns, data) => {
     table.className = 'table-container';
 
     // Create table header
-    const headerRow = document.createElement('div');
-    headerRow.className = 'table-row table-header';
-    let visibleColumnIndex = 0;
-    columns.forEach((column, index) => {
-        if (!column.hidden) {
-            const headerCell = document.createElement('div');
-            headerCell.className = 'table-cell header-cell';
-            headerCell.textContent = column.name;
-            headerCell.style.cursor = 'pointer';
+    if (!window.is_mobile) {
+	    const headerRow = document.createElement('div');
+	    headerRow.className = 'table-row table-header';
+	    let visibleColumnIndex = 0;
+	    columns.forEach((column, index) => {
+	        if (!column.hidden) {
+	            const headerCell = document.createElement('div');
+	            headerCell.className = 'table-cell header-cell';
+	            headerCell.textContent = column.name;
+	            headerCell.style.cursor = 'pointer';
 
-            // Use an IIFE to create a new scope for each iteration
-            (function(currentIndex) {
-                headerCell.onclick = function() {
-                    console.log(`Header cell clicked: ${column.name}, visible index: ${currentIndex}`);
-                    sortTable(tableId, currentIndex);
-                };
-            })(visibleColumnIndex);
-            if (column.width) {
-                headerCell.style.width = column.width;
-            }
-            if (column.textAlign) {
-                headerCell.style.textAlign = column.textAlign;
-            } else {
-            	headerCell.style.textAlign = 'center';
-            }
-            if (column.whiteSpace) {
-									headerCell.style.whiteSpace = column.whiteSpace;
-            }
-            headerRow.appendChild(headerCell);
-            visibleColumnIndex++;
-        }
-    });
-    table.appendChild(headerRow);
+	            // Use an IIFE to create a new scope for each iteration
+	            (function(currentIndex) {
+	                headerCell.onclick = function() {
+	                    console.log(`Header cell clicked: ${column.name}, visible index: ${currentIndex}`);
+	                    sortTable(tableId, currentIndex);
+	                };
+	            })(visibleColumnIndex);
+	            if (column.width) {
+	                headerCell.style.width = column.width;
+	            }
+	            if (column.textAlign) {
+	                headerCell.style.textAlign = column.textAlign;
+	            } else {
+	            	headerCell.style.textAlign = 'center';
+	            }
+	            if (column.whiteSpace) {
+										headerCell.style.whiteSpace = column.whiteSpace;
+	            }
+	            headerRow.appendChild(headerCell);
+	            visibleColumnIndex++;
+	        }
+	    });
+	    table.appendChild(headerRow);
+
+    }
 
     // Create scrollable container for table body
     const bodyContainer = document.createElement('div');
@@ -328,7 +655,8 @@ const updateRow = (tableId, rowId, newData) => {
 													cells[visibleIndex].innerHTML = column.formatter(null, newData);
 												} else {
 													const cellValue = newData[column.field];
-													if (cellValue != null) {
+													if (cellValue !== null) {
+														console.log(`Updating cell ${column.field} with value ${cellValue}`);
 														cells[visibleIndex].innerHTML = ''; // Clear existing content
 														cells[visibleIndex].innerHTML = column.formatter ? column.formatter(cellValue, newData) : cellValue;
 													}
@@ -434,7 +762,7 @@ function initializeClicks() {
             const leadId = target.getAttribute('data-id');
             console.log('Checking lead with id:', leadId);
             socket.emit('check_lead', { lead_id: leadId });
-            target.outerHTML = '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>';
+            target.outerHTML = '<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>';
             clicked_button = true;
         }
         if (target.classList.contains('liked-lead-btn')) {
@@ -447,15 +775,33 @@ function initializeClicks() {
         if (target.classList.contains('hide-lead-btn')) {
             const leadId = target.getAttribute('data-id');
             console.log('Hiding lead with id:', leadId);
-            socket.emit('hide_lead', { lead_id: leadId });
-            target.style.opacity = '0.5';
-            clicked_button = true;
+            if (window.confirmHides) {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This lead will be hidden from the list.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, hide it',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        socket.emit('hide_lead', { lead_id: leadId });
+                        target.style.opacity = '0.5';
+                        clicked_button = true;
+                    }
+                });
+            } else {
+                socket.emit('hide_lead', { lead_id: leadId });
+                target.style.opacity = '0.5';
+                clicked_button = true;
+            }
         }
         if (target.classList.contains('check-source-btn')) {
             const sourceId = target.getAttribute('data-id');
             console.log('Checking source with id:', sourceId);
             socket.emit('check_lead_source', { lead_source_id: sourceId });
-            target.outerHTML = '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>';
+            target.outerHTML = '<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>';
             clicked_button = true;
         }
         if (target.classList.contains('hide-source-btn')) {
@@ -634,7 +980,7 @@ function checkAllSelected(tableId) {
                 socket.emit('check_lead_source', { lead_source_id: id });
                 emitCount++;
             }
-            checkButton.outerHTML = '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>';
+            checkButton.outerHTML = '<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>';
         }
     });
     if (emitCount > 0) {

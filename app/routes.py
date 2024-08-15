@@ -1,5 +1,5 @@
 import requests
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, g
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import socketio, mail
@@ -12,6 +12,12 @@ from app import db
 import redis
 
 bp = Blueprint('main', __name__)
+
+@bp.context_processor
+def inject_is_mobile():
+    return {
+        'is_mobile': getattr(g, 'is_mobile', False)
+    }
 
 import logging
 

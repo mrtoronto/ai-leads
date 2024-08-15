@@ -20,6 +20,7 @@ import {
 import { handleLeadEvents, handleSourceEvents, handleRequestEvents } from "./socket_handlers.js";
 
 document.addEventListener('DOMContentLoaded', function() {
+		console.log(window.is_mobile);
 		const fetchData = () => {
         return new Promise(resolve => {
             socket.once('initial_data', data => {
@@ -103,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
         const url = document.getElementById('lead-source-url').value;
         socket.emit('create_lead_source', { url });
+        document.getElementById('lead-source-url').value = '';
     });
 
     // Toggle Lead Source Form
@@ -120,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
         const url = document.getElementById('lead-url').value;
         socket.emit('create_lead', { url });
+        document.getElementById('lead-url').value = '';
     });
 
 

@@ -30,6 +30,11 @@ html {
 	font-family: 'Roboto', sans-serif;
 }
 
+body {
+	background-color: #E6F6FF !important;
+
+}
+
 div, p, h1, h2, h3, h4, h5, h6 {
 	font-family: 'Roboto', sans-serif;
 }
@@ -46,6 +51,8 @@ small {
 	margin-top: 0px !important;
 }
 
+
+
 .fa-icon {
     pointer-events: none;
     font-size: 22px;
@@ -54,6 +61,8 @@ small {
 .socket-btn {
     cursor: pointer;
     transition: opacity: 0.3s;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 .btn-primary {
@@ -280,15 +289,21 @@ small {
 .select-all-container {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+}
+
+.table-search-input {
+
+	margin-top: auto;
+	margin-bottom: 12px;
 }
 
 .select-all-container label {
-    margin-right: 10px;
+    margin-right: 12px;
 }
 
 .dropdown {
-    margin-left: 10px;
+    margin-left: 12px;
 }
 
 .table-row-selected {
@@ -302,7 +317,7 @@ small {
 
 
 .selected-count {
-    margin-right: 10px;
+    margin-right: 12px;
     font-weight: bold;
 }
 
@@ -328,4 +343,168 @@ small {
 
 #swal2-html-container {
 	padding-top: 0px;
+}
+
+
+.quality-bar-container {
+    width: 10px;
+    height: 50px;
+    background-color: #E6F6FF;
+    position: relative;
+    border-radius: 1em;
+}
+
+.quality-bar {
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    border-radius: 1em;
+    align-self: flex-end;
+    width: 100%;
+}
+
+
+.actions-container {
+	display: flex;
+	gap: 2em;
+}
+
+.table-row.expanded .description-text {
+	overflow: show;
+	text-overflow: clip;
+	white-space: normal;
+}
+
+.table-row.expanded .name-url {
+	overflow: show;
+	text-overflow: clip;
+	white-space: normal;
+}
+
+.table-row.expanded .link-below-name {
+	overflow: show;
+	text-overflow: clip;
+	white-space: normal;
+}
+
+.description-text {
+	font-size: 12px;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.link-below-name {
+	font-size: 12px;
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.name-url {
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.table-row.expanded .mobile-url-text {
+	overflow: show;
+	text-overflow: clip;
+	white-space: normal;
+}
+
+.mobile-url-text {
+	font-size: 12px;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+
+@media (max-width: 768px) {
+  .table-container {
+    display: block;
+  }
+
+  .table-row {
+    display: block;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    box-shadow: 8px 2px 4px 0px rgba(0, 0, 0, 0.2);
+  }
+
+  .table-row-selected {
+	border: 2px solid #3E8CFF;
+  }
+
+  .table-cell {
+    display: block;
+    text-align: left !important;
+    padding: 5px;
+  }
+
+  .actions-container {
+    border-top: 1px solid #12376B;
+    padding-top: 1em;
+    gap: 0em;
+  }
+
+  .action-child-border-left {
+  	border-left: 1px solid #12376B;
+  }
+
+  .table-container {
+    border: unset;
+  }
+
+  .select-all-container {
+    flex-direction: column;
+    text-align: right;
+  }
+
+  .select-all-container label {
+	margin-right: 0;
+	margin-bottom: 12px;
+  }
+
+  .table-cell[data-field="name"] {
+  	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+  }
+  .table-cell[data-field="description"] {
+  	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+  }
+
+  .navbar-brand {
+	margin-left: 0;
+	margin-right: 0px;
+  }
+}
+
+.cell-spinner-container {
+	width: 50%;
+	height: 30px;
+	display: flex;
+}
+
+.cell-spinner {
+	height: 80%;
+	max-height: 30px;
+	margin-top: auto;
+	margin-bottom: auto;
+	margin-left: auto;
+	margin-right: auto;
+
+}
+
+.nav-dropdown-menu {
+	padding: 1em;
+	font-weight: bold;
 }

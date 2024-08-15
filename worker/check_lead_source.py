@@ -28,10 +28,11 @@ def check_lead_source_task(lead_source_id):
 		previous_leads = '\n'.join(previous_leads) + '\n'
 		previous_leads = previous_leads.strip()
 
-		validation_output = collect_leads_from_url(lead_source.url, lead_source_user, previous_leads)
+		validation_output, opengraph_img_url = collect_leads_from_url(lead_source.url, lead_source_user, previous_leads)
 
 		if not validation_output:
 			lead_source._finished()
+			lead_source.valid = False
 			lead_source.save()
 			worker_socketio.emit('source_checked', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
 			return
@@ -39,9 +40,12 @@ def check_lead_source_task(lead_source_id):
 		lead_source.name = validation_output.name or lead_source.name
 		lead_source.description = validation_output.description or lead_source.description
 		lead_source.valid = bool(validation_output.name or validation_output.description)
+		lead_source.image_url = opengraph_img_url or lead_source.image_url
 
 		lead_source.checked = True
 		lead_source.checking = False
+
+		lead_source.save()
 
 		if validation_output.leads:
 			for new_lead in validation_output.leads:

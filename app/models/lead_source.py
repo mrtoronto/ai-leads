@@ -25,7 +25,7 @@ class LeadSource(db.Model):
 	hidden_at = db.Column(db.DateTime)
 	checked = db.Column(db.Boolean, default=False)
 	checking = db.Column(db.Boolean, default=False)
-	og_image = db.Column(db.String(255))
+	image_url = db.Column(db.String(255))
 	quality_score = db.Column(db.Float)
 
 	jobs = db.relationship('Job', backref='lead_source', lazy='dynamic')
@@ -46,7 +46,7 @@ class LeadSource(db.Model):
 			'created_at': self.created_at.isoformat() if self.created_at else None,
 			'hidden_at': self.hidden_at.isoformat() if self.hidden_at else None,
 			'checking': self.checking,
-			'og_image': self.og_image,
+			'image_url': self.image_url,
 			'quality_score': self.quality_score,
 			'n_leads': self.leads.count()
 		}
@@ -129,6 +129,7 @@ class LeadSource(db.Model):
 	def _finished(self):
 		self.checking = False
 		self.checked = True
+		self.save()
 
 	def _hide(self):
 		self.hidden = True
