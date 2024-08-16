@@ -1,61 +1,126 @@
 .btn-danger-outline-light {
 	background-color: transparent;
-	border-color: #FF6161;
+	border: 2px solid #FF6161;
 	color: #2A232E;
+	line-height: 1;
+	padding: 0.25em;
+	border-radius: 0.25em;
+	transition: background-color 0.3s;
 }
 
-.btn-danger-fill-dark {
-	background-color: #transparent;
-	border-color: #FF6161;
+.btn-danger-outline-light:hover {
+	background-color: rbga(255, 97, 97, 0.2);
+}
+
+.btn-danger-outline-dark {
+	background-color: transparent;
+	border: 2px solid #FF6161;
 	color: #E6F6FF;
+	line-height: 1;
+	padding: 0.25em;
+	border-radius: 0.25em;
+	transition: background-color 0.3s;
+}
+
+.btn-danger-outline-dark:hover {
+	background-color: rbga(255, 97, 97, 0.2);
+}
+
+.btn-danger-fill-light {
+	background-color: #FF6161;
+	border: 2px solid #FF6161;
+	line-height: 1;
+	padding: 0.25em;
+	border-radius: 0.25em;
+	transition: background-color 0.3s;
+}
+
+.btn-danger-fill-light:hover {
+	background-color: #C54949;
 }
 
 
 .btn-primary-fill-light {
 	background-color: #3E8CFF;
-	border-color: #3E8CFF;
+	border: 2px solid #3E8CFF;
 	color: #E6F6FF;
+	line-height: 1;
+	padding: 0.25em;
+	border-radius: 0.25em;
+	transition: background-color 0.3s;
+}
+
+.btn-primary-fill-light:hover {
+	background-color: #387EE4;
 }
 
 .btn-primary-outline-light {
 	background-color: transparent;
-	border-color: #3E8CFF;
+	border: 2px solid #3E8CFF;
 	color: #2A232E;
+	line-height: 1;
+	padding: 0.25em;
+	border-radius: 0.25em;
+}
+
+.btn-primary-outline-light:hover {
+	background-color: rbga(62, 140, 255, 0.2);
 }
 
 .btn-primary-fill-dark {
 	background-color: #3E8CFF;
-	border-color: #3E8CFF;
+	border: 2px solid #3E8CFF;
 	color: #E6F6FF;
+	line-height: 1;
+	padding: 0.25em;
+	border-radius: 0.25em;
+}
+
+.btn-primary-fill-dark:hover {
+	background-color: #387EE4;
 }
 
 .btn-primary-outline-dark {
 	background-color: transparent;
-	border-color: #3E8CFF;
+	border: 2px solid #3E8CFF;
 	color: #E6F6FF;
+	line-height: 1;
+	padding: 0.25em;
+	border-radius: 0.25em;
+}
+
+.btn-primary-outline-dark:hover {
+	background-color: rbga(62, 140, 255, 0.2);
 }
 
 .btn-secondary-fill-light {
 	background-color: #FCFF61;
-	border-color: #FCFF61;
+	border: 2px solid #FCFF61;
 	color: #2A232E;
+	line-height: 1;
+	padding: 0.25em;
+	border-radius: 0.25em;
+}
+
+.btn-secondary-fill-light:hover {
+	background-color: #D4D740;
 }
 
 .btn-secondary-outline-light {
 	background-color: transparent;
-	border-color: #FCFF61;
+	border: 2px solid #FCFF61;
 	color: #2A232E;
 }
 
 .btn-secondary-fill-dark {
 	background-color: #FCFF61;
-	border-color: #FCFF61;
+	border: 2px solid #FCFF61;
 	color: #2A232E;
 }
 
 .btn-secondary-outline-dark {
 	background-color: transparent;
-	border-color: #FCFF61;
+	border: 2px solid #FCFF61;
 	color: #E6F6FF;
 }
 

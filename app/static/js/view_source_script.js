@@ -1,5 +1,5 @@
 import { socket } from "./socket.js";
-import { searchTable, updateRow, addRow, createAllTables, initializeClicks, initializeSearches } from "./general_script.js";
+import { searchTable, updateRow, addRow, createAllTables, initializeClicks, initializeSearches, initializeSelectAll } from "./general_script.js";
 import { createSourceDetailsComponent, createTableComponent, initializeLikeButtons } from "./components.js";
 import { handleLeadEvents, handleSourceEvents } from "./socket_handlers.js";
 
@@ -13,7 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
         container.innerHTML = '';
 
         container.innerHTML += createSourceDetailsComponent(data.source);
-        container.innerHTML += createTableComponent("Associated Leads", "leads-table", "leads-search");
+        // container.innerHTML += createTableComponent("Associated Leads", "leads-table", "leads-search");
+        //
+        container.innerHTML += createTableComponent(
+              'Leads from Query', 'leads-table', 'leads-search', 'leads-table-select-all', 'leads-table-dropdown',
+              ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
+        );
 
         createAllTables({
             leads: data.leads
@@ -21,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         initializeClicks();
         initializeSearches();
-
+        initializeSelectAll();
         handleLeadEvents();
     });
 

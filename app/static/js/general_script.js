@@ -10,7 +10,8 @@ const dataCache = {
 window.confirmHides = true;
 
 const desktopLeadNameFormatter = (cell, row) => {
-    const content = cell ? cell : row.url;
+		console.log(row);
+    let content = cell ? cell : row.url;
     const isUrl = !cell;
     const percentage = row.quality_score !== null ? Math.floor(row.quality_score * 100) : 0;
     const color = `rgb(${Math.floor(255 - (percentage * 2.55))}, ${Math.floor(percentage * 2.55)}, 0)`;
@@ -46,7 +47,6 @@ const desktopLeadNameFormatter = (cell, row) => {
 		        </div>
 					</div>`
         : `<div style="${containerStyle}">
-        		${qualityBar}
           	<div style="min-width: 50px">
 							<a href="${imageLink}"  target="_blank" style="min-width: 50px">
 								<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
@@ -228,7 +228,7 @@ getQueryTableColumns = () => [
     { id: 'n_leads', name: '# of Leads', width: '90px', field: 'n_leads' },
     { id: 'n_sources', name: '# of Sources', width: '90px', field: 'n_sources' },
     { id: 'finished', name: 'Finished', width: '90px', field: 'finished', formatter: (cell) => cell ? '<i class="fa-solid fa-check fa-icon">' : '<i class="fa-solid fa-x"></i>' },
-    { id: 'hidden', name: 'Hide', width: '90px', field: 'hidden', formatter: (_, row) => `<div class="hide-request-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>` }
+    { id: 'hidden', name: 'Hide', width: '90px', field: 'hidden', formatter: (_, row) => `<div class="btn-danger-fill-light hide-request-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>` }
 ];
 
 let getSourceTableColumns;
@@ -290,16 +290,16 @@ getSourceTableColumns = () => [
             if (row.checking) {
                 return `<div class="actions-container">
                             <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
-                            <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             } else if (row.checked) {
                 return `<div class="actions-container">
-                            <div class="hide-source-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-source-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             } else {
                 return `<div class="actions-container">
-                            <div class="check-source-btn socket-btn" data-id="${row.id}"><i class="fa-brands fa-searchengin fa-icon"></i></div>
-                            <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="btn-primary-fill-dark check-source-btn socket-btn" data-id="${row.id}" style="border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             }
         }
@@ -352,21 +352,21 @@ getLeadTableColumns = () => [
             if (row.checking) {
                 return `<div class="actions-container">
                             <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
-                            <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             } else if ((row.checked) && (row.valid)) {
                 return `<div class="actions-container">
-                            <div class="liked-lead-btn socket-btn" data-id="${row.id}"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
-                            <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="${row.liked ? 'btn-primary-fill-light' : 'btn-primary-outline-light'} liked-lead-btn socket-btn" data-id="${row.id}" style="border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             } else if (row.checked) {
                 return `<div class="actions-container">
-                            <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             } else {
                 return `<div class="actions-container">
-                            <div class="check-lead-btn socket-btn" data-id="${row.id}"><i class="fa-brands fa-searchengin fa-icon"></i></div>
-                            <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="btn-primary-fill-dark check-lead-btn socket-btn" data-id="${row.id}" style="border-top-right-radius: 0; border-bottom-right-radius: 0; "><i class="fa-brands fa-searchengin fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="border-top-left-radius: 0; border-bottom-left-radius: 0; "><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             }
         }
@@ -409,7 +409,7 @@ if (window.is_mobile) {
 										<div style="width: 50%;margin: auto; text-align: center;" class="socket-btn">
 											${row.finished ? '<i class="fa-solid fa-check fa-icon">' : '<i class="fa-solid fa-x fa-icon">'}</i>
 										</div>
-										<div style="width: 50%;margin: auto; text-align: center;" class="hide-request-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+										<div style="width: 50%;margin: auto; text-align: center;" class="btn-danger-fill-light hide-request-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
 							</div>`
 		}
 	];
@@ -497,19 +497,19 @@ if (window.is_mobile) {
                 if (row.checking) {
                     return `<div class="actions-container">
                                 <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
-                                <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+                                <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
                             </div>`;
                 } else if (row.checked) {
                     return `<div class="actions-container">
-                    						<div class="hide-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
-                                	<i class="fa-solid fa-trash fa-icon  btn-danger-outline-light"></i>
+                    						<div class="btn-danger-fill-light hide-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
+                                	<i class="fa-solid fa-trash fa-icon"></i>
                                 </div>
                             </div>`;
                 } else {
                     return `<div class="actions-container">
-                                <div class="check-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
-                                <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
-                                	<i class="fa-solid fa-trash fa-icon btn-danger-outline-light"></i>
+                                <div class="btn-primary-fill-dark check-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
+                                <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                	<i class="fa-solid fa-trash fa-icon"></i>
                                 </div>
                             </div>`;
                 }
@@ -579,21 +579,21 @@ if (window.is_mobile) {
 													if (row.checking) {
 																	return `<div class="actions-container">
 																						<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
-																						<div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+																						<div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
 																					</div>`;
 													} else if ((row.checked) && (row.valid)) {
 																	return `<div class="actions-container">
-																								<div class="liked-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
-																								<div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+																								<div class="${row.liked ? 'btn-primary-fill-light' : 'btn-primary-outline-light'} liked-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
+																								<div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-trash fa-icon"></i></div>
 																				</div>`;
 													} else if (!row.checked) {
 																	return `<div class="actions-container">
-																						<div class="check-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
-																						<div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+																						<div class="btn-primary-fill-light check-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
+																						<div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-trash fa-icon"></i></div>
 																					</div>`;
 													} else {
 																	return `<div class="actions-container">
-																						<div class="hide-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+																						<div class="btn-danger-fill-light hide-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
 																					</div>`;
 
 													}
@@ -737,7 +737,7 @@ const updateRow = (tableId, rowId, newData) => {
 													cells[visibleIndex].innerHTML = column.formatter(null, newData);
 												} else {
 													const cellValue = newData[column.field];
-													if (cellValue !== null) {
+													if (cellValue !== null && cellValue !== undefined) {
 														console.log(`Updating cell ${column.field} with value ${cellValue}`);
 														cells[visibleIndex].innerHTML = ''; // Clear existing content
 														cells[visibleIndex].innerHTML = column.formatter ? column.formatter(cellValue, newData) : cellValue;
@@ -889,16 +889,52 @@ function initializeClicks() {
         if (target.classList.contains('hide-source-btn')) {
             const sourceId = target.getAttribute('data-id');
             console.log('Hiding source with id:', sourceId);
-            socket.emit('hide_source', { source_id: sourceId });
-            target.style.opacity = '0.5';
-            clicked_button = true;
+						if (window.confirmHides) {
+							Swal.fire({
+									title: 'Are you sure?',
+									text: 'This source will be hidden from the list.',
+									icon: 'warning',
+									showCancelButton: true,
+									confirmButtonText: 'Yes, hide it',
+									cancelButtonText: 'Cancel',
+									reverseButtons: true
+							}).then((result) => {
+									if (result.isConfirmed) {
+										socket.emit('hide_source', { source_id: sourceId });
+										target.style.opacity = '0.5';
+										clicked_button = true;
+									}
+							});
+						} else {
+            	socket.emit('hide_source', { source_id: sourceId });
+	            target.style.opacity = '0.5';
+	            clicked_button = true;
+						}
         }
         if (target.classList.contains('hide-request-btn')) {
             const requestId = target.getAttribute('data-id');
             console.log('Hiding request', requestId);
-            socket.emit('hide_request', { query_id: requestId });
-            target.style.opacity = '0.5';
-            clicked_button = true;
+            if (window.confirmHides) {
+             Swal.fire({
+                 title: 'Are you sure?',
+                 text: 'This request will be hidden from the list.',
+                 icon: 'warning',
+                 showCancelButton: true,
+                 confirmButtonText: 'Yes, hide it',
+                 cancelButtonText: 'Cancel',
+                 reverseButtons: true
+             }).then((result) => {
+                 if (result.isConfirmed) {
+                     socket.emit('hide_request', { query_id: requestId });
+                     target.style.opacity = '0.5';
+                     clicked_button = true;
+                 }
+             });
+		        } else {
+			        socket.emit('hide_request', { query_id: requestId });
+			        target.style.opacity = '0.5';
+			        clicked_button = true;
+		        }
         }
 
         if (event.target.classList.contains('copy-email-btn')) {

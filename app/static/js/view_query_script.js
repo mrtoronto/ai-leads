@@ -1,5 +1,5 @@
 import { socket } from "./socket.js";
-import { searchTable, createAllTables, initializeClicks, initializeSearches, } from "./general_script.js";
+import { searchTable, createAllTables, initializeClicks, initializeSearches, initializeSelectAll } from "./general_script.js";
 import { handleLeadEvents, handleSourceEvents, handleRequestEvents } from "./socket_handlers.js";
 import { createQueryDetailsComponent, createTableComponent } from "./components.js";
 
@@ -12,8 +12,17 @@ document.addEventListener('DOMContentLoaded', function() {
         container.innerHTML = '';
 
         container.innerHTML += createQueryDetailsComponent(data.query);
-        container.innerHTML += createTableComponent("Associated Leads", "leads-table", "leads-search");
-        container.innerHTML += createTableComponent("Associated Sources", "sources-table", "sources-search");
+        // container.innerHTML += createTableComponent("Associated Leads", "leads-table", "leads-search");
+        // container.innerHTML += createTableComponent("Associated Sources", "sources-table", "sources-search");
+        //
+        container.innerHTML += createTableComponent(
+              'Leads from Query', 'leads-table', 'leads-search', 'leads-table-select-all', 'leads-table-dropdown',
+              ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
+          );
+          container.innerHTML += createTableComponent(
+              'Sources from Query', 'sources-table', 'sources-search', 'sources-table-select-all', 'sources-table-dropdown',
+              ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
+          );
 
         createAllTables({
             leads: data.leads,
@@ -24,12 +33,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Re-add event listeners for search inputs
         document.getElementById('leads-search').addEventListener('input', (e) => searchTable('leads-table', e.target.value));
         document.getElementById('sources-search').addEventListener('input', (e) => searchTable('sources-table', e.target.value));
+		    initializeClicks();
+		    initializeSearches();
+		    initializeSelectAll();
     });
 
 
 
-    initializeClicks();
-    initializeSearches();
 
     handleLeadEvents();
     handleSourceEvents();

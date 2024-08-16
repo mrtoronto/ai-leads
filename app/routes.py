@@ -10,13 +10,20 @@ import json
 from flask import Blueprint, current_app
 from app import db
 import redis
+import os
 
 bp = Blueprint('main', __name__)
+
+def dir_last_updated(folder):
+	return str(max(os.path.getmtime(os.path.join(root_path, f))
+				for root_path, dirs, files in os.walk(folder)
+				for f in files))
 
 @bp.context_processor
 def inject_is_mobile():
     return {
-        'is_mobile': getattr(g, 'is_mobile', False)
+        'is_mobile': getattr(g, 'is_mobile', False),
+        'last_updated': dir_last_updated('app')
     }
 
 import logging

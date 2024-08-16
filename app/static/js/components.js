@@ -63,16 +63,66 @@ export function createQueryDetailsComponent(query) {
     `);
 }
 
-export function createTableComponent(title, tableId, searchId) {
+export function createTableComponent(title, tableId, searchId, selectAllId, dropdownId, dropdownActionClasses=[]) {
+    const actionMenu = dropdownActionClasses.length > 0 ? `
+        <div class="select-all-container">
+            <span class="selected-count" id="${tableId}-selected-count"></span>
+            <input type="checkbox" class="select-all-checkbox" id="${selectAllId}">
+            <label for="${selectAllId}">Select All</label>
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="${dropdownId}" data-bs-toggle="dropdown" aria-expanded="false">
+                    Actions
+                </button>
+
+                <ul class="dropdown-menu" aria-labelledby="${dropdownId}">
+                    ${dropdownActionClasses.map(actionClass => `
+                        <li><a class="dropdown-item ${actionClass}" href="#">${getActionDisplayName(actionClass)}</a></li>
+                    `).join('')}
+                </ul>
+            </div>
+        </div>` : '';
+
     return `
         <div class="mt-5">
             <h2 style="text-align: center;">${title}</h2>
             <div id="${tableId}-count" class="text-center small"></div>
-            <input type="text" id="${searchId}" placeholder="Search ${title.toLowerCase()}...">
-            <div id="${tableId}" class="table-container" style="width: 100%;"></div>
+            <div style="display: flex; justify-content: space-between; margin-top: 1em;">
+                <input type="text" id="${searchId}" placeholder="Search ${title.toLowerCase()}..." class="table-search-input form-control" style="width: 50%;">
+                ${actionMenu}
+            </div>
+            <div id="${tableId}" class="table-container" style="width: 100%;">
+                <div class="loading-icon-container">
+                    <img class="loading-icon" src="/static/assets/chunk-loader.svg">
+                </div>
+            </div>
+            <div id="${tableId}-count" class="text-center small mt-2"></div>
         </div>
     `;
 }
+
+function getActionDisplayName(actionClass) {
+    switch(actionClass) {
+        case 'select-all':
+            return 'Select Visible';
+        case 'unselect-all':
+            return 'Unselect Visible';
+        case 'select-checked':
+            return 'Select Checked';
+        case 'select-unchecked':
+            return 'Select Unchecked';
+        case 'select-invalid':
+            return 'Select Invalid';
+        case 'check-all':
+            return 'Check Selected';
+        case 'hide-all':
+            return 'Hide Selected';
+        case 'export-csv':
+            return 'Export to CSV';
+        default:
+            return '';
+    }
+}
+
 
 export function initializeLikeButtons() {
     document.addEventListener('click', function(event) {

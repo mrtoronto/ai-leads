@@ -17,6 +17,8 @@ import {
 	initializeSelectAll
 } from "./general_script.js";
 
+import { createTableComponent } from "./components.js";
+
 import { handleLeadEvents, handleSourceEvents, handleRequestEvents } from "./socket_handlers.js";
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -48,6 +50,23 @@ document.addEventListener('DOMContentLoaded', function() {
             socket.emit('get_initial_data');
         });
     };
+
+		document.getElementById('queries-table-container').innerHTML = createTableComponent(
+        'Queries', 'requests-table', 'requests-search', 'requests-table-select-all', 'requests-table-dropdown',
+        ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
+    );
+    document.getElementById('lead-sources-table-container').innerHTML = createTableComponent(
+        'Lead Sources', 'sources-table', 'sources-search', 'sources-table-select-all', 'sources-table-dropdown',
+        ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
+    );
+    document.getElementById('leads-table-container').innerHTML = createTableComponent(
+        'Leads', 'leads-table', 'leads-search', 'leads-table-select-all', 'leads-table-dropdown',
+        ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
+    );
+    document.getElementById('liked-leads-table-container').innerHTML = createTableComponent(
+        'Liked Leads', 'liked-leads-table', 'liked-leads-search', 'liked-leads-table-select-all', 'liked-leads-table-dropdown',
+        ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
+    );
 
     // Initialize tables
     fetchData().then(data => {
@@ -100,53 +119,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Add event listeners for forms and buttons
-    document.getElementById('create-lead-source-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const url = document.getElementById('lead-source-url').value;
-        socket.emit('create_lead_source', { url });
-        document.getElementById('lead-source-url').value = '';
-    });
+    // document.getElementById('create-lead-source-form').addEventListener('submit', function(event) {
+    //     event.preventDefault();
+    //     const url = document.getElementById('lead-source-url').value;
+    //     socket.emit('create_lead_source', { url });
+    //     document.getElementById('lead-source-url').value = '';
+    // });
 
     // Toggle Lead Source Form
-    document.getElementById('toggle-lead-source-form').addEventListener('click', function() {
-        const formContainer = document.getElementById('lead-source-form-container');
-        formContainer.style.display = (formContainer.style.display === 'none' || formContainer.style.display === '') ? 'block' : 'none';
-    });
+    // document.getElementById('toggle-lead-source-form').addEventListener('click', function() {
+    //     const formContainer = document.getElementById('lead-source-form-container');
+    //     formContainer.style.display = (formContainer.style.display === 'none' || formContainer.style.display === '') ? 'block' : 'none';
+    // });
 
-    document.getElementById('toggle-lead-form').addEventListener('click', function() {
-        const formContainer = document.getElementById('lead-form-container');
-        formContainer.style.display = (formContainer.style.display === 'none' || formContainer.style.display === '') ? 'block' : 'none';
-    });
+    // document.getElementById('toggle-lead-form').addEventListener('click', function() {
+    //     const formContainer = document.getElementById('lead-form-container');
+    //     formContainer.style.display = (formContainer.style.display === 'none' || formContainer.style.display === '') ? 'block' : 'none';
+    // });
 
-    document.getElementById('create-lead-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const url = document.getElementById('lead-url').value;
-        socket.emit('create_lead', { url });
-        document.getElementById('lead-url').value = '';
-    });
+    // document.getElementById('create-lead-form').addEventListener('submit', function(event) {
+    //     event.preventDefault();
+    //     const url = document.getElementById('lead-url').value;
+    //     socket.emit('create_lead', { url });
+    //     document.getElementById('lead-url').value = '';
+    // });
 
 
-    document.querySelector('#lead-form').addEventListener('submit', function (event) {
-        event.preventDefault();
-        const query = document.querySelector('#query').value;
+    // document.querySelector('#lead-form').addEventListener('submit', function (event) {
+    //     event.preventDefault();
+    //     const query = document.querySelector('#query').value;
 
-        document.querySelector('.submit-request-btn').disabled = true;
+    //     document.querySelector('.submit-request-btn').disabled = true;
 
-        fetch("/submit_request", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ query: query })
-        }).then(response => response.json())
-          .then(data => {
-              if (data.message) {
-                iziToast.success({ title: 'Success', message: data.message });
-              }
-          }).catch((error) => {
-              console.error('Error:', error);
-          });
-    });
+    //     fetch("/submit_request", {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         },
+    //         body: JSON.stringify({ query: query })
+    //     }).then(response => response.json())
+    //       .then(data => {
+    //           if (data.message) {
+    //             iziToast.success({ title: 'Success', message: data.message });
+    //           }
+    //       }).catch((error) => {
+    //           console.error('Error:', error);
+    //       });
+    // });
 
     initializeSearches();
     initializeClicks();

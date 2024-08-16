@@ -390,11 +390,15 @@ small {
 .hide-lead-btn, .hide-source-btn, .hide-request-btn {
 	margin-left: auto;
 	width: 50%;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
 }
 
 .liked-lead-btn, .check-lead-btn, .cell-spinner-container, .check-source-btn {
 	width: 50%;
 	margin-right: auto;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
 }
 
 .table-row.expanded .description-text {
@@ -489,8 +493,6 @@ small {
   }
 
   .actions-container {
-    border-top: 1px solid #12376B;
-    padding-top: 1em;
     gap: 0em;
   }
 
@@ -516,6 +518,11 @@ small {
   	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+  }
+
+  .table-cell[data-field="actions"] {
+  	margin-top: 0.5em;
+  	padding: 0;
   }
   .table-cell[data-field="description"] {
   	overflow: hidden;
@@ -558,7 +565,7 @@ small {
 
 .cell-spinner-container {
 	width: 50%;
-	height: 30px;
+	height: 50px;
 	display: flex;
 }
 
