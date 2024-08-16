@@ -737,7 +737,7 @@ const updateRow = (tableId, rowId, newData) => {
 													cells[visibleIndex].innerHTML = column.formatter(null, newData);
 												} else {
 													const cellValue = newData[column.field];
-													if (cellValue !== null && cellValue !== undefined) {
+													if ((cellValue !== null && cellValue !== undefined) || (column.field == 'actions')) {
 														console.log(`Updating cell ${column.field} with value ${cellValue}`);
 														cells[visibleIndex].innerHTML = ''; // Clear existing content
 														cells[visibleIndex].innerHTML = column.formatter ? column.formatter(cellValue, newData) : cellValue;
