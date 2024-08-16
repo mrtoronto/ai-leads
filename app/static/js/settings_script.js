@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
         emailError.classList.add('d-none');
 
         if (emailInput.value.includes('@')) {
+        		$('#email-submit').attr('disabled', false);
             emailTimeout = setTimeout(() => {
                 const email = emailInput.value;
                 socket.emit('check_email_availability', { email });

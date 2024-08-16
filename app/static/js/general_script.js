@@ -17,6 +17,16 @@ const desktopLeadNameFormatter = (cell, row) => {
     const containerStyle = 'text-align: left; padding: 5px; display: flex; flex-direction: row; align-items: center; gap: 1em;';
     const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
     const linkStyle = 'font-size: 12px; display: block;';
+    const imageUrl = row.image_url
+					? row.image_url
+					: (row.checked && row.valid)
+					? '/static/assets/ai-leads-checkMark.png'
+					: (row.checked && !row.valid)
+					? '/static/assets/ai-leads-X.png'
+					: '/static/assets/placeholder_img.png';
+    const imageLink = row.guid
+					? `/lead/${row.guid}`
+					: '#';
     const qualityBar = percentage > 0 ? `
         <div style="display: flex; align-items: center;">
 	        <div class="quality-bar-container">
@@ -24,8 +34,26 @@ const desktopLeadNameFormatter = (cell, row) => {
 	        </div>
         </div>` : '';
     return cell
-        ? `<div style="${containerStyle}">${qualityBar}<div style="display: flex; flex-direction: column;"><a href="/lead/${row.guid}" class="lead-name" data-id="${row.id}" style="${style}">${content}</a><a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a></div></div>`
-        : `<div style="${containerStyle}">${qualityBar}<a href="${row.url}" target="_blank" style="${style}">${content}</a></div>`;
+        ? `<div style="${containerStyle}">${qualityBar}
+		        <div style="min-width: 50px">
+							<a href="${imageLink}"  target="_blank">
+								<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+							</a>
+						</div>
+		        <div style="display: flex; flex-direction: column; overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+		        	<a href="/lead/${row.guid}" class="lead-name" data-id="${row.id}" style="${style}">${content}</a>
+		         	<a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a>
+		        </div>
+					</div>`
+        : `<div style="${containerStyle}">
+        		${qualityBar}
+          	<div style="min-width: 50px">
+							<a href="${imageLink}"  target="_blank" style="min-width: 50px">
+								<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+							</a>
+						</div>
+          	<a href="${row.url}" target="_blank" style="${style}">${content}</a>
+          </div>`;
 }
 
 const mobileLeadNameFormatter = (cell, row) => {
@@ -34,8 +62,8 @@ const mobileLeadNameFormatter = (cell, row) => {
 	const percentage = row.quality_score !== null ? Math.floor(row.quality_score * 100) : 0;
 	const color = `rgb(${Math.floor(255 - (percentage * 2.55))}, ${Math.floor(percentage * 2.55)}, 0)`;
 	const containerStyle = 'text-align: left; padding: 5px; display: flex; flex-direction: column;';
-	const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
-	const linkStyle = 'font-size: 12px; display: block;';
+	const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'} min-width: 50px`;
+	const linkStyle = 'font-size: 12px; display: block; min-width: 50px';
 	const qualityBar = percentage > 0 ? `
 					<div style="display: flex; align-items: center;">
 							<div class="quality-bar-container">
@@ -43,26 +71,44 @@ const mobileLeadNameFormatter = (cell, row) => {
               </div>
 					</div>` : '';
 	const imageUrl = row.image_url
-					? row.image_url
-					: row.checked
-					? '/static/assets/ai-leads-checkMark.png'
-					: '/static/assets/placeholder_img.png';
+			? row.image_url
+			: (row.checked && row.valid)
+			? '/static/assets/ai-leads-checkMark.png'
+			: (row.checked && !row.valid)
+			? '/static/assets/ai-leads-X.png'
+			: '/static/assets/placeholder_img.png';
+	const imageLink = row.guid
+					? `/lead/${row.guid}`
+					: '#';
 	return cell
 					? `<div style="${containerStyle}">
 									<div style="display: flex; align-items: center; gap: 0.5em;">
 										${qualityBar}
-										<div>
-											<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+										<div style="min-width: 50px">
+											<a href="${imageLink}"  target="_blank">
+												<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+											</a>
 										</div>
-										<div>
-											<a href="/lead/${row.guid}" class="lead-name" data-id="${row.id}" style="${style}">${content}</a>
-											<a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a>
+										<div style="display: flex; flex-direction: column; width: 100%;>
+											<a href="${imageLink}" class="lead-name"  target="_blank" data-id="${row.id}" style="${style}">
+												<span style="text-overflow: ellipsis;">${content}</span>
+											</a>
+											<a href="${imageLink}" target="_blank" style="${linkStyle}"  class="name-url">${row.url}</a>
 										</div>
 									</div>
-								</div>`
+						</div>`
 					: `<div style="${containerStyle}">
-									<div style="display: flex; align-items: center;">${qualityBar}<a href="${row.url}" target="_blank" style="${style}">${content}</a></div>
-								</div>`;
+									<div style="display: flex; align-items: center; gap: 0.5em;">
+										<div style="min-width: 50px">
+											<a href="${imageLink}" target="_blank">
+												<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+											</a>
+										</div>
+										<div style="display: flex; flex-direction: column; width: 100%; overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+											<a class="name-url" href="${row.url}" target="_blank" style="${style}">${content}</a>
+										</div>
+									</div>
+							</div>`;
 }
 
 const getTableColumnsById = (tableId) => {
@@ -191,7 +237,7 @@ getSourceTableColumns = () => [
     { id: 'checking', name: 'Checking', field: 'checking', hidden: true },
     {
         id: 'name',
-        width: '200px',
+        width: '300px',
         textAlign: 'left !important',
         name: 'Name',
         field: 'name',
@@ -201,14 +247,34 @@ getSourceTableColumns = () => [
             const containerStyle = 'text-align: left; padding: 5px; display: flex; flex-direction: row; gap: 1em;';
             const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
             const linkStyle = 'font-size: 10px; display: block;';
-					return cell
+            const imageUrl = row.image_url
+									? row.image_url
+									: (row.checked && row.valid)
+									? '/static/assets/ai-leads-checkMark.png'
+									: (row.checked && !row.valid)
+									? '/static/assets/ai-leads-X.png'
+									: '/static/assets/placeholder_img.png';
+		        const imageLink = row.guid
+							? `/source/${row.guid}`
+							: '#';
+            return cell
 									? `<div style="${containerStyle}; display: flex; align-items: center;">
-													<div style="display: flex; flex-direction: column;">
+													<div style="min-width: 50px">
+														<a href="${imageLink}"  target="_blank">
+															<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+														</a>
+													</div>
+													<div style="display: flex; flex-direction: column; overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
 													<a href="/source/${row.guid}" class="source-name" data-id="${row.id}" style="${style}">${content}</a>
 													<a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a>
 													</div>
 										</div>`
 									: `<div style="${containerStyle}; display: flex; align-items: center;">
+												<div style="display: flex; flex-direction: column; overflow: hidden;text-overflow: ellipsis;white-space: nowrap; min-width: 50px">
+													<a href="${imageLink}"  target="_blank">
+														<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+													</a>
+												</div>
 												<a href="${row.url}" target="_blank" style="${style}" class="name-url">${content}</a>
 										</div>`;
         }
@@ -228,7 +294,6 @@ getSourceTableColumns = () => [
                         </div>`;
             } else if (row.checked) {
                 return `<div class="actions-container">
-                            <div class="socket-btn" style="width: 22px"></div>
                             <div class="hide-source-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             } else {
@@ -246,7 +311,7 @@ getLeadTableColumns = () => [
     { id: 'id', name: 'ID', field: 'id', hidden: true },
     { id: 'checking', name: 'Checking', field: 'checking', hidden: true },
     {
-        id: 'name', width: '200px', textAlign: 'left !important', name: 'Name', field: 'name', formatter: (cell, row) => desktopLeadNameFormatter(cell, row)
+        id: 'name', width: '300px', textAlign: 'left !important', name: 'Name', field: 'name', formatter: (cell, row) => desktopLeadNameFormatter(cell, row)
     },
     { id: 'description', whiteSpace: 'wrap !important', width: '300px', name: 'Description', field: 'description', formatter: (cell) => `<div style="font-size: 12px;">${cell || "---"}</div>` },
     {
@@ -285,17 +350,21 @@ getLeadTableColumns = () => [
         field: 'actions',
         formatter: (cell, row) => {
             if (row.checking) {
-                return `<div class="actions-container" style="display: flex; gap: 1em;">
+                return `<div class="actions-container">
                             <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
                             <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
-            } else if (row.checked) {
-                return `<div class="actions-container" style="display: flex; gap: 1em;">
+            } else if ((row.checked) && (row.valid)) {
+                return `<div class="actions-container">
                             <div class="liked-lead-btn socket-btn" data-id="${row.id}"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
                             <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
+            } else if (row.checked) {
+                return `<div class="actions-container">
+                            <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                        </div>`;
             } else {
-                return `<div class="actions-container" style="display: flex; gap: 1em;">
+                return `<div class="actions-container">
                             <div class="check-lead-btn socket-btn" data-id="${row.id}"><i class="fa-brands fa-searchengin fa-icon"></i></div>
                             <div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
@@ -361,16 +430,24 @@ if (window.is_mobile) {
                 const color = `rgb(${Math.floor(255 - (percentage * 2.55))}, ${Math.floor(percentage * 2.55)}, 0)`;
                 const containerStyle = 'text-align: left; padding: 5px; display: flex; flex-direction: column; gap: 0.5em;';
                 const style = `${isUrl ? 'word-break: break-all;' : 'word-break: normal;'}`;
-                const qualityBar = percentage > 0 ? `
-                    <div style="display: flex; align-items: center;">
-                        <div style="width: 10px; height: 40px; background-color: #e0e0e0; display: flex;">
-                            <div style="align-self: flex-end; width: 100%; height: ${percentage}%; background-color: ${color};"></div>
-                        </div>
-                    </div>` : '';
+                const imageUrl = row.image_url
+									? row.image_url
+									: (row.checked && row.valid)
+									? '/static/assets/ai-leads-checkMark.png'
+									: (row.checked && !row.valid)
+									? '/static/assets/ai-leads-X.png'
+									: '/static/assets/placeholder_img.png';
+				        const imageLink = row.guid
+									? `/source/${row.guid}`
+									: '#';
                 return cell
                     ? `<div style="${containerStyle}">
                         <div style="display: flex; align-items: center; gap: 0.5em;">
-                            ${qualityBar}
+	                      		<div style="min-width: 50px">
+															<a href="${imageLink}"  target="_blank">
+																<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+															</a>
+														</div>
                             <div style="width: 100%;">
                                 <a href="/source/${row.guid}" class="source-name" data-id="${row.id}" style="${style}">${content}</a>
                                 <a class="link-below-name" href="${row.url}" target="_blank">${row.url}</a>
@@ -382,6 +459,11 @@ if (window.is_mobile) {
                     </div>`
                     : `<div style="${containerStyle}">
                         <div style="display: flex; align-items: center;">
+                      		<div style="display: flex; flex-direction: column; overflow: hidden;text-overflow: ellipsis;white-space: nowrap;min-width: 50px">
+															<a href="${imageLink}"  target="_blank">
+																<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
+															</a>
+														</div>
                             <a href="${row.url}" target="_blank" style="${style}" class="name-url">${content}</a>
                         </div>
                     </div>`;
@@ -413,18 +495,18 @@ if (window.is_mobile) {
             field: 'actions',
             formatter: (cell, row) => {
                 if (row.checking) {
-                    return `<div class="actions-container" style="display: flex;">
+                    return `<div class="actions-container">
                                 <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
                                 <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
                             </div>`;
                 } else if (row.checked) {
-                    return `<div class="actions-container" style="display: flex;">
+                    return `<div class="actions-container">
                     						<div class="hide-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
                                 	<i class="fa-solid fa-trash fa-icon  btn-danger-outline-light"></i>
                                 </div>
                             </div>`;
                 } else {
-                    return `<div class="actions-container" style="display: flex;">
+                    return `<div class="actions-container">
                                 <div class="check-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
                                 <div class="hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
                                 	<i class="fa-solid fa-trash fa-icon btn-danger-outline-light"></i>
@@ -495,22 +577,22 @@ if (window.is_mobile) {
 									field: 'actions',
 									formatter: (cell, row) => {
 													if (row.checking) {
-																	return `<div class="actions-container" style="display: flex;">
+																	return `<div class="actions-container">
 																						<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
 																						<div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
 																					</div>`;
 													} else if ((row.checked) && (row.valid)) {
-																	return `<div class="actions-container" style="display: flex;">
+																	return `<div class="actions-container">
 																								<div class="liked-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
 																								<div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
 																				</div>`;
 													} else if (!row.checked) {
-																	return `<div class="actions-container" style="display: flex;">
+																	return `<div class="actions-container">
 																						<div class="check-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
 																						<div class="hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
 																					</div>`;
 													} else {
-																	return `<div class="actions-container" style="display: flex;">
+																	return `<div class="actions-container">
 																						<div class="hide-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
 																					</div>`;
 
@@ -838,6 +920,13 @@ function initializeClicks() {
         const cell = event.target.closest('.table-cell:not(.header-cell)');
         if (cell && !clicked_button) {
             const row = cell.closest('.table-row');
+            // skip if table-row is a child of `requests-table`
+            const table = cell.closest('.table-container');
+            const tableId = table ? table.id : '';
+
+            if (tableId === 'requests-table') {
+                return;
+            }
             if (row) {
                 // Contract all other expanded rows
                 document.querySelectorAll('.table-row.expanded').forEach(expandedRow => {
