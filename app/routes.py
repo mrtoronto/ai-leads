@@ -193,7 +193,7 @@ def submit_request():
 	new_request.save()
 
 	queue_search_request(new_request.id)
-	return jsonify({"message": "Search queued!"}), 200
+	return jsonify({"message": "Search queued!", "guid": new_request.guid}), 200
 
 
 @bp.route('/query/<guid>')

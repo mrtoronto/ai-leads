@@ -139,7 +139,7 @@ class Lead(db.Model):
 		return updates, failed_updates, user.last_trained_source_model_at
 
 	@classmethod
-	def check_and_add(cls, url, user_id, query_id, source_id):
+	def check_and_add(cls, url, user_id, query_id, source_id, image_url=None):
 		url = get_standard_url(url)
 		base_url = get_base_url(url)
 		existing_lead = cls.query.filter_by(url=url, hidden=False).first()
@@ -150,7 +150,8 @@ class Lead(db.Model):
 			base_url=base_url,
 			user_id=user_id,
 			query_id=query_id,
-			source_id=source_id
+			source_id=source_id,
+			image_url=image_url,
 		)
 		try:
 			new_lead.save()

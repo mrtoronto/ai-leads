@@ -44,6 +44,10 @@ class CollectionOutput(BaseModel):
 		None,
 		description="The link provided by the user is invalid. Do not use this value, it will be set by the system if necessary."
 	)
+	not_enough_credits: Optional[bool] = Field(
+		False,
+		description="User is out of credits. Do not use this value, it will be set by the system if necessary."
+	)
 
 
 class ValidationOutput(BaseModel):
@@ -57,6 +61,10 @@ class ValidationOutput(BaseModel):
 	contact_page: Optional[str] = Field(None, description="A link to a contact page with a contact form")
 	no_email_found: Optional[bool] = Field(None, description="No relevant email address found")
 	invalid_link: Optional[bool] = Field(None, description="The link provided by the user is invalid. Do not use this value, it will be set by the system if necessary.")
+	not_enough_credits: Optional[bool] = Field(
+		None,
+		description="User is out of credits. Do not use this value, it will be set by the system if necessary."
+	)
 	leads: Optional[List[Url]] = Field(
 		[],
 		description="A list of URLs pointing to leads found on the web. These sites are directly applicable to the user's query and may contain contact information for the organization."
@@ -118,7 +126,7 @@ Previously the user has liked leads like the following:
 """)
 
 source_lead_collection_prompt = PromptTemplate("""
-You are a GPT trained to collect leads from a lead source. The user will provide you with the contents of a page potentially containing leads. Your job is to filter the results and return all of the relevant leads and all of the other lead sources to the user.
+You are a GPT trained to collect leads from a lead source. The user will provide the contents of a page potentially containing leads. Your job is to filter the results and return all of the relevant leads and all of the other lead sources to the user.
 
 A lead is a company or organization that may be interested in the user's services. A lead source is a website that is likely to contain leads.
 
@@ -129,7 +137,7 @@ Only URLs are relevant leads. The following are not relevant leads:
 	- Twitter, Facebook, Instagram or other social media profiles
 	- Maps or directions
 
-The user you are finding leads for describes their business's industry as "{user_industry}".
+This user describes their business's industry as "{user_industry}".
 
 They are interested in finding leads for organizations with {user_pref_org_size} employees.
 
@@ -143,9 +151,12 @@ You need to provide:
 		- Links to websites that may be interested in the user's services
 		- For example, company websites or contact pages
 		- Provide a max of one lead per organization
+		- If the page contains multiple links to an organization, pick the most relevant one
 	- Lead Sources: Not directly applicable to the user's query but may contain links to relevant sites
 		- Links to websites that may contain links to sites that may be interested in the user's services
 		- For example, blogs, forums, or directories
+		- Provide a max of one lead per organization
+		- If the page contains multiple links to an organization, pick the most relevant one
 
 Previously the user has liked leads like the following:
 {previous_leads}
@@ -240,9 +251,6 @@ def _llm(user_input, template, parser, parse_output=True, user=None, previous_le
 		return None, 0
 
 
-
-
-
 def get_visible_text_and_links(link):
 	headers = {
 		'User-Agent': random.choice(user_agents)
@@ -305,16 +313,19 @@ def search_serpapi(query):
 	else:
 		return None
 
-def search_and_validate_leads(new_request, previous_leads, socketio_obj, search_mult=10):
+def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketio_obj=None, search_mult=10):
 
 	if new_request.user.credits < 1:
 		return [], "Insufficient credits"
 	search_results = search_serpapi(new_request.reformatted_query)
 
-	new_request.user.move_credits(
-		search_mult * -10,
-		CreditLedgerType.CHECK_SOURCE
-	)
+	if app_obj and socketio_obj:
+		with app_obj.app_context():
+			new_request.user.move_credits(
+				search_mult * -10,
+				CreditLedgerType.CHECK_SOURCE,
+				socketio_obj=socketio_obj
+			)
 	# print(search_results)
 	if not search_results:
 		return [], "Failed to search SERP API"
@@ -322,13 +333,31 @@ def search_and_validate_leads(new_request, previous_leads, socketio_obj, search_
 	leads = []
 	for result in search_results.get('organic_results', []):
 		url = result.get('link')
-		collected_leads = collect_leads_from_url(
+
+		collected_leads, image_url = collect_leads_from_url(
 			url=url,
 			user=new_request.user,
-			previous_leads=previous_leads
+			previous_leads=previous_leads,
+			app_obj=app_obj,
+			socketio_obj=socketio_obj
 		)
-		if not collected_leads:
+
+		if collected_leads and collected_leads.not_enough_credits:
+			return [], "Insufficient credits"
+
+		if not collected_leads or (not collected_leads.leads and not collected_leads.lead_sources):
 			continue
+
+		new_source_obj = LeadSource.check_and_add(
+			url,
+			new_request.user_id,
+			new_request.id,
+			image_url=image_url
+		)
+		if new_source_obj and socketio_obj and app_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('new_lead_source', {'source': new_source_obj.to_dict()}, to=f'user_{new_request.user_id}')
+
 		if collected_leads.leads:
 			for lead in collected_leads.leads:
 				new_lead_obj = Lead.check_and_add(
@@ -337,8 +366,9 @@ def search_and_validate_leads(new_request, previous_leads, socketio_obj, search_
 					query_id=new_request.id,
 					source_id=None,
 				)
-				if new_lead_obj:
-					socketio_obj.emit('new_lead', {'lead': new_lead_obj.to_dict()}, to=f'user_{new_request.user_id}')
+				if new_lead_obj and socketio_obj and app_obj:
+					with app_obj.app_context():
+						socketio_obj.emit('new_lead', {'lead': new_lead_obj.to_dict()}, to=f'user_{new_request.user_id}')
 
 		if collected_leads.lead_sources:
 			for lead_source in collected_leads.lead_sources:
@@ -347,8 +377,9 @@ def search_and_validate_leads(new_request, previous_leads, socketio_obj, search_
 					new_request.user_id,
 					new_request.id
 				)
-				if new_source_obj:
-					socketio_obj.emit('new_lead_source', {'source': new_source_obj.to_dict()}, to=f'user_{new_request.user_id}')
+				if new_source_obj and socketio_obj and app_obj:
+					with app_obj.app_context():
+						socketio_obj.emit('new_lead_source', {'source': new_source_obj.to_dict()}, to=f'user_{new_request.user_id}')
 
 	return True, ""
 
@@ -356,18 +387,23 @@ def search_and_validate_leads(new_request, previous_leads, socketio_obj, search_
 
 
 
-def _llm_validate_lead(link, user, link_val_mult=2):
+def _llm_validate_lead(link, user, link_val_mult=2, app_obj=None, socketio_obj=None):
 	print(f'Validating lead from link: {link}')
 	if user.credits < 1:
-		return None, None
+		return ValidationOutput(
+			not_enough_credits=True
+		), None
 	visible_text, opengraph_img_url = get_visible_text_and_links(link)
 	opengraph_img_url = _tidy_url(link, opengraph_img_url)
 	if visible_text:
 		output, tokens_used_usd = _llm(visible_text, lead_validation_prompt, validation_parser, user)
-		user.move_credits(
-			tokens_used_usd * -1000 * link_val_mult,
-			CreditLedgerType.CHECK_LEAD
-		)
+		if app_obj and socketio_obj:
+			with app_obj.app_context():
+				user.move_credits(
+					tokens_used_usd * -1000 * link_val_mult,
+					CreditLedgerType.CHECK_LEAD,
+					socketio_obj=socketio_obj
+				)
 		if not output:
 			output = ValidationOutput(
 				invalid_lead=True,
@@ -389,10 +425,12 @@ def _llm_validate_lead(link, user, link_val_mult=2):
 # 	)
 # 	return output
 
-def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3):
+def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app_obj=None, socketio_obj=None):
 	print(f'Collecting leads from URL: {url}')
 	if user.credits < 1:
-		return None, None
+		return CollectionOutput(
+			not_enough_credits=True
+		), None
 
 	visible_text, opengraph_img_url = get_visible_text_and_links(url)
 	if visible_text:
@@ -403,23 +441,28 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3):
 			user=user,
 			previous_leads=previous_leads
 		)
-		user.move_credits(
-			tokens_used_usd * -1000 * url_collection_mult,
-			CreditLedgerType.CHECK_SOURCE
-		)
+
+		if socketio_obj and app_obj:
+			with app_obj.app_context():
+				user.move_credits(
+					tokens_used_usd * -1000 * url_collection_mult,
+					CreditLedgerType.CHECK_SOURCE,
+					socketio_obj=socketio_obj
+				)
 		return output, opengraph_img_url
 	else:
 		return CollectionOutput(
 			invalid_link=True
 		), opengraph_img_url
 
-def rewrite_query(user_query, user, rewrite_query_mult=3):
+def rewrite_query(user_query, user, rewrite_query_mult=3, socketio_obj=None):
 	print(f'Rewriting query: {user_query}')
 	if user.credits < 1:
 		return None
 	output, tokens_used_usd = _llm(user_query, query_reformatting_prompt, rewriting_parser, user)
 	user.move_credits(
 		tokens_used_usd * -1000 * rewrite_query_mult,
-		CreditLedgerType.CHECK_QUERY
+		CreditLedgerType.CHECK_QUERY,
+		socketio_obj=socketio_obj
 	)
 	return output

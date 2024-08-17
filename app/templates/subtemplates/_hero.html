@@ -1,0 +1,28 @@
+<div style="height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #00ffa030; width: 100%; background-image: url('/static/assets/hero_waves.svg'); background-size: cover;">
+	<div style="width: 50%; min-width: 300px; margin: auto;    margin-top: 200px; background-color: #fff; padding: 2em; border-radius: 1em; line-height: 1;">
+		{% if current_user.is_authenticated %}
+		<h1 class="text-center">Enter a query below</h1>
+		<form id="lead-form" class="text-center">
+			<div class="form-group mb-0">
+				<input type="text" class="form-control" id="query" name="query" size="32" style="border-bottom-left-radius: 0px;border-bottom-right-radius: 0px">
+			</div>
+			<button type="submit" class="btn btn-primary submit-request-btn w-100"  style="border-top-right-radius: 0px;border-top-left-radius: 0px;">✨&nbsp;&nbsp;&nbsp;✨&nbsp;&nbsp;&nbsp;✨</button>
+		</form>
+		{% else %}
+		<div class="d-flex flex-column align-items-center" style="width: fit-content; margin: auto;">
+			<h1 class="text-center" style="font-size: 3em; line-height: 1;">
+				Convert
+			</h1>
+			<div class="d-flex align-items-center">
+				<span style="font-size: 4rem; font-family: 'Courier New', Courier, monospace; font-weight: bold; letter-spacing: -6px;">Queries</span>
+				<span style="font-size: 2rem; margin: 0 1rem;">→</span>
+				<b style="font-size: 4rem; font-family: TBF">leads</b>
+			</div>
+			<h1 class="text-center" style="font-size: 2em; line-height: 1; margin: auto;">
+				in minutes
+			</h1>
+		</div>
+		{% endif %}
+	</div>
+</div>
+<div style="height: 50px; background: linear-gradient(to top, transparent, #1774c3a3);"></div>

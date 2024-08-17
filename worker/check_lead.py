@@ -31,7 +31,12 @@ def check_lead_task(lead_id):
 		if not lead:
 			return
 		lead_user = User.get_by_id(lead.user_id)
-		first_validation_output, opengraph_img_url = _llm_validate_lead(lead.url, lead_user)
+		first_validation_output, opengraph_img_url = _llm_validate_lead(
+			lead.url,
+			lead_user,
+			app_obj=min_app,
+			socketio_obj=worker_socketio
+		)
 		final_validation_output = first_validation_output
 
 		if not first_validation_output:
@@ -52,9 +57,21 @@ def check_lead_task(lead_id):
 					base_url = '/'.join(base_url[:3])
 					next_link = base_url + next_link
 
-				validation_output, opengraph_img_url = _llm_validate_lead(next_link, lead_user)
+				validation_output, opengraph_img_url = _llm_validate_lead(
+					next_link,
+					lead_user,
+					app_obj=min_app,
+					socketio_obj=worker_socketio
+				)
 				logger.info(validation_output)
 				if validation_output:
+
+					if validation_output.not_enough_credits or final_validation_output.not_enough_credits:
+						lead.checking = False
+						lead.save()
+						worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')
+						return
+
 					if not final_validation_output:
 						final_validation_output = validation_output
 					if validation_output.contact_page and not final_validation_output.contact_page:
@@ -97,6 +114,12 @@ def check_lead_task(lead_id):
 		if not final_validation_output:
 			logger.error("No validation output")
 			lead._finished()
+			lead.save()
+			worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')
+			return
+
+		if final_validation_output.not_enough_credits:
+			lead.checking = False
 			lead.save()
 			worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')
 			return

@@ -28,11 +28,23 @@ def check_lead_source_task(lead_source_id):
 		previous_leads = '\n'.join(previous_leads) + '\n'
 		previous_leads = previous_leads.strip()
 
-		validation_output, opengraph_img_url = collect_leads_from_url(lead_source.url, lead_source_user, previous_leads)
+		validation_output, opengraph_img_url = collect_leads_from_url(
+			lead_source.url,
+			lead_source_user,
+			previous_leads,
+			app_obj=min_app,
+			socketio_obj=worker_socketio
+		)
 
 		if not validation_output:
 			lead_source._finished()
 			lead_source.valid = False
+			lead_source.save()
+			worker_socketio.emit('source_checked', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
+			return
+
+		if validation_output.not_enough_credits:
+			lead_source.checking = False
 			lead_source.save()
 			worker_socketio.emit('source_checked', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
 			return

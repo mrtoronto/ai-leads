@@ -26,7 +26,7 @@ def search_request_task(query_id):
 
 		if request:
 			logger.info(f'Searching for leads for query: {request.user_query}')
-			rephrased_query = rewrite_query(request.user_query, request.user)
+			rephrased_query = rewrite_query(request.user_query, request.user, socketio_obj=worker_socketio)
 			if rephrased_query:
 				logger.info(f'Rephrased query: {rephrased_query.rewritten_query}')
 				request.reformatted_query = rephrased_query.rewritten_query
@@ -39,7 +39,12 @@ def search_request_task(query_id):
 
 			worker_socketio.emit('new_request', {'request': request.to_dict()}, to=f'user_{request.user_id}')
 
-			success, error = search_and_validate_leads(request, previous_leads, worker_socketio)
+			success, error = search_and_validate_leads(
+				request,
+				previous_leads,
+				app_obj=min_app,
+				socketio_obj=worker_socketio
+			)
 
 			if error:
 				request._finished(f'Error // {error}')

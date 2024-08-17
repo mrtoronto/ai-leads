@@ -108,7 +108,7 @@ class LeadSource(db.Model):
 		return cls.query.filter_by(user_id=user_id, hidden=False, valid=True).all()
 
 	@classmethod
-	def check_and_add(cls, url, user_id, query_id):
+	def check_and_add(cls, url, user_id, query_id, image_url=None):
 		url = get_standard_url(url)
 		existing_source = cls.query.filter_by(url=url, hidden=False).first()
 		if existing_source:
@@ -116,7 +116,8 @@ class LeadSource(db.Model):
 		new_source = cls(
 			url=url,
 			user_id=user_id,
-			query_id=query_id
+			query_id=query_id,
+			image_url=image_url
 		)
 		try:
 			new_source.save()

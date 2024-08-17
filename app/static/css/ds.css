@@ -8,8 +8,8 @@
 	transition: background-color 0.3s;
 }
 
-.btn-danger-outline-light:hover {
-	background-color: rbga(255, 97, 97, 0.2);
+.btn-danger-outline-light:hover, .btn-danger-outline-light:focus, .btn-danger-outline-light:active {
+	background-color: rgba(255, 97, 97, 0.2);
 }
 
 .btn-danger-outline-dark {
@@ -22,8 +22,8 @@
 	transition: background-color 0.3s;
 }
 
-.btn-danger-outline-dark:hover {
-	background-color: rbga(255, 97, 97, 0.2);
+.btn-danger-outline-dark:hover, .btn-danger-outline-dark:focus, .btn-danger-outline-dark:active {
+	background-color: rgba(255, 97, 97, 0.2);
 }
 
 .btn-danger-fill-light {
@@ -35,7 +35,7 @@
 	transition: background-color 0.3s;
 }
 
-.btn-danger-fill-light:hover {
+.btn-danger-fill-light:hover, .btn-danger-fill-light:focus, .btn-danger-fill-light:active {
 	background-color: #C54949;
 }
 
@@ -50,7 +50,7 @@
 	transition: background-color 0.3s;
 }
 
-.btn-primary-fill-light:hover {
+.btn-primary-fill-light:hover, .btn-primary-fill-light:focus, .btn-primary-fill-light:active {
 	background-color: #387EE4;
 }
 
@@ -61,10 +61,11 @@
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
+	transition: background-color 0.3s;
 }
 
-.btn-primary-outline-light:hover {
-	background-color: rbga(62, 140, 255, 0.2);
+.btn-primary-outline-light:hover, .btn-primary-outline-light:focus, .btn-primary-outline-light:active {
+	background-color: rgba(62, 140, 255, 0.5);
 }
 
 .btn-primary-fill-dark {
@@ -74,9 +75,10 @@
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
+	transition: background-color 0.3s;
 }
 
-.btn-primary-fill-dark:hover {
+.btn-primary-fill-dark:hover, .btn-primary-fill-dark:focus, .btn-primary-fill-dark:active {
 	background-color: #387EE4;
 }
 
@@ -87,10 +89,11 @@
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
+	transition: background-color 0.3s;
 }
 
-.btn-primary-outline-dark:hover {
-	background-color: rbga(62, 140, 255, 0.2);
+.btn-primary-outline-dark:hover, .btn-primary-outline-dark:focus, .btn-primary-outline-dark:active {
+	background-color: rgba(62, 140, 255, 0.2);
 }
 
 .btn-secondary-fill-light {
@@ -100,6 +103,7 @@
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
+	transition: background-color 0.3s;
 }
 
 .btn-secondary-fill-light:hover {

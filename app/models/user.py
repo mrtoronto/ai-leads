@@ -89,7 +89,7 @@ class User(UserMixin, db.Model):
 			db.session.add(self)
 		db.session.commit()
 
-	def move_credits(self, amount, trxn_type, trxn_description=""):
+	def move_credits(self, amount, trxn_type, trxn_description="", app_obj=None, socketio_obj=None):
 		self.credits += amount
 		self.save()
 
@@ -102,6 +102,12 @@ class User(UserMixin, db.Model):
 		entry.save()
 
 		credits_remaining = self.credits >= 0
+
+		if socketio_obj and app_obj:
+			with app_obj.app_context():
+				print(f"Sending update_credits to user_{self.id}")
+				socketio_obj.emit('update_credits', {'credits': self.credits}, to=f'user_{self.id}')
+
 		return entry, credits_remaining
 
 	@classmethod

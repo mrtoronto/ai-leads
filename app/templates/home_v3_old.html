@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% include "subtemplates/_hero.html" %}
+
+{% if current_user.is_authenticated %}
+<div class="container d-flex justify-content-center align-items-center">
+    <div style="width: 100%;">
+        <hr>
+        <div id="table-container">
+            <div id="queries-table-container"></div>
+            <div id="lead-sources-table-container"></div>
+            <div id="leads-table-container"></div>
+            <div id="liked-leads-table-container"></div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-5 bg-light p-4 rounded shadow">
+	<h2 class="text-center mb-4">Lead Quality Prediction</h2>
+	<div class="row justify-content-center">
+		<div class="col-md-4 text-center">
+			<div class="card mb-3">
+				<div class="card-body">
+					<h5 class="card-title">Liked Leads</h5>
+					<p class="card-text display-4" id="liked-leads-count">
+						<div class="spinner-border spinner-border-lg count-spinner" role="status" style="width: 3rem; height: 3rem;">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4 text-center">
+			<div class="card mb-3">
+				<div class="card-body">
+					<h5 class="card-title">Hidden Leads</h5>
+					<p class="card-text display-4" id="hidden-leads-count">
+						<div class="spinner-border spinner-border-lg count-spinner" role="status" style="width: 3rem; height: 3rem;">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="text-center mt-3">
+		<button id="retrain-model-btn" class="btn btn-primary btn-lg" disabled>Retrain Model</button>
+		<div class="text-center mt-3 small">Like 50 leads and hide 50 leads to train a lead quality model.</div>
+	</div>
+	<div class="text-center mt-3 small" id="last-trained-time">Last trained: {{ current_user.last_trained_lead_model_at.strftime('%m/%d/%Y, %I:%M:%S %p') if current_user.last_trained_lead_model_at else 'Never' }}</div>
+</div>
+
+{% else %}
+
+<div class="container mt-5">
+	<div class="row">
+  		<div class="col-md-6">
+            <h2>Turn <b>Queries</b> into <b>Leads</b></h2>
+            <p>
+                Our platform transforms search queries into valuable leads quickly and easily. Whether you need "marketing agencies in NYC", "global web design communities" or "fishing stores in Nebraska" our AI-driven tool identifies and delivers potential customers straight to your dashboard.
+            </p>
+        </div>
+		<div class="col-md-6">
+			<h2>What is Query?</h2>
+			<p>On AI-Leads, a query is a broad search that your leads may fall under. Starting from the query, we'll crawl search results looking for potential customers specifically for your business. </p>
+		</div>
+	</div>
+
+	<div class="row mt-5">
+		<div class="col-md-6">
+			<h2>What is Lead Quality Prediction?</h2>
+			<p>Lead quality prediction is our in-house machine learning model that will predicts the quality of a lead or lead source for you. These models are trained on your interactions so as you like and hide more leads, the predictions will get better. Use these predictions to hone in on the most interesting results.</p>
+		</div>
+		<div class="col-md-6">
+			<h2>How It Works</h2>
+			<p>1. Sign up or log in to your account.<br>2. Enter a query in the search box and click on the submit button.<br>3. Select which sources to dig into.<br>4. View the results and manage your leads.</p>
+		</div>
+	</div>
+</div>
+
+{% endif %}
+
+<script src="/static/js/home_script_v3.js?last_updated={{ last_updated }}" type="module"></script>
+{% endblock %}
