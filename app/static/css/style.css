@@ -339,8 +339,10 @@ small {
 }
 
 .table-row-selected {
-	border: 2px solid #4CAF50;
-	border-bottom: none;
+	border-left: 4px solid #3E8CFF;
+	border-right: 4px solid #3E8CFF;
+	border-top: 2px solid #3E8CFF;
+	border-bottom: 2px solid #3E8CFF;
 }
 
 .table-row-selected:last-child {
@@ -478,6 +480,8 @@ small {
 	padding: 0em;
 	font-weight: bold;
 }
+
+
 
 
 @media (max-width: 768px) {

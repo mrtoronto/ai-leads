@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container d-flex justify-content-center align-items-center">
+    <div style="width: 100%;">
+    	{% include "subtemplates/_sub_navbar.html" %}
+        <div id="table-container">
+            <div id="all-queries-table-container"></div>
+            <div id="running-queries-table-container"></div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/view_queries_script.js?last_updated={{ last_updated }}" type="module"></script>
+{% endblock %}

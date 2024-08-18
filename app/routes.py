@@ -451,3 +451,21 @@ def save_preferences():
 
 			return jsonify({"status": "success"}), 200
 	return jsonify({"status": "error"}), 400
+
+
+@bp.route('/leads')
+@login_required
+def leads():
+    return render_template('view_leads.html')
+
+
+@bp.route('/jobs')
+@login_required
+def jobs():
+    return render_template('view_jobs.html')
+
+
+@bp.route('/queries')
+@login_required
+def queries():
+    return render_template('view_queries.html')

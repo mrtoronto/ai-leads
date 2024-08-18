@@ -64,10 +64,6 @@ def handle_check_lead(data):
 	lead = Lead().get_by_id(lead_id)
 
 	if lead:
-		if lead.checking:
-			socketio.emit('error', {'message': 'Lead is already being checked'}, to=current_user.get_id())
-			return
-
 		if current_user.credits < 1:
 			socketio.emit('credit_error', {'message': 'Not enough credits to check a lead.', 'lead': lead.to_dict()}, to=f"user_{lead.user_id}")
 			return
@@ -78,7 +74,7 @@ def handle_check_lead(data):
 		queue_check_lead_task(lead_id)
 		socketio.emit('lead_check_started', {'lead': lead.to_dict()}, to=f"user_{lead.user_id}")
 	else:
-		socketio.emit('error', {'message': 'Lead not found'}, to=current_user.get_id())
+		socketio.emit('error', {'message': 'Lead not found'}, to=f"user_{current_user.id}")
 
 @socketio.on('hide_request')
 @login_required

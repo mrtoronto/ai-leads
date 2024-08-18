@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         //
         container.innerHTML += createTableComponent(
               'Leads from Query', 'leads-table', 'leads-search', 'leads-table-select-all', 'leads-table-dropdown',
-              ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
+              ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
         );
 
         createAllTables({

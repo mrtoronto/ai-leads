@@ -10,7 +10,6 @@ const dataCache = {
 window.confirmHides = true;
 
 const desktopLeadNameFormatter = (cell, row) => {
-		console.log(row);
     let content = cell ? cell : row.url;
     const isUrl = !cell;
     const percentage = row.quality_score !== null ? Math.floor(row.quality_score * 100) : 0;
@@ -119,6 +118,14 @@ const getTableColumnsById = (tableId) => {
             return getSourceTableColumns();
         case 'leads-table':
         case 'liked-leads-table':
+            return getLeadTableColumns();
+        case 'checked-leads-table-container':
+            return getLeadTableColumns();
+        case 'unchecked-leads-table-container':
+            return getLeadTableColumns();
+        case 'all-leads-table-container':
+            return getLeadTableColumns();
+        case 'hidden-leads-table-container':
             return getLeadTableColumns();
         default:
             console.error(`Unknown table id: ${tableId}`);
@@ -289,7 +296,7 @@ getSourceTableColumns = () => [
         formatter: (cell, row) => {
             if (row.checking) {
                 return `<div class="actions-container">
-                            <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
+                            <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner" data-id="${row.id}"></div>
                             <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             } else if (row.checked) {
@@ -351,7 +358,7 @@ getLeadTableColumns = () => [
         formatter: (cell, row) => {
             if (row.checking) {
                 return `<div class="actions-container">
-                            <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
+                            <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" data-id="${row.id}"></div>
                             <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
                         </div>`;
             } else if ((row.checked) && (row.valid)) {
@@ -496,7 +503,7 @@ if (window.is_mobile) {
             formatter: (cell, row) => {
                 if (row.checking) {
                     return `<div class="actions-container">
-                                <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
+                                <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner"  data-id="${row.id}"></div>
                                 <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
                             </div>`;
                 } else if (row.checked) {
@@ -578,7 +585,7 @@ if (window.is_mobile) {
 									formatter: (cell, row) => {
 													if (row.checking) {
 																	return `<div class="actions-container">
-																						<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>
+																						<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" data-id="${row.id}"></div>
 																						<div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
 																					</div>`;
 													} else if ((row.checked) && (row.valid)) {
@@ -604,7 +611,7 @@ if (window.is_mobile) {
 
 const getLikedLeadTableColumns = () => getLeadTableColumns();
 
-const createTable = (tableId, columns, data) => {
+const createTable = (tableId, columns, data, show_hidden=false) => {
     const table = document.getElementById(tableId);
     table.innerHTML = '';
     table.className = 'table-container';
@@ -713,7 +720,6 @@ const addClassToTableRow = (row, data) => {
 const updateRow = (tableId, rowId, newData) => {
 		console.log(`Updating row in table ${tableId} with id ${rowId}`);
   	console.log(newData);
-    const allTables = ['leads-table', 'liked-leads-table', 'sources-table', 'requests-table'];
     const tablesToUpdate = tableId === 'leads-table' ? ['leads-table', 'liked-leads-table'] : [tableId];
 
     tablesToUpdate.forEach(table => {
@@ -820,7 +826,7 @@ function createAllTables(data) {
     updateCounts();
 }
 
-function initializeSearches() {
+function initializeSearches(extra_ids=[]) {
 	if (document.getElementById('requests-search')) {
 		document.getElementById('requests-search').addEventListener('input', (e) => searchTable('requests-table', e.target.value));
 	}
@@ -833,6 +839,12 @@ function initializeSearches() {
 	if (document.getElementById('liked-leads-search')) {
 		document.getElementById('liked-leads-search').addEventListener('input', (e) => searchTable('liked-leads-table', e.target.value));
 	}
+
+	extra_ids.forEach((id) => {
+		if (document.getElementById(`${id}-search`)) {
+			document.getElementById(`${id}-search`).addEventListener('input', (e) => searchTable(`${id}-table`, e.target.value));
+		}
+	});
 }
 
 function initializeClicks() {
@@ -844,9 +856,48 @@ function initializeClicks() {
             const leadId = target.getAttribute('data-id');
             console.log('Checking lead with id:', leadId);
             socket.emit('check_lead', { lead_id: leadId });
-            target.outerHTML = '<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>';
+            target.outerHTML = `<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" 	data-id="${leadId}"></div>`;
             clicked_button = true;
         }
+
+        if (target.classList.contains('lead-cell-spinner')) {
+        	const leadId = target.getAttribute('data-id');
+					Swal.fire({
+						title: 'Retry Checking Lead?',
+						text: 'Do you want to retry checking this lead?',
+						icon: 'warning',
+						showCancelButton: true,
+						confirmButtonText: 'Yes, retry',
+						cancelButtonText: 'No, cancel'
+					}).then((result) => {
+						if (result.isConfirmed) {
+							console.log('Checking lead with id:', leadId);
+							socket.emit('check_lead', { lead_id: leadId });
+							target.outerHTML = `<img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" data-id="${leadId}">`;
+							clicked_button = true;
+						}
+					});
+        }
+
+        if (target.classList.contains('source-cell-spinner')) {
+        	const sourceId = target.getAttribute('data-id');
+					Swal.fire({
+						title: 'Retry Checking Source?',
+						text: 'Do you want to retry checking this source?',
+						icon: 'warning',
+						showCancelButton: true,
+						confirmButtonText: 'Yes, retry',
+						cancelButtonText: 'No, cancel'
+					}).then((result) => {
+						if (result.isConfirmed) {
+							console.log('Checking source with id:', sourceId);
+							socket.emit('check_lead_source', { lead_source_id: sourceId });
+							target.outerHTML = `<img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner" data-id="${sourceId}">`;
+							clicked_button = true;
+						}
+					});
+        }
+
         if (target.classList.contains('liked-lead-btn')) {
             const leadId = target.getAttribute('data-id');
             console.log('Liking lead with id:', leadId);
@@ -883,7 +934,7 @@ function initializeClicks() {
             const sourceId = target.getAttribute('data-id');
             console.log('Checking source with id:', sourceId);
             socket.emit('check_lead_source', { lead_source_id: sourceId });
-            target.outerHTML = '<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>';
+            target.outerHTML = `<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner" data-id="${sourceId}"></div>`;
             clicked_button = true;
         }
         if (target.classList.contains('hide-source-btn')) {
@@ -958,11 +1009,13 @@ function initializeClicks() {
             const row = cell.closest('.table-row');
             // skip if table-row is a child of `requests-table`
             const table = cell.closest('.table-container');
-            const tableId = table ? table.id : '';
+            let tableId = table ? table.id : '';
 
             if (tableId === 'requests-table') {
                 return;
             }
+
+            tableId = tableId.replace('-table', '');
             if (row) {
                 // Contract all other expanded rows
                 document.querySelectorAll('.table-row.expanded').forEach(expandedRow => {
@@ -977,31 +1030,44 @@ function initializeClicks() {
                     }
                 });
 
-                row.classList.toggle('expanded');
                 if (row.classList.contains('expanded')) {
-                    row.style.height = 'auto';
-                    row.querySelectorAll('.table-cell').forEach(cell => {
-                        cell.style.whiteSpace = 'normal';
-                        cell.style.overflow = 'visible';
-                        cell.style.textOverflow = 'clip';
-                    });
+                    row.classList.remove('expanded');
+                    if (row.classList.contains('table-row-selected')) {
+											row.classList.remove('table-row-selected');
+                    } else {
+                    	row.classList.add('table-row-selected');
+                    }
+                    updateSelectedCount(tableId);
                 } else {
-                    row.style.height = '';
-                    row.querySelectorAll('.table-cell').forEach(cell => {
-                        cell.style.whiteSpace = 'nowrap';
-                        cell.style.overflow = 'hidden';
-                        cell.style.textOverflow = 'ellipsis';
-                    });
+                    row.classList.toggle('expanded');
+                    if (row.classList.contains('expanded')) {
+                        row.style.height = 'auto';
+                        row.querySelectorAll('.table-cell').forEach(cell => {
+                            cell.style.whiteSpace = 'normal';
+                            cell.style.overflow = 'visible';
+                            cell.style.textOverflow = 'clip';
+                        });
+                    } else {
+                        row.style.height = '';
+                        row.querySelectorAll('.table-cell').forEach(cell => {
+                            cell.style.whiteSpace = 'nowrap';
+                            cell.style.overflow = 'hidden';
+                            cell.style.textOverflow = 'ellipsis';
+                        });
+                    }
                 }
             }
         }
     });
 }
 
-function initializeSelectAll() {
-    const tables = ['requests', 'sources', 'leads', 'liked-leads'];
+function initializeSelectAll(extra_tables=[]) {
+		let tables = ['requests', 'sources', 'leads', 'liked-leads'];
+		tables = tables.concat(extra_tables);
+
 
     tables.forEach(tableId => {
+    		console.log(`Setting up ${tableId}`);
         const selectAllCheckbox = document.getElementById(`${tableId}-table-select-all`);
         const dropdownMenu = document.querySelector(`#${tableId}-table-dropdown + .dropdown-menu`);
         if (selectAllCheckbox) {
@@ -1019,28 +1085,42 @@ function initializeSelectAll() {
             dropdownMenu.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                let clicked_button = false;
 
                 if (e.target.classList.contains('select-all')) {
                     selectAllRows(tableId);
+                    clicked_button = true;
                 } else if (e.target.classList.contains('unselect-all')) {
                     unselectAllRows(tableId);
+                    clicked_button = true;
                 } else if (e.target.classList.contains('select-unchecked')) {
                     unselectAllRows(tableId);
                 		selectUncheckedRows(tableId);
+                    clicked_button = true;
                 } else if (e.target.classList.contains('select-checked')) {
                     unselectAllRows(tableId);
                 		selectCheckedRows(tableId);
+                    clicked_button = true;
                 } else if (e.target.classList.contains('select-invalid')) {
                     unselectAllRows(tableId);
                     selectInvalidRows(tableId);
+                    clicked_button = true;
                 } else if (e.target.classList.contains('check-all')) {
                     checkAllSelected(tableId);
+                    clicked_button = true;
                 } else if (e.target.classList.contains('hide-all')) {
                     hideAllSelected(tableId);
+                    clicked_button = true;
                 } else if (e.target.classList.contains('export-csv')) {
                     exportToCSV(tableId);
+                    clicked_button = true;
                 }
                 updateSelectedCount(tableId);
+
+                if (clicked_button) {
+                	// close the menu
+										dropdownMenu.classList.remove('show');
+                }
             });
         }
     });
@@ -1098,14 +1178,15 @@ function checkAllSelected(tableId) {
         if (checkButton) {
             const id = checkButton.getAttribute('data-id');
             console.log(`Checking ${tableId} with id:`, id);
-            if (tableId === 'leads' || tableId === 'liked-leads') {
+            if (tableId.includes('leads')) {
                 socket.emit('check_lead', { lead_id: id });
                 emitCount++;
-            } else if (tableId === 'sources') {
+                checkButton.outerHTML = `<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" data-id="${id}"></div>`;
+            } else if (tableId.includes('sources')) {
                 socket.emit('check_lead_source', { lead_source_id: id });
                 emitCount++;
+                checkButton.outerHTML = `<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner" data-id="${id}"></div>`;
             }
-            checkButton.outerHTML = '<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner"></div>';
         }
     });
     if (emitCount > 0) {

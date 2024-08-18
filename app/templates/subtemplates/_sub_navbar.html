@@ -1,0 +1,50 @@
+<style>
+
+.nav-container {
+	display: flex;
+	justify-content: center;
+	gap: 1em;
+	margin-top: 1em;
+}
+.btn-nav {
+  font-size: 18px;
+  padding: 0.5em;
+  width: 20%;
+  text-align: center;
+}
+@media (max-width: 767px) {
+  .btn-nav {
+    font-size: 14px;
+    width: 40%;
+  }
+  .nav-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+  }
+}
+</style>
+<div style="width: 80%; min-width: 300px; margin: auto;">
+	<div class="nav-container">
+	   	{% if request.path != '/' %}
+	  	<a href="/" class="btn-primary-outline-light btn-nav" onclick="this.innerHTML='<span class=\'spinner-border spinner-border-sm\' role=\'status\' aria-hidden=\'true\'></span>'; this.classList.add('disabled');">Home</a>
+	    {% endif %}
+	   	{% if request.path == '/leads' %}
+	   	<a href="#" class="btn-primary-fill-light btn-nav disabled">Leads</a>
+	    {% else %}
+	   	<a href="/leads" class="btn-primary-outline-light btn-nav" onclick="this.innerHTML='<span class=\'spinner-border spinner-border-sm\' role=\'status\' aria-hidden=\'true\'></span>'; this.classList.add('disabled');">Leads</a>
+	    {% endif %}
+	    {% if request.path == '/jobs' %}
+	   	<a href="#" class="btn-primary-fill-light btn-nav disabled">In-Progress</a>
+	    {% else %}
+	   	<a href="/jobs" class="btn-primary-outline-light btn-nav" onclick="this.innerHTML='<span class=\'spinner-border spinner-border-sm\' role=\'status\' aria-hidden=\'true\'></span>'; this.classList.add('disabled');">In-Progress</a>
+		{% endif %}
+		{% if request.path == '/queries' %}
+	  	<a href="#" class="btn-primary-fill-light btn-nav disabled">Queries</a>
+	   	{% else %}
+	   	<a href="/queries" class="btn-primary-outline-light btn-nav" onclick="this.innerHTML='<span class=\'spinner-border spinner-border-sm\' role=\'status\' aria-hidden=\'true\'></span>'; this.classList.add('disabled');">Queries</a>
+		{% endif %}
+	</div>
+	<hr>
+
+</div>

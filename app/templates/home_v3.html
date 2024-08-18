@@ -6,14 +6,15 @@
 <div class="hero-section">
     <div class="hero-content">
         <p class="hero-subtitle top-subtitle">Convert <b>Queries</b> to <b>Leads</b> in minutes</p>
-        <h1 class="hero-title"><span style="font-family: monospace;">@i</span><b>Leads</b></h1>
+        <h1 class="hero-title {% if current_user.is_authenticated %}auth-hero-title{% endif %}"><span style="font-family: monospace;">@i</span><b>Leads</b></h1>
         {% if current_user.is_authenticated %}
-        <h1 class="text-center">Enter a query</h1>
 		<form id="lead-form" class="text-center" style="width: 80%; margin: auto;">
 			<div class="form-group mb-0">
-				<input type="text" class="form-control" id="query" name="query" size="32" style="border-bottom-left-radius: 0px;border-bottom-right-radius: 0px">
+				<input placeholder="What are you looking for?" type="text" class="form-control" id="query" name="query" size="32" style="border-bottom-left-radius: 0px;border-bottom-right-radius: 0px; border: 2px solid #E6F6FF; background-color: #E6F6FF; ">
 			</div>
-			<button type="submit" class="btn-primary-fill-dark submit-request-btn w-100"  style="border-top-right-radius: 0px;border-top-left-radius: 0px;"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+			<button type="submit" class="btn-primary-fill-dark submit-request-btn w-100"  style="border-top-right-radius: 0px;border-top-left-radius: 0px; border-bottom-left-radius: 2000em; border-bottom-right-radius: 2000em; border: 6px solid #E6F6FF;">
+				<i class="fa-solid fa-wand-magic-sparkles"></i>
+			</button>
 		</form>
         {% else %}
         <a href="/register" class="btn btn-primary hero-btn">Start Getting Leads</a>
@@ -22,9 +23,7 @@
 </div>
 
 {% if current_user.is_authenticated %}
-<div style="margin: auto; width: 50%;">
-	<button style="border-width: 8px; border-radius: 4em; width: 100%; font-size: 32px; font-weight: bold; text-decoration: none;" class="btn-primary-outline-light" href="/leads">My Leads</button>
-</div>
+{% include "subtemplates/_sub_navbar.html" %}
 {% endif %}
 
 <div class="sub-hero-section">

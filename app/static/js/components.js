@@ -75,9 +75,12 @@ export function createTableComponent(title, tableId, searchId, selectAllId, drop
                 </button>
 
                 <ul class="dropdown-menu" aria-labelledby="${dropdownId}">
-                    ${dropdownActionClasses.map(actionClass => `
-                        <li><a class="dropdown-item ${actionClass}" href="#">${getActionDisplayName(actionClass)}</a></li>
-                    `).join('')}
+                    ${dropdownActionClasses.reduce((acc, actionClass, index) => {
+                        if (actionClass === '') {
+                            return `${acc}<li><hr class="dropdown-divider"></li>`;
+                        }
+                        return `${acc}<li><a class="dropdown-item ${actionClass}" href="#">${getActionDisplayName(actionClass)}</a></li>`;
+                    }, '')}
                 </ul>
             </div>
         </div>` : '';

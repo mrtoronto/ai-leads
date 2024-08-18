@@ -16,6 +16,7 @@ window.current_user_email = "{{ current_user.email }}";
 }
 
 </style>
+{% include "subtemplates/_sub_navbar.html" %}
 <div class="container mt-5">
     {% if not current_user.email_verified %}
     <div class="alert alert-warning" role="alert">
@@ -28,12 +29,12 @@ window.current_user_email = "{{ current_user.email }}";
 	    <div class="form-group mb-3">
 	        <label for="email">Email</label>
 	        <small class="form-text text-muted">Email address associated with your account.</small>
-	        <div style="display: flex; gap: 2em;">
+	        <div style="display: flex; gap: 1em;">
 				<div style="width: 100%;">
 					<input class="form-control" id="email" name="email" value="{{ current_user.email }}">
 					<button type="submit" style="width: 100%;" id="email-submit" class="btn btn-primary" disabled>Save</button>
 				</div>
-		        <div id="email-feedback" style="font-size: 24px;">
+		        <div id="email-feedback" style="font-size: 24px; width: 30px;">
 		            <span id="email-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
 		            <span id="email-success" class="d-none">&#x2714;</span> <!-- Checkmark icon -->
 		            <span id="email-error" class="d-none">&#x2716;</span> <!-- Cross icon -->
