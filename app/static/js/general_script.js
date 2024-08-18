@@ -116,8 +116,13 @@ const getTableColumnsById = (tableId) => {
             return getQueryTableColumns();
         case 'sources-table':
             return getSourceTableColumns();
+        case 'checking-lead-sources-table-container':
+            return getSourceTableColumns();
         case 'leads-table':
+            return getLeadTableColumns();
         case 'liked-leads-table':
+            return getLeadTableColumns();
+        case 'checking-leads-table-container':
             return getLeadTableColumns();
         case 'checked-leads-table-container':
             return getLeadTableColumns();
@@ -658,37 +663,47 @@ const createTable = (tableId, columns, data, show_hidden=false) => {
     const bodyContainer = document.createElement('div');
     bodyContainer.className = 'table-body-container';
 
-    // Create table body
-    data.forEach(rowData => {
-        let row = document.createElement('div');
-        row.className = 'table-row';
-        row.setAttribute('data-id', rowData.id);
-				row = addClassToTableRow(row, rowData);
+    if (data.length === 0) {
+        table.style.height = 'auto';
+        table.style.maxHeight = 'unset';
+        table.style.minHeight = '150px';
+        const noDataMessage = document.createElement('div');
+        noDataMessage.className = 'no-data-message';
+        noDataMessage.textContent = 'No data found';
+        bodyContainer.appendChild(noDataMessage);
+    } else {
+        // Create table body
+        data.forEach(rowData => {
+            let row = document.createElement('div');
+            row.className = 'table-row';
+            row.setAttribute('data-id', rowData.id);
+            row = addClassToTableRow(row, rowData);
 
-        columns.forEach(column => {
-            if (!column.hidden) {
-                const cell = document.createElement('div');
-                cell.className = 'table-cell';
-                if (column.width) {
-                    cell.style.width = column.width;
-                }
-                if (column.textAlign) {
-                    cell.style.textAlign = column.textAlign;
-                } else {
-                	cell.style.textAlign = 'center';
-                }
+            columns.forEach(column => {
+                if (!column.hidden) {
+                    const cell = document.createElement('div');
+                    cell.className = 'table-cell';
+                    if (column.width) {
+                        cell.style.width = column.width;
+                    }
+                    if (column.textAlign) {
+                        cell.style.textAlign = column.textAlign;
+                    } else {
+                        cell.style.textAlign = 'center';
+                    }
 
-                if (column.whiteSpace) {
-											cell.style.whiteSpace = column.whiteSpace;
+                    if (column.whiteSpace) {
+                        cell.style.whiteSpace = column.whiteSpace;
+                    }
+                    cell.setAttribute('data-field', column.field);
+                    const cellValue = rowData[column.field];
+                    cell.innerHTML = column.formatter ? column.formatter(cellValue, rowData) : cellValue;
+                    row.appendChild(cell);
                 }
-                cell.setAttribute('data-field', column.field);
-                const cellValue = rowData[column.field];
-                cell.innerHTML = column.formatter ? column.formatter(cellValue, rowData) : cellValue;
-                row.appendChild(cell);
-            }
+            });
+            bodyContainer.appendChild(row);
         });
-        bodyContainer.appendChild(row);
-    });
+    }
 
     table.appendChild(bodyContainer);
 };
@@ -718,8 +733,6 @@ const addClassToTableRow = (row, data) => {
 }
 
 const updateRow = (tableId, rowId, newData) => {
-		console.log(`Updating row in table ${tableId} with id ${rowId}`);
-  	console.log(newData);
     const tablesToUpdate = tableId === 'leads-table' ? ['leads-table', 'liked-leads-table'] : [tableId];
 
     tablesToUpdate.forEach(table => {
@@ -744,7 +757,6 @@ const updateRow = (tableId, rowId, newData) => {
 												} else {
 													const cellValue = newData[column.field];
 													if ((cellValue !== null && cellValue !== undefined) || (column.field == 'actions')) {
-														console.log(`Updating cell ${column.field} with value ${cellValue}`);
 														cells[visibleIndex].innerHTML = ''; // Clear existing content
 														cells[visibleIndex].innerHTML = column.formatter ? column.formatter(cellValue, newData) : cellValue;
 													}
@@ -767,12 +779,21 @@ const updateRow = (tableId, rowId, newData) => {
 // Modify the addRow function to ensure it's creating the row correctly
 const addRow = (tableId, newData) => {
     const table = document.getElementById(tableId);
+
+    if (!table) {
+    	return;
+    }
     const bodyContainer = table.querySelector('.table-body-container');
     const columns = getTableColumnsById(tableId);
+
     let row = document.createElement('div');
     row.className = 'table-row';
     row.setAttribute('data-id', newData.id);
     row = addClassToTableRow(row, newData);
+
+    if (table.querySelector('.no-data-message')) {
+  		table.querySelector('.no-data-message').remove();
+    }
 
     columns.forEach(column => {
         if (!column.hidden) {
@@ -807,6 +828,15 @@ const handleHideEvent = (tableId, rowId) => {
     if (row) {
         row.remove();
     }
+
+    // if table is empty, add .no-data-message with text "No Data Found"
+    if (!table.querySelector('.table-row')) {
+				const noDataMessage = document.createElement('div');
+				noDataMessage.className = 'no-data-message';
+				noDataMessage.innerHTML = 'No Data Found';
+				table.querySelector('.table-body-container').appendChild(noDataMessage);
+		}
+
     updateCounts();
 };
 

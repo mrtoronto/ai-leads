@@ -111,6 +111,7 @@ small {
     max-height: 600px;
     min-height: 600px;
     overflow-y: scroll;
+    transition: min-height 1s ease-in-out, max-height 1s ease-in-out, height 1s ease-in-out;
 }
 
 #requests-table {
@@ -595,4 +596,20 @@ small {
 	margin-left: auto;
 	margin-right: auto;
 
+}
+
+
+.no-data-message {
+	text-align: center;
+    padding: 2em 0;
+}
+
+.header-robot {
+    border-radius: 50em;
+}
+
+.header-robot:hover {
+	color: #3E8CFF;
+	background-color: white;
+	transition: color 3s ease-in-out;
 }

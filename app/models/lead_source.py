@@ -1,5 +1,5 @@
 import time
-from app.utils import get_base_url, get_standard_url
+from app.utils import get_base_url, get_standard_url, _real_url_check
 import pytz
 from datetime import datetime
 from app.models.user_models import ModelTypes
@@ -111,7 +111,7 @@ class LeadSource(db.Model):
 	def check_and_add(cls, url, user_id, query_id, image_url=None):
 		url = get_standard_url(url)
 		existing_source = cls.query.filter_by(url=url, hidden=False).first()
-		if existing_source:
+		if existing_source or not _real_url_check(url):
 			return None
 		new_source = cls(
 			url=url,

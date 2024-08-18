@@ -45,6 +45,6 @@ class Config(object):
 	MAIL_USE_SSL = False
 	MAIL_USERNAME = 'apikey'  # This is the literal string 'apikey', not your API key
 	MAIL_PASSWORD = local_settings.SENDGRID_API_KEY
-	MAIL_DEFAULT_SENDER = 'matt@ai-leads.xyz'
+	MAIL_DEFAULT_SENDER = ('Matt — aiLeads', 'matt@ai-leads.xyz')
 
 	SECURITY_PASSWORD_SALT = local_settings.SECURITY_PASSWORD_SALT

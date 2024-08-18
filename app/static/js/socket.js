@@ -1,6 +1,8 @@
 import { CountUp } from "/static/js/countUp.min.js";
 let socket;
 
+import { updateRow } from "/static/js/general_script.js";
+
 function initializeSocket() {
 	const options = {
 		debug: true,

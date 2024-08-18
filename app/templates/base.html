@@ -32,7 +32,10 @@
     	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 	        <span class="navbar-toggler-icon"></span>
 	    </button>
-        <a class="navbar-brand" href="{{ url_for('main.index') }}"><span style="font-family: monospace;">@i</span><b>Leads</b> 🤖</a>
+        <a class="navbar-brand" href="{{ url_for('main.index') }}">
+        	<i class="header-robot fa-solid fa-robot mr-2"></i>
+        	<span style="font-family: monospace;">@i</span><b>Leads</b>
+        </a>
         {% if current_user.is_authenticated %}
         <div id="creditCounter" class="small">
         	<span id="creditPrefix">Credits: </span>

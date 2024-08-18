@@ -1,3 +1,4 @@
+import re
 from app import socketio, db
 from flask_login import login_required, current_user
 from app.models import LeadSource, Lead, Query, User
@@ -169,7 +170,6 @@ def handle_update_user_settings(data):
 		user = User.get_by_id(current_user.id)
 		if user:
 			user.user_description = data.get('user_description', user.user_description)
-			user.search_model_preference = data.get('search_model_preference', user.search_model_preference)
 			user.source_collection_model_preference = data.get('source_collection_model_preference', user.source_collection_model_preference)
 			user.lead_validation_model_preference = data.get('lead_validation_model_preference', user.lead_validation_model_preference)
 			user.industry = data.get('industry', user.industry)
@@ -236,9 +236,6 @@ def handle_get_lead_data(data):
 @login_required
 def handle_check_email_availability(data):
     email = data['email']
-
-    # Check if the email is valid
-    import re
     email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     is_valid = re.match(email_regex, email) is not None
 

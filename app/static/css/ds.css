@@ -1,7 +1,7 @@
 .btn-danger-outline-light {
 	background-color: transparent;
 	border: 2px solid #FF6161;
-	color: #2A232E;
+	color: #2A232E !important;
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
@@ -15,7 +15,7 @@
 .btn-danger-outline-dark {
 	background-color: transparent;
 	border: 2px solid #FF6161;
-	color: #E6F6FF;
+	color: #E6F6FF !important;
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
@@ -43,7 +43,7 @@
 .btn-primary-fill-light {
 	background-color: #3E8CFF;
 	border: 2px solid #3E8CFF;
-	color: #E6F6FF;
+	color: #E6F6FF !important;
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
@@ -53,13 +53,13 @@
 
 .btn-primary-fill-light:hover, .btn-primary-fill-light:focus, .btn-primary-fill-light:active {
 	background-color: #387EE4;
-	color: #E6F6FF;
+	color: #E6F6FF !important;
 }
 
 .btn-primary-outline-light {
 	background-color: transparent;
 	border: 2px solid #3E8CFF;
-	color: #2A232E;
+	color: #2A232E !important;
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
@@ -68,12 +68,13 @@
 
 .btn-primary-outline-light:hover, .btn-primary-outline-light:focus, .btn-primary-outline-light:active {
 	background-color: rgba(62, 140, 255, 0.5);
+	color: #2A232E;
 }
 
 .btn-primary-fill-dark {
 	background-color: #3E8CFF;
 	border: 2px solid #3E8CFF;
-	color: #E6F6FF;
+	color: #E6F6FF !important;
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
@@ -87,7 +88,7 @@
 .btn-primary-outline-dark {
 	background-color: transparent;
 	border: 2px solid #3E8CFF;
-	color: #E6F6FF;
+	color: #E6F6FF !important;
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;
@@ -101,7 +102,7 @@
 .btn-secondary-fill-light {
 	background-color: #FCFF61;
 	border: 2px solid #FCFF61;
-	color: #2A232E;
+	color: #2A232E !important;
 	line-height: 1;
 	padding: 0.25em;
 	border-radius: 0.25em;

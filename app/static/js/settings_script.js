@@ -11,10 +11,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('settings-form');
     const emailForm = document.getElementById('settings-email-form');
     const emailInput = document.getElementById('email');
+    const emailSubmitBtn = document.getElementById('email-submit');
     const resendVerificationBtn = document.getElementById('resend-verification-email');
     const resendPasswordResetBtn = document.getElementById('resend-password-reset-email');
 
     let emailTimeout;
+
+    emailInput.addEventListener('input', function() {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const isValidEmail = emailRegex.test(emailInput.value);
+
+        emailSubmitBtn.classList.add('btn-primary-outline-light');
+
+        if (isValidEmail) {
+            emailSubmitBtn.disabled = false;
+        } else {
+            emailSubmitBtn.disabled = true;
+        }
+    });
 
     emailInput.addEventListener('input', function() {
         clearTimeout(emailTimeout); // Clearing the previous timeout
@@ -26,9 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
         emailSpinner.classList.remove('d-none');
         emailSuccess.classList.add('d-none');
         emailError.classList.add('d-none');
+        emailSubmitBtn.disabled = true; // Disable the save button initially
 
         if (emailInput.value.includes('@')) {
-        		$('#email-submit').attr('disabled', false);
             emailTimeout = setTimeout(() => {
                 const email = emailInput.value;
                 socket.emit('check_email_availability', { email });
@@ -37,19 +51,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     emailSpinner.classList.add('d-none');
                     if (response.available) {
                         emailSuccess.classList.remove('d-none');
+                        emailSubmitBtn.disabled = false; // Enable the save button if email is available
+                        emailSubmitBtn.classList.add('btn-primary-fill-light');
+                        emailSubmitBtn.classList.remove('btn-primary-outline-light');
                     } else {
                         emailError.classList.remove('d-none');
+                        emailSubmitBtn.disabled = true; // Disable the save button if email is not available
+                        emailSubmitBtn.classList.add('btn-primary-outline-light');
+                        emailSubmitBtn.classList.remove('btn-primary-fill-light');
                     }
                 });
             }, 2000); // 2 second delay
         } else {
             emailSpinner.classList.add('d-none');
+            emailSubmitBtn.disabled = true; // Disable the save button if email is invalid
         }
     });
 
 		emailForm.addEventListener('submit', function (event) {
 			event.preventDefault();
 			const email = emailInput.value;
+
+			if (email == window.current_user_email) {
+				Swal.fire({
+					icon: 'error',
+					title: 'Error',
+					text: 'You are already using this email!',
+				});
+				return;
+			}
 
 			socket.emit('update_email', { email: email });
 
@@ -77,13 +107,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const industry = document.getElementById('industry').value;
         const pref_org_size = document.getElementById('preferred_org_size').value;
         const description = document.getElementById('user-description').value;
-        const searchModelPreference = document.getElementById('search-model-preference').value;
+        // const searchModelPreference = document.getElementById('search-model-preference').value;
         const sourceCollectionModelPreference = document.getElementById('source-collection-model-preference').value;
         const leadValidationModelPreference = document.getElementById('lead-validation-model-preference').value;
 
         const settingsData = {
             user_description: description,
-            search_model_preference: searchModelPreference,
+            // search_model_preference: searchModelPreference,
             source_collection_model_preference: sourceCollectionModelPreference,
             lead_validation_model_preference: leadValidationModelPreference,
             email: email,

@@ -22,6 +22,9 @@ def check_lead_source_task(lead_source_id):
 		if not lead_source:
 			return
 
+		if lead_source.checked and lead_source.valid:
+			return
+
 		lead_source_user = User.get_by_id(lead_source.user_id)
 		previously_liked_leads = Lead.get_liked_leads(lead_source.user_id, 5)
 		previous_leads = [f'{lead.name} - {lead.description}' for lead in previously_liked_leads]
@@ -83,8 +86,5 @@ def check_lead_source_task(lead_source_id):
 						worker_socketio.emit('new_lead_source', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
 
 		lead_source._finished()
-
-		model = FastTextModel(lead_source.user_id, ModelTypes.LEAD_SOURCE)
-		lead_source.quality_score = model.predict_lead(lead_source.user, lead_source)
 
 		worker_socketio.emit('source_checked', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')

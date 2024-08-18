@@ -1,6 +1,6 @@
 import random
 import requests
-from local_settings import OPENAI_API_KEY, SERP_API_KEY
+from local_settings import OPENAI_API_KEY, SERP_API_KEY, GROQ_API_KEY
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -89,6 +89,7 @@ class PromptTemplate():
 query_reformatting_prompt = PromptTemplate("""
 You are a GPT trained to rewrite user's search queries. The user will provide you with their basic search query and a description of what they're looking for. Your job is to rewrite the query in a way that is more likely to return relevant results.
 
+This is the output format. Do not deviate from it. Do not include any text outside of this output format.
 {format_instruction}
 """)
 
@@ -115,13 +116,16 @@ Please provide a list of URLs that are either:
 	- Leads: Links that are directly applicable to the user's query and may contain contact information
 		- Links to websites that may be interested in the user's services
 		- For example, company websites or contact pages
+		- These are de-duplicated by domain so make sure to only include one link per domain
 	- Lead Sources: Not directly applicable to the user's query but may contain links to relevant sites
 		- Links to websites that may contain links to organizations interested in the user's services
 		- For example, blogs, forums, or directories
+		- These are not de-duplicated by domain so include all relevant links
 
 Previously the user has liked leads like the following:
 {previous_leads}
 
+This is the output format. Do not deviate from it. Do not include any text outside of this output format.
 {format_instruction}
 """)
 
@@ -152,15 +156,19 @@ You need to provide:
 		- For example, company websites or contact pages
 		- Provide a max of one lead per organization
 		- If the page contains multiple links to an organization, pick the most relevant one
+		- These are de-duplicated by domain so make sure to only include one link per domain
+		- Do not include links that aren't the main domain of the organization
 	- Lead Sources: Not directly applicable to the user's query but may contain links to relevant sites
 		- Links to websites that may contain links to sites that may be interested in the user's services
 		- For example, blogs, forums, or directories
 		- Provide a max of one lead per organization
 		- If the page contains multiple links to an organization, pick the most relevant one
+		- These are not de-duplicated by domain so include all relevant links
 
 Previously the user has liked leads like the following:
 {previous_leads}
 
+This is the output format. Do not deviate from it. Do not include any text outside of this output format.
 {format_instruction}
 """)
 
@@ -195,6 +203,8 @@ MODEL_PRICING = {
 	"claude-3-5-sonnet-20240620": {"input": 3 / 1e6, "output": 15 / 1e6 },
 	"claude-3-haiku-20240307": {"input": 0.25 / 1e6, "output": 1.25 / 1e6},
 	"replicate/meta/meta-llama-3.1-405b-instruct": {"input": 9.5 / 1e6, "output": 9.5 / 1e6},
+	"groq/llama-3.1-70b-versatile": {"input": 0.59 / 1e6, "output": 0.79 / 1e6},
+	"groq/mixtral-8x7b-32768": {"input": 0.24 / 1e6, "output": 0.24 / 1e6},
 }
 
 
@@ -221,17 +231,26 @@ def _llm(user_input, template, parser, parse_output=True, user=None, previous_le
 
 	headers = {
 		'Content-Type': 'application/json',
-		'Authorization': f'Bearer {OPENAI_API_KEY}'
 	}
+
+	if 'groq' in model_name:
+		url = "https://api.groq.com/openai/v1/chat/completions"
+		headers['Authorization'] = f'Bearer {GROQ_API_KEY}'
+		input_model_name = model_name.replace('groq/', '')
+	else:
+		url = "https://api.openai.com/v1/chat/completions"
+		headers['Authorization'] = f'Bearer {OPENAI_API_KEY}'
+		input_model_name = model_name
 	data = {
-		'model': model_name,
+		'model': input_model_name,
 		'messages': [
 			{'role': 'system', 'content': system_prompt},
 			{'role': 'user', 'content': user_input}
 		],
 		'max_tokens': 1000
 	}
-	response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=data)
+
+	response = requests.post(url, headers=headers, json=data)
 	if response.status_code == 200:
 		response_json = response.json()
 		prompt_tokens = response_json.get('usage', {}).get('prompt_tokens', 0)
@@ -247,7 +266,7 @@ def _llm(user_input, template, parser, parse_output=True, user=None, previous_le
 		else:
 			return response.json()['choices'][0]['message']['content'], tokens_used_usd
 	else:
-		print(f'LLM Error: {response.status_code}')
+		print(f'LLM Error: {response.status_code} - {response.json()}')
 		return None, 0
 
 
@@ -387,32 +406,32 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 
 
 
-def _llm_validate_lead(link, user, link_val_mult=2, app_obj=None, socketio_obj=None):
+def _llm_validate_lead(link, user):
 	print(f'Validating lead from link: {link}')
 	if user.credits < 1:
 		return ValidationOutput(
 			not_enough_credits=True
-		), None
+		), None, 0
+
 	visible_text, opengraph_img_url = get_visible_text_and_links(link)
 	opengraph_img_url = _tidy_url(link, opengraph_img_url)
 	if visible_text:
-		output, tokens_used_usd = _llm(visible_text, lead_validation_prompt, validation_parser, user)
-		if app_obj and socketio_obj:
-			with app_obj.app_context():
-				user.move_credits(
-					tokens_used_usd * -1000 * link_val_mult,
-					CreditLedgerType.CHECK_LEAD,
-					socketio_obj=socketio_obj
-				)
+		output, tokens_used_usd = _llm(
+			visible_text,
+			lead_validation_prompt,
+			validation_parser,
+			user,
+			model_name=user.lead_validation_model_preference
+		)
 		if not output:
 			output = ValidationOutput(
 				invalid_lead=True,
 			)
-		return output, opengraph_img_url
+		return output, opengraph_img_url, tokens_used_usd
 	else:
 		return ValidationOutput(
 			invalid_link=True
-		), opengraph_img_url
+		), opengraph_img_url, 0
 
 # def collect_leads_from_query(user_query, user, previous_leads, query_collection_mult=3):
 # 	print(f'Collecting leads from query: {user_query}')
@@ -432,6 +451,9 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 			not_enough_credits=True
 		), None
 
+	if 'groq' in user.lead_validation_model_preference:
+		url_collection_mult = 6
+
 	visible_text, opengraph_img_url = get_visible_text_and_links(url)
 	if visible_text:
 		output, tokens_used_usd = _llm(
@@ -439,7 +461,8 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 			template=source_lead_collection_prompt,
 			parser=collection_parser,
 			user=user,
-			previous_leads=previous_leads
+			previous_leads=previous_leads,
+			model_name=user.source_collection_model_preference
 		)
 
 		if socketio_obj and app_obj:
@@ -455,7 +478,7 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 			invalid_link=True
 		), opengraph_img_url
 
-def rewrite_query(user_query, user, rewrite_query_mult=3, socketio_obj=None):
+def rewrite_query(user_query, user, rewrite_query_mult=10, socketio_obj=None):
 	print(f'Rewriting query: {user_query}')
 	if user.credits < 1:
 		return None

@@ -1,5 +1,5 @@
 import time
-from app.utils import get_base_url, get_standard_url
+from app.utils import get_base_url, get_standard_url, _useful_url_check
 import pytz
 from datetime import datetime
 
@@ -142,8 +142,9 @@ class Lead(db.Model):
 	def check_and_add(cls, url, user_id, query_id, source_id, image_url=None):
 		url = get_standard_url(url)
 		base_url = get_base_url(url)
-		existing_lead = cls.query.filter_by(url=url, hidden=False).first()
-		if existing_lead:
+
+		existing_lead = cls.query.filter_by(base_url=base_url, hidden=False).first()
+		if existing_lead or not _useful_url_check(url):
 			return None
 		new_lead = cls(
 			url=url,

@@ -116,6 +116,7 @@ def login():
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
+
 	if request.method == 'POST':
 		email = request.form.get('email')
 		password = request.form.get('password')
@@ -153,7 +154,9 @@ def register():
 
 		# Redirect to setup preferences page
 		return redirect(url_for('main.setup_preferences')) # New route after registration
-
+	if current_user.is_authenticated:
+		flash('You are already logged in!')
+		return redirect(url_for('main.index'))
 	return render_template('register.html')
 
 @bp.route('/setup_preferences')

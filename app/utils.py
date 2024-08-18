@@ -1,7 +1,7 @@
 
 def get_standard_url(url):
 	if not url.startswith('http'):
-		base_url = 'https://' + url
+		url = 'https://' + url
 	if 'http:' in url:
 		url = url.replace('http:', 'https:')
 
@@ -10,6 +10,10 @@ def get_standard_url(url):
 		url = f'{protocol}://www.{rest}'
 	elif 'www.' not in url:
 		url = f'https://www.{url}'
+
+
+	if url[-1] == '/':
+		url = url[:-1]
 
 	return url
 
@@ -44,6 +48,10 @@ def _tidy_url(example_url, to_be_fixed):
 
 
 def _useful_url_check(url):
+
+	if not _real_url_check(url):
+		return False
+
 	if 'facebook.com' in url:
 		return False
 	if 'twitter.com' in url:
@@ -58,6 +66,10 @@ def _useful_url_check(url):
 		return False
 	if 'goo.gl/maps' in url:
 		return False
+
+	return True
+
+def _real_url_check(url):
 	if url == 'https://www.':
 		return False
 	if url == 'http://www.':

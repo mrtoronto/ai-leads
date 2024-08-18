@@ -6,12 +6,26 @@ window.current_user_email = "{{ current_user.email }}";
 </script>
 
 <style>
+
+.btn-primary-outline-light, .btn-primary-fill-light {
+	height: 100%;
+}
+
+.btn-primary-outline-light:hover {
+	background-color: transparent !important;
+}
+
+.btn-primary-outline-light {
+	color: #67596F !important;
+}
+
 #email-submit {
-	border-top-right-radius: 0;
+	border-bottom-left-radius: 0;
 	border-top-left-radius: 0;
 }
+
 #email {
-	border-bottom-left-radius: 0;
+	border-top-right-radius: 0;
 	border-bottom-right-radius: 0;
 }
 
@@ -26,21 +40,23 @@ window.current_user_email = "{{ current_user.email }}";
     {% endif %}
     <h2>Settings</h2>
     <form id="settings-email-form" style="margin-top: 2em;">
-	    <div class="form-group mb-3">
-	        <label for="email">Email</label>
-	        <small class="form-text text-muted">Email address associated with your account.</small>
-	        <div style="display: flex; gap: 1em;">
-				<div style="width: 100%;">
-					<input class="form-control" id="email" name="email" value="{{ current_user.email }}">
-					<button type="submit" style="width: 100%;" id="email-submit" class="btn btn-primary" disabled>Save</button>
-				</div>
-		        <div id="email-feedback" style="font-size: 24px; width: 30px;">
+		<div class="form-group mb-3">
+		    <label for="email">Email</label>
+		    <small class="form-text text-muted">Email address associated with your account.</small>
+		    <div style="display: flex;">
+		        <div style="flex-grow: 1;">
+		            <input class="form-control" id="email" name="email" value="{{ current_user.email }}">
+		        </div>
+		        <div>
+		            <button type="submit" id="email-submit" class="btn-primary-outline-light" disabled>Save</button>
+		        </div>
+		        <div id="email-feedback" style="font-size: 24px; width: 30px; margin-left: 1em;">
 		            <span id="email-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
 		            <span id="email-success" class="d-none">&#x2714;</span> <!-- Checkmark icon -->
 		            <span id="email-error" class="d-none">&#x2716;</span> <!-- Cross icon -->
 		        </div>
-			</div>
-	    </div>
+		    </div>
+		</div>
     </form>
     <hr>
 
@@ -70,17 +86,12 @@ window.current_user_email = "{{ current_user.email }}";
             <textarea class="form-control" id="user-description" name="user_description" rows="3" maxlength="2000">{{ current_user.user_description }}</textarea>
         </div>
         <div class="form-group mb-3">
-            <label for="search-model-preference">Search Model</label>
-            <select class="form-select" id="search-model-preference" name="search_model_preference">
-                <option value="gpt-4o" {{ 'selected' if current_user.search_model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
-                <option value="gpt-4o-mini" {{ 'selected' if current_user.search_model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
-            </select>
-        </div>
-        <div class="form-group mb-3">
             <label for="source-collection-model-preference">Source Collection Model</label>
             <select class="form-select" id="source-collection-model-preference" name="source_collection_model_preference">
                 <option value="gpt-4o" {{ 'selected' if current_user.source_collection_model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
                 <option value="gpt-4o-mini" {{ 'selected' if current_user.source_collection_model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
+                <!-- <option value="groq/llama-3.1-70b-versatile" {{ 'selected' if current_user.source_collection_model_preference == 'groq/llama-3.1-70b-versatile' else '' }}>LLama 3.1 70B</option> -->
+                <!-- <option value="groq/mixtral-8x7b-32768" {{ 'selected' if current_user.source_collection_model_preference == 'groq/mixtral-8x7b-32768' else '' }}>Mixtral 8x7B</option> -->
             </select>
         </div>
         <div class="form-group mb-3">
@@ -88,6 +99,8 @@ window.current_user_email = "{{ current_user.email }}";
             <select class="form-select" id="lead-validation-model-preference" name="lead_validation_model_preference">
                 <option value="gpt-4o" {{ 'selected' if current_user.lead_validation_model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
                 <option value="gpt-4o-mini" {{ 'selected' if current_user.lead_validation_model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
+                <!-- <option value="groq/llama-3.1-70b-versatile" {{ 'selected' if current_user.lead_validation_model_preference == 'groq/llama-3.1-70b-versatile' else '' }}>LLama 3.1 70B</option> -->
+                <!-- <option value="groq/mixtral-8x7b-32768" {{ 'selected' if current_user.lead_validation_model_preference == 'groq/mixtral-8x7b-32768' else '' }}>Mixtral 8x7B</option> -->
             </select>
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%;">Save</button>

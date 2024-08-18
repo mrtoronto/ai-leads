@@ -1,5 +1,5 @@
 from app import worker_socketio, create_minimal_app
-from app.models import LeadSource, Lead, ModelTypes, User
+from app.models import LeadSource, Lead, ModelTypes, User, CreditLedgerType
 from rq import get_current_job
 from app.llm import _llm_validate_lead, collect_leads_from_url
 from app.utils import _tidy_url, _useful_url_check
@@ -30,13 +30,18 @@ def check_lead_task(lead_id):
 		lead = Lead().get_by_id(lead_id)
 		if not lead:
 			return
+
+		if lead.checked and lead.valid:
+			return
+
+		total_tokens_used_usd = 0
+
 		lead_user = User.get_by_id(lead.user_id)
-		first_validation_output, opengraph_img_url = _llm_validate_lead(
+		first_validation_output, opengraph_img_url, tokens_used_usd = _llm_validate_lead(
 			lead.url,
-			lead_user,
-			app_obj=min_app,
-			socketio_obj=worker_socketio
+			lead_user
 		)
+		total_tokens_used_usd += tokens_used_usd
 		final_validation_output = first_validation_output
 
 		if not first_validation_output:
@@ -57,12 +62,12 @@ def check_lead_task(lead_id):
 					base_url = '/'.join(base_url[:3])
 					next_link = base_url + next_link
 
-				validation_output, opengraph_img_url = _llm_validate_lead(
+				validation_output, opengraph_img_url, tokens_used_usd = _llm_validate_lead(
 					next_link,
-					lead_user,
-					app_obj=min_app,
-					socketio_obj=worker_socketio
+					lead_user
 				)
+
+				total_tokens_used_usd += tokens_used_usd
 				logger.info(validation_output)
 				if validation_output:
 
@@ -172,5 +177,18 @@ def check_lead_task(lead_id):
 		lead.quality_score = model.predict_lead(lead_user, lead)
 		lead._finished()
 		db.session.commit()
+
+		if 'groq' in lead_user.lead_validation_model_preference:
+			link_val_mult = 6
+		else:
+			link_val_mult = 2
+
+		with min_app.app_context():
+			lead_user.move_credits(
+				tokens_used_usd * -1000 * link_val_mult,
+				CreditLedgerType.CHECK_LEAD,
+				socketio_obj=worker_socketio,
+				app_obj=min_app
+			)
 
 		worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')
