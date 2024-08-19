@@ -23,9 +23,9 @@ from .tasks import (
 )
 
 @socketio.on('get_initial_data')
-def handle_get_initial_data():
+def handle_get_initial_data(data):
 	if current_user.is_authenticated:
-		initial_data = current_user.get_initial_data()
+		initial_data = current_user.get_initial_data(data)
 		socketio.emit('initial_data', initial_data, to=f"user_{current_user.id}")
 
 @socketio.on('check_lead_source')

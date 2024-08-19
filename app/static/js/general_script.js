@@ -167,10 +167,14 @@ function searchTable(tableId, searchTerm) {
     rows.forEach(row => {
         const nameCell = row.querySelector('.table-cell[data-field="name"]');
         const urlCell = row.querySelector('.table-cell[data-field="name"] a');
+        const queryCell = row.querySelector('.table-cell[data-field="user_query"]');
+        const reformattedCell = row.querySelector('.table-cell[data-field="reformatted_query"]');
         const name = nameCell ? nameCell.textContent.toLowerCase() : '';
         const url = urlCell ? urlCell.href.toLowerCase() : '';
+        const query = queryCell ? queryCell.textContent.toLowerCase() : '';
+        const reformatted = reformattedCell ? reformattedCell.textContent.toLowerCase() : '';
 
-        if (name.includes(searchTerm.toLowerCase()) || url.includes(searchTerm.toLowerCase())) {
+        if (name.includes(searchTerm.toLowerCase()) || url.includes(searchTerm.toLowerCase()) || query.includes(searchTerm.toLowerCase()) || reformatted.includes(searchTerm.toLowerCase)) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
@@ -1098,8 +1102,8 @@ function initializeSelectAll(extra_tables=[]) {
 
     tables.forEach(tableId => {
     		console.log(`Setting up ${tableId}`);
-        const selectAllCheckbox = document.getElementById(`${tableId}-table-select-all`);
-        const dropdownMenu = document.querySelector(`#${tableId}-table-dropdown + .dropdown-menu`);
+        const selectAllCheckbox = document.getElementById(`${tableId}-select-all`);
+        const dropdownMenu = document.querySelector(`#${tableId}-dropdown + .dropdown-menu`);
         if (selectAllCheckbox) {
             selectAllCheckbox.addEventListener('change', function() {
             const rows = Array.from(document.querySelectorAll(`#${tableId}-table .table-row:not(.table-header)`))
@@ -1160,13 +1164,13 @@ function selectAllRows(tableId) {
 	const rows = Array.from(document.querySelectorAll(`#${tableId}-table .table-row:not(.table-header)`))
 					.filter(row => row.style.display !== 'none');
     rows.forEach(row => row.classList.add('table-row-selected'));
-    document.getElementById(`${tableId}-table-select-all`).checked = true;
+    document.getElementById(`${tableId}-select-all`).checked = true;
 }
 
 function unselectAllRows(tableId) {
     const rows = document.querySelectorAll(`#${tableId}-table .table-row:not(.table-header)`);
     rows.forEach(row => row.classList.remove('table-row-selected'));
-    document.getElementById(`${tableId}-table-select-all`).checked = false;
+    document.getElementById(`${tableId}-select-all`).checked = false;
 }
 
 function selectUncheckedRows(tableId) {
@@ -1284,7 +1288,7 @@ function hideAllSelected(tableId) {
 
 function updateSelectedCount(tableId) {
     const selectedRows = document.querySelectorAll(`#${tableId}-table .table-row.table-row-selected:not(.table-header)`);
-    const countElement = document.getElementById(`${tableId}-table-selected-count`);
+    const countElement = document.getElementById(`${tableId}-selected-count`);
     if (countElement) {
         countElement.textContent = selectedRows.length > 0 ? `${selectedRows.length} selected` : '';
     }

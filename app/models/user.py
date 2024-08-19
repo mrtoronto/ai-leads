@@ -111,15 +111,46 @@ class User(UserMixin, db.Model):
 		return entry, credits_remaining
 
 	@classmethod
-	def get_initial_data(cls):
-		requests = Query.query.filter_by(user_id=cls.id, hidden=False).all()
-		lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False).all()
-		leads = Lead.query.filter_by(user_id=cls.id).order_by(Lead.liked.desc(), Lead.valid.desc(), Lead.checked.desc(), Lead.id.desc()).all()
+	def get_initial_data(cls, data):
+		get_requests = data.get('get_requests', True)
+		get_lead_sources = data.get('get_lead_sources', True)
+		get_leads = data.get('get_leads', True)
+		get_hidden_leads = data.get('get_hidden_leads', False)
+		get_hidden_queries = data.get('get_hidden_queries', False)
+		get_in_progress = data.get('get_in_progress', False)
 
-		liked_leads = [l for l in leads if l.liked]
-		hidden_leads = [l for l in leads if l.hidden]
+		if get_requests:
+			if get_in_progress:
+				requests = Query.query.filter_by(user_id=cls.id, hidden=False, finished=False).all()
+			else:
+				requests = Query.query.filter_by(user_id=cls.id, hidden=False).all()
+		else:
+			requests = []
+		if get_lead_sources:
+			if get_in_progress:
+				lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False, checking=True).all()
+			else:
+				lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False).all()
+		else:
+			lead_sources = []
 
-		leads = [l for l in leads if not l.hidden]
+		if get_leads:
+			if get_in_progress:
+				leads = Lead.query.filter_by(user_id=cls.id, hidden=False, checking=True).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
+				hidden_leads = []
+				liked_leads = []
+			else:
+				leads = Lead.query.filter_by(user_id=cls.id).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
+				hidden_leads = [l for l in leads if l.hidden]
+				liked_leads = [l for l in leads if l.liked]
+				if not get_hidden_leads:
+					leads = [l for l in leads if not l.hidden]
+		else:
+			leads = []
+			liked_leads = []
+			hidden_leads = []
+
+
 
 		return {
 			'requests': [r.to_dict() for r in requests],

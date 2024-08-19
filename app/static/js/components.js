@@ -63,7 +63,11 @@ export function createQueryDetailsComponent(query) {
     `);
 }
 
-export function createTableComponent(title, tableId, searchId, selectAllId, dropdownId, dropdownActionClasses=[]) {
+export function createTableComponent(title, id_prefix, dropdownActionClasses=[]) {
+		const tableId = `${id_prefix}-table`;
+		const selectAllId = `${id_prefix}-select-all`;
+		const dropdownId = `${id_prefix}-dropdown`;
+		const searchId = `${id_prefix}-search`;
     const actionMenu = dropdownActionClasses.length > 0 ? `
         <div class="select-all-container">
             <span class="selected-count" id="${tableId}-selected-count"></span>

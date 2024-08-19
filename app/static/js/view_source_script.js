@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // container.innerHTML += createTableComponent("Associated Leads", "leads-table", "leads-search");
         //
         container.innerHTML += createTableComponent(
-              'Leads from Query', 'leads-table', 'leads-search', 'leads-table-select-all', 'leads-table-dropdown',
+              'Leads from Query', 'leads',
               ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
         );
 

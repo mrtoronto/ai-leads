@@ -17,25 +17,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const fetchData = () => {
         return new Promise(resolve => {
             socket.once('initial_data', data => {
+                dataCache.requests = data.requests.reduce((acc, request) => ({ ...acc, [request.id]: request }), {});
                 dataCache.sources = data.lead_sources.reduce((acc, source) => ({ ...acc, [source.id]: source }), {});
                 dataCache.leads = data.leads.reduce((acc, lead) => ({ ...acc, [lead.id]: lead }), {});
                 resolve(data);
             });
-            socket.emit('get_initial_data');
+            socket.emit('get_initial_data', { 'get_in_progress': true });
         });
     };
 
     document.getElementById('checking-queries-table-container').innerHTML = createTableComponent(
-        'Queries (in-progress)', 'checking-queries-table', 'checking-queries-search', 'checking-queries-table-select-all', 'checking-queries-table-dropdown',
+        'Queries (in-progress)', 'checking-queries',
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', '', 'check-all', 'hide-all', 'export-csv']
     );
 
     document.getElementById('checking-lead-sources-table-container').innerHTML = createTableComponent(
-        'Lead Sources (in-progress)', 'checking-lead-sources-table', 'checking-lead-sources-search', 'checking-lead-sources-table-select-all', 'checking-lead-sources-table-dropdown',
+        'Lead Sources (in-progress)', 'checking-lead-sources',
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
     );
     document.getElementById('checking-leads-table-container').innerHTML = createTableComponent(
-        'Leads (in-progress)', 'checking-leads-table', 'checking-leads-search', 'checking-leads-table-select-all', 'checking-leads-table-dropdown',
+        'Leads (in-progress)', 'checking-leads',
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
     );
 
@@ -49,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
         createTable('checking-leads-table', getLeadTableColumns(), leads_checking);
 
         initializeClicks();
-		    initializeSearches();
+		    initializeSearches(['checking-queries-table-container', 'checking-lead-sources-table-container', 'checking-leads-table-container']);
 				initializeSelectAll(['checking-queries-table-container', 'checking-lead-sources-table-container', 'checking-leads-table-container']);
     });
 		handleLeadEvents('checking-leads-table-container');

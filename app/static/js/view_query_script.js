@@ -16,11 +16,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // container.innerHTML += createTableComponent("Associated Sources", "sources-table", "sources-search");
         //
         container.innerHTML += createTableComponent(
-              'Leads from Query', 'leads-table', 'leads-search', 'leads-table-select-all', 'leads-table-dropdown',
+              'Leads from Query', 'leads',
               ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
           );
           container.innerHTML += createTableComponent(
-              'Sources from Query', 'sources-table', 'sources-search', 'sources-table-select-all', 'sources-table-dropdown',
+              'Sources from Query', 'sources',
               ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
           );
 
@@ -29,18 +29,10 @@ document.addEventListener('DOMContentLoaded', function() {
             sources: data.sources
         });
 
-
-        // Re-add event listeners for search inputs
-        document.getElementById('leads-search').addEventListener('input', (e) => searchTable('leads-table', e.target.value));
-        document.getElementById('sources-search').addEventListener('input', (e) => searchTable('sources-table', e.target.value));
-
 		    initializeClicks();
 		    initializeSearches();
 		    initializeSelectAll();
     });
-
-
-
 
     handleLeadEvents();
     handleSourceEvents();

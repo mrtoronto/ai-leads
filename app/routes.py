@@ -112,7 +112,7 @@ def login():
 			return redirect(url_for('main.index'))
 		print('User not found')
 		return render_template('login.html', email=email)
-	return render_template('login.html')
+	return render_template('login.html', title='Login')
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -157,7 +157,7 @@ def register():
 	if current_user.is_authenticated:
 		flash('You are already logged in!')
 		return redirect(url_for('main.index'))
-	return render_template('register.html')
+	return render_template('register.html', title='Register')
 
 @bp.route('/setup_preferences')
 @login_required
@@ -167,7 +167,7 @@ def setup_preferences():
 @bp.route('/settings')
 @login_required
 def settings():
-	return render_template('settings.html')
+	return render_template('settings.html', title='Settings')
 
 @bp.route('/logout')
 @login_required
@@ -209,7 +209,7 @@ def view_query(guid):
 	elif query.user_id != current_user.id:
 		flash('You are not authorized to view this query.')
 		return redirect(url_for('main.index'))
-	return render_template('view_query.html', query=query)
+	return render_template('view_query.html', query=query, title=f'Query: {query.user_query[:50] + "..." if len(query.user_query) > 50 else query.user_query}')
 
 @bp.route('/source/<guid>')
 @login_required
@@ -221,7 +221,7 @@ def view_source(guid):
 	elif source.user_id != current_user.id:
 		flash('You are not authorized to view this source.')
 		return redirect(url_for('main.index'))
-	return render_template('view_source.html', source=source)
+	return render_template('view_source.html', source=source, title=f'Source: {source.name[:50] + "..." if len(source.name) > 50 else source.name}')
 
 @bp.route('/lead/<guid>')
 @login_required
@@ -233,12 +233,12 @@ def view_lead(guid):
 	elif lead.user_id != current_user.id:
 		flash('You are not authorized to view this lead.')
 		return redirect(url_for('main.index'))
-	return render_template('view_lead.html', lead=lead)
+	return render_template('view_lead.html', lead=lead, title=f'Lead: {lead.name[:50] + "..." if len(lead.name) > 50 else lead.name}')
 
 
 @bp.route('/faqs')
 def faqs():
-	return render_template('faqs.html')
+	return render_template('faqs.html', title='FAQs')
 
 
 @bp.route('/admin')
@@ -418,11 +418,11 @@ def contact():
 		flash('Your message has been sent successfully.', 'success')
 		return redirect(url_for('main.contact'))
 
-	return render_template('contact.html')
+	return render_template('contact.html', title='Contact Us')
 
 @bp.route('/privacy_policy')
 def privacy_policy():
-	return render_template('privacy_policy.html')
+	return render_template('privacy_policy.html', title='Privacy Policy')
 
 
 @bp.route('/send-email')
@@ -459,16 +459,16 @@ def save_preferences():
 @bp.route('/leads')
 @login_required
 def leads():
-    return render_template('view_leads.html')
+    return render_template('view_leads.html', title="Your Leads")
 
 
 @bp.route('/jobs')
 @login_required
 def jobs():
-    return render_template('view_jobs.html')
+    return render_template('view_jobs.html', title="In-Progress")
 
 
 @bp.route('/queries')
 @login_required
 def queries():
-    return render_template('view_queries.html')
+    return render_template('view_queries.html', title="Your Queries")

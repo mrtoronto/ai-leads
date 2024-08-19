@@ -52,19 +52,18 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
 		document.getElementById('queries-table-container').innerHTML = createTableComponent(
-        'Queries', 'requests-table', 'requests-search', 'requests-table-select-all', 'requests-table-dropdown',
-        ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
+        'Queries', 'requests', ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
     );
     document.getElementById('lead-sources-table-container').innerHTML = createTableComponent(
-        'Lead Sources', 'sources-table', 'sources-search', 'sources-table-select-all', 'sources-table-dropdown',
+        'Lead Sources', 'sources',
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
     );
     document.getElementById('leads-table-container').innerHTML = createTableComponent(
-        'Leads', 'leads-table', 'leads-search', 'leads-table-select-all', 'leads-table-dropdown',
+        'Leads', 'leads',
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
     );
     document.getElementById('liked-leads-table-container').innerHTML = createTableComponent(
-        'Liked Leads', 'liked-leads-table', 'liked-leads-search', 'liked-leads-table-select-all', 'liked-leads-table-dropdown',
+        'Liked Leads', 'liked-leads',
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid', 'check-all', 'hide-all', 'export-csv']
     );
 
