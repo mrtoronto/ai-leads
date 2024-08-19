@@ -22,7 +22,7 @@ const desktopLeadNameFormatter = (cell, row) => {
 					: (row.checked && row.valid)
 					? '/static/assets/ai-leads-checkMark.png'
 					: (row.checked && !row.valid)
-					? '/static/assets/ai-leads-X.png'
+					? '/static/assets/ai-leads-x.png'
 					: '/static/assets/placeholder_img.png';
     const imageLink = row.guid
 					? `/lead/${row.guid}`
@@ -74,7 +74,7 @@ const mobileLeadNameFormatter = (cell, row) => {
 			: (row.checked && row.valid)
 			? '/static/assets/ai-leads-checkMark.png'
 			: (row.checked && !row.valid)
-			? '/static/assets/ai-leads-X.png'
+			? '/static/assets/ai-leads-x.png'
 			: '/static/assets/placeholder_img.png';
 	const imageLink = row.guid
 					? `/lead/${row.guid}`
@@ -268,7 +268,7 @@ getSourceTableColumns = () => [
 									: (row.checked && row.valid)
 									? '/static/assets/ai-leads-checkMark.png'
 									: (row.checked && !row.valid)
-									? '/static/assets/ai-leads-X.png'
+									? '/static/assets/ai-leads-x.png'
 									: '/static/assets/placeholder_img.png';
 		        const imageLink = row.guid
 							? `/source/${row.guid}`
@@ -451,7 +451,7 @@ if (window.is_mobile) {
 									: (row.checked && row.valid)
 									? '/static/assets/ai-leads-checkMark.png'
 									: (row.checked && !row.valid)
-									? '/static/assets/ai-leads-X.png'
+									? '/static/assets/ai-leads-x.png'
 									: '/static/assets/placeholder_img.png';
 				        const imageLink = row.guid
 									? `/source/${row.guid}`
