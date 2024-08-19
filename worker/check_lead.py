@@ -178,14 +178,14 @@ def check_lead_task(lead_id):
 		lead._finished()
 		db.session.commit()
 
-		if 'groq' in lead_user.lead_validation_model_preference:
-			link_val_mult = 6
+		if 'mini' in lead_user.lead_validation_model_preference:
+			mult = min_app.config['PRICING_MULTIPLIERS']['check_lead_mini']
 		else:
-			link_val_mult = 2
+			mult = min_app.config['PRICING_MULTIPLIERS']['check_lead']
 
 		with min_app.app_context():
 			lead_user.move_credits(
-				tokens_used_usd * -1000 * link_val_mult,
+				tokens_used_usd * -1000 * mult,
 				CreditLedgerType.CHECK_LEAD,
 				socketio_obj=worker_socketio,
 				app_obj=min_app

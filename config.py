@@ -48,3 +48,11 @@ class Config(object):
 	MAIL_DEFAULT_SENDER = ('Matt — aiLeads', 'matt@ai-leads.xyz')
 
 	SECURITY_PASSWORD_SALT = local_settings.SECURITY_PASSWORD_SALT
+
+	PRICING_MULTIPLIERS = {
+		'query': 400,
+		'check_source': 4,
+		'check_lead': 4,
+		'check_source_mini': 10,
+		'check_lead_mini': 10,
+	}

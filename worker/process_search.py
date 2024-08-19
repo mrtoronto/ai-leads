@@ -1,5 +1,5 @@
 from app import worker_socketio, create_minimal_app
-from app.models import LeadSource, Lead, Query, User
+from app.models import LeadSource, Lead, Query, User, CreditLedgerType
 from rq import get_current_job
 from app.llm import search_and_validate_leads, rewrite_query
 from flask_socketio import emit
@@ -39,14 +39,36 @@ def search_request_task(query_id):
 
 			worker_socketio.emit('new_request', {'request': request.to_dict()}, to=f'user_{request.user_id}')
 
-			success, error = search_and_validate_leads(
+			with min_app.app_context():
+				request.user.move_credits(
+					min_app.config['PRICING_MULTIPLIERS']['query'] * -1,
+					CreditLedgerType.QUERY,
+					socketio_obj=worker_socketio,
+					app_obj=min_app
+				)
+
+			success, error, tokens_used = search_and_validate_leads(
 				request,
 				previous_leads,
 				app_obj=min_app,
 				socketio_obj=worker_socketio
 			)
 
+
+			with min_app.app_context():
+				if 'mini' in request.user.source_collection_model_preference:
+					mult = min_app.config['PRICING_MULTIPLIERS']['check_source_mini']
+				else:
+					mult = min_app.config['PRICING_MULTIPLIERS']['check_source']
+				request.user.move_credits(
+					mult * -1000 * tokens_used,
+					CreditLedgerType.CHECK_QUERY,
+					socketio_obj=worker_socketio,
+					app_obj=min_app
+				)
+
 			if error:
+
 				request._finished(f'Error // {error}')
 				worker_socketio.emit('request_checked', {'request': request.to_dict()}, to=f'user_{request.user_id}')
 				return

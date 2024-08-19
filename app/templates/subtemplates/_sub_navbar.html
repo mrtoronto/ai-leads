@@ -12,6 +12,17 @@
   width: 20%;
   text-align: center;
 }
+
+.submit-request-btn:hover i {
+    transform: rotate(-10deg);
+    transition: transform 0.3s ease;
+}
+
+.submit-request-btn:focus i {
+    transform: rotate(20deg);
+    transition: transform 0.3s ease;
+}
+
 @media (max-width: 767px) {
   .btn-nav {
     font-size: 14px;
@@ -24,6 +35,7 @@
   }
 }
 </style>
+
 <div style="width: 80%; min-width: 300px; margin: auto;">
 	<div class="nav-container">
 	   	{% if request.path != '/' %}
@@ -48,3 +60,19 @@
 	<hr>
 
 </div>
+{% if request.path != '/' %}
+<div style="width: 80%; margin: auto; margin-top: 1em;">
+	<form id="lead-form" class="text-center" style="width: 80%; margin: auto;">
+		<div class="form-group mb-0">
+			<input placeholder="What are you looking for?" type="text" class="form-control" id="query" name="query" size="32" style="border-bottom-left-radius: 0px;border-bottom-right-radius: 0px; border: 2px solid #3E8CFF; background-color: #E6F6FF; ">
+		</div>
+		<button type="submit" class="btn-primary-fill-dark submit-request-btn w-100"  style="border-top-right-radius: 0px;border-top-left-radius: 0px; border-bottom-left-radius: 2000em; border-bottom-right-radius: 2000em; border: 6px solid #3E8CFF;">
+			<i class="fa-solid fa-wand-magic-sparkles"></i>
+		</button>
+	</form>
+	<hr>
+</div>
+
+<script src="/static/js/socket.js" type="module"></script>
+<script type="module" src="/static/js/new_request.js"></script>
+{% endif %}

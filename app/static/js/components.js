@@ -94,7 +94,7 @@ export function createTableComponent(title, id_prefix, dropdownActionClasses=[])
             <h2 style="text-align: center;">${title}</h2>
             <div id="${tableId}-count" class="text-center small"></div>
             <div style="display: flex; justify-content: space-between; margin-top: 1em;">
-                <input type="text" id="${searchId}" placeholder="Search ${title.toLowerCase()}..." class="table-search-input form-control" style="width: 50%;">
+                <input type="text" id="${searchId}" placeholder="Search ${title.toLowerCase()}..." class="table-search-input form-control" style="width: 100%;">
                 ${actionMenu}
             </div>
             <div id="${tableId}" class="table-container" style="width: 100%;">

@@ -1,5 +1,5 @@
 from app import worker_socketio, create_minimal_app
-from app.models import LeadSource, Lead, User, ModelTypes, UserModels
+from app.models import LeadSource, Lead, User, ModelTypes, UserModels, CreditLedgerType
 from rq import get_current_job
 from app.llm import collect_leads_from_url
 from app.utils import _tidy_url, _useful_url_check
@@ -31,13 +31,26 @@ def check_lead_source_task(lead_source_id):
 		previous_leads = '\n'.join(previous_leads) + '\n'
 		previous_leads = previous_leads.strip()
 
-		validation_output, opengraph_img_url = collect_leads_from_url(
+		validation_output, opengraph_img_url, tokens_used = collect_leads_from_url(
 			lead_source.url,
 			lead_source_user,
 			previous_leads,
 			app_obj=min_app,
 			socketio_obj=worker_socketio
 		)
+
+		with min_app.app_context():
+			if 'mini' in lead_source_user.source_collection_model_preference:
+				mult = min_app.config['PRICING_MULTIPLIERS']['check_source_mini']
+			else:
+				mult = min_app.config['PRICING_MULTIPLIERS']['check_source']
+
+			lead_source_user.move_credits(
+				mult * -1000 * tokens_used,
+				CreditLedgerType.CHECK_SOURCE,
+				socketio_obj=worker_socketio,
+				app_obj=min_app
+			)
 
 		if not validation_output:
 			lead_source._finished()
@@ -51,6 +64,16 @@ def check_lead_source_task(lead_source_id):
 			lead_source.save()
 			worker_socketio.emit('source_checked', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
 			return
+
+		if validation_output.is_lead:
+			new_lead_obj = Lead.check_and_add(
+				url=lead_source.url,
+				user_id=lead_source.user_id,
+				query_id=lead_source.query_id,
+				source_id=lead_source.id
+			)
+			if new_lead_obj:
+				worker_socketio.emit('new_lead', {'lead': new_lead_obj.to_dict()}, to=f'user_{lead_source.user_id}')
 
 		lead_source.name = validation_output.name or lead_source.name
 		lead_source.description = validation_output.description or lead_source.description

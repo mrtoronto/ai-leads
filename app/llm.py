@@ -48,6 +48,7 @@ class CollectionOutput(BaseModel):
 		False,
 		description="User is out of credits. Do not use this value, it will be set by the system if necessary."
 	)
+	is_lead: Optional[bool] = Field(None, description="Mark this value as true if this source should also be marked as a lead")
 
 
 class ValidationOutput(BaseModel):
@@ -195,6 +196,7 @@ MODEL_PRICING = {
 	"gpt-3.5-turbo-0125": {"input": 0.5 / 1e6, "output": 1.5 / 1e6 },
 	"gpt-4-0125-preview": {"input": 10 / 1e6 , "output": 30 / 1e6 },
 	"gpt-4o": {"input": 5 / 1e6 , "output": 15 / 1e6 },
+	"gpt-4o-mini": {"input": 0.15 / 1e6 , "output": 0.600 / 1e6 },
 	"gpt-4-turbo": {"input": 10 / 1e6 , "output": 30 / 1e6 },
 	"gpt-4-1106-preview": {"input": 10 / 1e6 , "output": 30 / 1e6 },
 	"gpt-4-1106-vision-preview": {"input": 10 / 1e6 , "output": 30 / 1e6 },
@@ -335,25 +337,19 @@ def search_serpapi(query):
 def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketio_obj=None, search_mult=10):
 
 	if new_request.user.credits < 1:
-		return [], "Insufficient credits"
+		return [], "Insufficient credits", 0
 	search_results = search_serpapi(new_request.reformatted_query)
 
-	if app_obj and socketio_obj:
-		with app_obj.app_context():
-			new_request.user.move_credits(
-				search_mult * -10,
-				CreditLedgerType.CHECK_SOURCE,
-				socketio_obj=socketio_obj
-			)
 	# print(search_results)
 	if not search_results:
-		return [], "Failed to search SERP API"
+		return [], "Failed to search SERP API", 0
 
 	leads = []
+	total_tokens_used = 0
 	for result in search_results.get('organic_results', []):
 		url = result.get('link')
 
-		collected_leads, image_url = collect_leads_from_url(
+		collected_leads, image_url, tokens_used_usd = collect_leads_from_url(
 			url=url,
 			user=new_request.user,
 			previous_leads=previous_leads,
@@ -361,8 +357,10 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 			socketio_obj=socketio_obj
 		)
 
+		total_tokens_used += tokens_used_usd
+
 		if collected_leads and collected_leads.not_enough_credits:
-			return [], "Insufficient credits"
+			return [], "Insufficient credits", total_tokens_used
 
 		if not collected_leads or (not collected_leads.leads and not collected_leads.lead_sources):
 			continue
@@ -400,7 +398,7 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 					with app_obj.app_context():
 						socketio_obj.emit('new_lead_source', {'source': new_source_obj.to_dict()}, to=f'user_{new_request.user_id}')
 
-	return True, ""
+	return True, "", total_tokens_used
 
 
 
@@ -449,7 +447,7 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 	if user.credits < 1:
 		return CollectionOutput(
 			not_enough_credits=True
-		), None
+		), None, 0
 
 	if 'groq' in user.lead_validation_model_preference:
 		url_collection_mult = 6
@@ -464,19 +462,11 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 			previous_leads=previous_leads,
 			model_name=user.source_collection_model_preference
 		)
-
-		if socketio_obj and app_obj:
-			with app_obj.app_context():
-				user.move_credits(
-					tokens_used_usd * -1000 * url_collection_mult,
-					CreditLedgerType.CHECK_SOURCE,
-					socketio_obj=socketio_obj
-				)
-		return output, opengraph_img_url
+		return output, opengraph_img_url, tokens_used_usd
 	else:
 		return CollectionOutput(
 			invalid_link=True
-		), opengraph_img_url
+		), opengraph_img_url, 0
 
 def rewrite_query(user_query, user, rewrite_query_mult=10, socketio_obj=None):
 	print(f'Rewriting query: {user_query}')

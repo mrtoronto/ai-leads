@@ -333,6 +333,7 @@ small {
 
 .select-all-container label {
     margin-right: 12px;
+    text-wrap: nowrap;
 }
 
 .dropdown {
