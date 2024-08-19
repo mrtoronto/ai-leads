@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% if title %}{{ title }} — @iLeads {% else %}@iLeads{% endif %}{% endblock %}</title>
+    <title>{% block title %}{% if title %}{{ title }} — aiLeads {% else %}aiLeads{% endif %}{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.12.0/sweetalert2.min.css" integrity="sha512-uE3H1RGE5HkSD6RqI8zbKiSCevsWKVi/74GXOSiu0+IcHO3pkLG+Ouzmn1sB6Be5Y6f+3fuIkGxsieEIUrgMTA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
@@ -20,12 +20,12 @@
     <link rel="icon" type="image/x-icon" href="/static/assets/favicon-192x192.ico">
     <link rel="icon" type="image/x-icon" href="/static/assets/favicon-256x256.ico">
 
-    <meta name="description" content="@iLeads is a platform that helps you generate on-demand leads for your business.">
+    <meta name="description" content="aiLeads is a platform that helps you generate on-demand leads for your business.">
     <meta name="keywords" content="leads, lead generation, business, marketing, sales, ai, artificial intelligence, machine learning, on-demand, b2b, b2c, b2b2c, b2b2b, b2c2b, b2c2c, b2g, b2g2b, b2g2c, b2g2g, g2b, g2b2b, g2b2c, g2c, g2c2b, g2c2c, g2g, g2g2b, g2g2c, g2g2g">
 
     <!-- can you add an opengraph image and metadata -->
-    <meta property="og:title" content="@iLeads">
-    <meta property="og:description" content="@iLeads is a platform that helps you generate on-demand leads for your business.">
+    <meta property="og:title" content="aiLeads">
+    <meta property="og:description" content="aiLeads is a platform that helps you generate on-demand leads for your business.">
     <meta property="og:image" content="https://ai-leads.xyz/static/assets/og-image.png">
     <meta property="og:image:type" content="image/png" />
     <meta property="og:url" content="https://ai-leads.xyz">
@@ -35,8 +35,8 @@
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@ai__leads">
-    <meta name="twitter:title" content="@iLeads">
-    <meta name="twitter:description" content="@iLeads is a platform that helps you generate on-demand leads for your business.">
+    <meta name="twitter:title" content="aiLeads">
+    <meta name="twitter:description" content="aiLeads is a platform that helps you generate on-demand leads for your business.">
     <meta name="twitter:image" content="https://ai-leads.xyz/static/assets/og-image.png">
 
 
@@ -67,7 +67,7 @@
 	    </button>
         <a class="navbar-brand" href="{{ url_for('main.index') }}">
         	<i class="header-robot fa-solid fa-robot mr-2"></i>
-        	<span style="font-family: monospace;">@i</span><b>Leads</b>
+        	<span style="font-family: monospace;">ai</span><b>Leads</b>
         </a>
         {% if current_user.is_authenticated %}
         <div id="creditCounter" class="small">
@@ -113,7 +113,7 @@
 
         <div class="container text-center">
 			<div class="container text-center" style="color: #fff;">
-				<span style="color: #fff; text-decoration: none; " >aiLEADS</span> |
+				<span style="color: #fff; text-decoration: none; " >aiLeads</span> |
 		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.faqs') }}">FAQs</a> |
 		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.contact') }}">Contact Us</a> |
 		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.privacy_policy') }}">Privacy Policy</a>

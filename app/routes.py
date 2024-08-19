@@ -150,7 +150,7 @@ def register():
 		# Send Welcome Email with Verification Link
 		token = generate_confirmation_token(new_user.email)
 		confirm_url = url_for('main.confirm_email', token=token, _external=True)
-		send_email(new_user.email, 'Welcome to aiLEADS!', 'welcome_email', name=new_user.username, confirm_url=confirm_url)
+		send_email(new_user.email, 'Welcome to aiLeads!', 'welcome_email', name=new_user.username, confirm_url=confirm_url)
 
 		# Redirect to setup preferences page
 		return redirect(url_for('main.setup_preferences')) # New route after registration
@@ -429,7 +429,7 @@ def privacy_policy():
 def send_email_route():
 	send_email(
 		to='matt.toronto97@gmail.com',
-		subject='Welcome to aiLEADS',
+		subject='Welcome to aiLeads',
 		template='welcome_email',
 		name="Recipient Name",  # Pass any required variables as keyword arguments
 		current_year=2024
