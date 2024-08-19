@@ -10,6 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash
 from config import Config
 from flask_caching import Cache
+from flask import send_file
 import time
 # from google.auth.exceptions import DefaultCredentialsError
 import logging
@@ -124,6 +125,17 @@ def create_app(config_class=Config):
 			for key, value in flask_app.config.items():
 				if 'PASS' not in key.upper():
 					logger.info(f"{key}: {value}")
+
+	@flask_app.route('/static/<path:filename>')
+	def custom_static(filename):
+		if "gzip" in request.headers.get('Accept-Encoding', ''):
+			return send_file(os.path.join(app.static_folder, filename+'.gz'),
+							as_attachment=False,
+							attachment_filename=filename,
+							mimetype='application/json',
+							headers={'Content-Encoding': 'gzip'})
+		else:
+			return app.send_static_file(filename)
 
 
 	logger.info(f'Returning app after {time.time() - start_time} seconds')
