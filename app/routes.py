@@ -12,7 +12,7 @@ from app import db
 import redis
 import os
 
-bp = Blueprint('main', __name__)
+bp = Blueprint('main', __name__, static_url_path='/static')
 
 def dir_last_updated(folder):
 	return str(max(os.path.getmtime(os.path.join(root_path, f))
