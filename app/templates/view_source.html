@@ -1,10 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5">
-	{% include "subtemplates/_sub_navbar.html" %}
-	<div class="loading-icon-container">
-		<img class="loading-icon" src="/static/assets/chunk-loader.svg">
-	</div>
+<div class="container d-flex justify-content-center align-items-center">
+    <div style="width: 100%;">
+    	{% include "subtemplates/_sub_navbar.html" %}
+		<div class="source-container mt-5">
+			<div class="loading-icon-container">
+				<img class="loading-icon" src="/static/assets/chunk-loader.svg">
+			</div>
+		</div>
+	    <div id="source-leads-table-container"></div>
+    </div>
 </div>
 <input type="hidden" id="source-id" value="{{ source.id }}">
 <script src="/static/js/view_source_script.js?last_updated={{ last_updated }}" type="module"></script>

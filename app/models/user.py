@@ -26,9 +26,10 @@ class User(UserMixin, db.Model):
 	last_trained_lead_model_at = db.Column(db.DateTime)
 	last_trained_source_model_at = db.Column(db.DateTime)
 	credits = db.Column(db.Integer, default=0)
-	search_model_preference = db.Column(db.String(50), default='gpt-4o')
-	source_collection_model_preference = db.Column(db.String(50), default='gpt-4o')
-	lead_validation_model_preference = db.Column(db.String(50), default='gpt-4o')
+	# search_model_preference = db.Column(db.String(50), default='gpt-4o')
+	# source_collection_model_preference = db.Column(db.String(50), default='gpt-4o')
+	# lead_validation_model_preference = db.Column(db.String(50), default='gpt-4o')
+	model_preference = db.Column(db.String(50), default='gpt-4o')
 
 	is_admin = db.Column(db.Boolean, default=False)
 
@@ -48,9 +49,7 @@ class User(UserMixin, db.Model):
 		self.last_trained_lead_model_at = kwargs.get('last_trained_lead_model_at')
 		self.last_trained_source_model_at = kwargs.get('last_trained_source_model_at')
 		self.credits = kwargs.get('credits', 0)
-		self.search_model_preference = kwargs.get('search_model_preference', 'gpt-4o')
-		self.source_collection_model_preference = kwargs.get('source_collection_model_preference', 'gpt-4o')
-		self.lead_validation_model_preference = kwargs.get('lead_validation_model_preference', 'gpt-4o')
+		self.model_preference = kwargs.get('model_preference', 'gpt-4o')
 		return self
 
 	def to_dict(self):
@@ -66,9 +65,7 @@ class User(UserMixin, db.Model):
 			'last_trained_lead_model_at': self.last_trained_lead_model_at,
 			'last_trained_source_model_at': self.last_trained_source_model_at,
 			'credits': self.credits,
-			'search_model_preference': self.search_model_preference,
-			'source_collection_model_preference': self.source_collection_model_preference,
-			'lead_validation_model_preference': self.lead_validation_model_preference,
+			'model_preference': self.model_preference,
 			'is_admin': self.is_admin
 		}
 
@@ -118,39 +115,62 @@ class User(UserMixin, db.Model):
 		get_hidden_leads = data.get('get_hidden_leads', False)
 		get_hidden_queries = data.get('get_hidden_queries', False)
 		get_in_progress = data.get('get_in_progress', False)
+		request = None
+		source = None
+		lead = None
 
-		if get_requests:
-			if get_in_progress:
-				requests = Query.query.filter_by(user_id=cls.id, hidden=False, finished=False).all()
-			else:
-				requests = Query.query.filter_by(user_id=cls.id, hidden=False).all()
+		requests = []
+		lead_sources = []
+		leads = []
+		liked_leads = []
+		hidden_leads = []
+
+		query_id = data.get('query_id', None)
+		source_id = data.get('source_id', None)
+		lead_id = data.get('lead_id', None)
+
+		if query_id:
+			request = Query.get_by_id(query_id)
+			lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False, query_id=query_id).all()
+			leads = Lead.query.filter_by(user_id=cls.id, hidden=False, query_id=query_id).all()
+
+		elif source_id:
+			source = LeadSource.get_by_id(source_id)
+			leads = Lead.query.filter_by(user_id=cls.id, hidden=False, source_id=source_id).all()
+
+		elif lead_id:
+			lead = Lead.get_by_id(lead_id)
+
 		else:
-			requests = []
-		if get_lead_sources:
-			if get_in_progress:
-				lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False, checking=True).all()
+			if get_requests:
+				if get_in_progress:
+					requests = Query.query.filter_by(user_id=cls.id, hidden=False, finished=False).all()
+				else:
+					if get_hidden_queries:
+						requests = Query.query.filter_by(user_id=cls.id).all()
+					else:
+						requests = Query.query.filter_by(user_id=cls.id, hidden=False).all()
 			else:
-				lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False).all()
-		else:
-			lead_sources = []
-
-		if get_leads:
-			if get_in_progress:
-				leads = Lead.query.filter_by(user_id=cls.id, hidden=False, checking=True).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
-				hidden_leads = []
-				liked_leads = []
+				requests = []
+			if get_lead_sources:
+				if get_in_progress:
+					lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False, checking=True).all()
+				else:
+					lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False).all()
 			else:
-				leads = Lead.query.filter_by(user_id=cls.id).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
-				hidden_leads = [l for l in leads if l.hidden]
-				liked_leads = [l for l in leads if l.liked]
-				if not get_hidden_leads:
-					leads = [l for l in leads if not l.hidden]
-		else:
-			leads = []
-			liked_leads = []
-			hidden_leads = []
+				lead_sources = []
 
-
+			if get_leads:
+				if get_in_progress:
+					leads = Lead.query.filter_by(user_id=cls.id, hidden=False, checking=True).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
+					hidden_leads = []
+					liked_leads = []
+				else:
+					leads = Lead.query.filter_by(user_id=cls.id).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
+					hidden_leads = [l for l in leads if l.hidden]
+					liked_leads = [l for l in leads if l.liked]
+					if not get_hidden_leads:
+						leads = [l for l in leads if not l.hidden]
 
 		return {
 			'requests': [r.to_dict() for r in requests],
@@ -158,4 +178,7 @@ class User(UserMixin, db.Model):
 			'leads': [l.to_dict() for l in leads],
 			'n_liked': len(liked_leads),
 			'n_hidden': len(hidden_leads),
+			'query': request.to_dict() if request else None,
+			'source': source.to_dict() if source else None,
+			'lead': lead.to_dict() if lead else None
 		}

@@ -1,37 +1,32 @@
-import { socket } from "./socket.js";
-import { searchTable, updateRow, addRow, createAllTables, initializeClicks, initializeSearches, initializeSelectAll } from "./general_script.js";
+import { socket, fetchData } from "./socket.js";
+import { createTable, updateCounts, getLeadTableColumns, initializeClicks, initializeSearches, initializeSelectAll } from "./general_script.js";
 import { createSourceDetailsComponent, createTableComponent, initializeLikeButtons } from "./components.js";
 import { handleLeadEvents, handleSourceEvents } from "./socket_handlers.js";
 
 
 document.addEventListener('DOMContentLoaded', function() {
     const sourceId = document.getElementById('source-id').value;
-    socket.emit('get_source_data', { source_id: sourceId });
 
-    socket.on('source_data', function(data) {
-        const container = document.querySelector('.container');
+    document.getElementById('source-leads-table-container').innerHTML = createTableComponent(
+        'Leads from Source', 'source-leads',
+        ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
+    );
+
+    fetchData({'source_id': sourceId}).then(data => {
+    		console.log(data);
+        const container = document.querySelector('.source-container');
         container.innerHTML = '';
 
         container.innerHTML += createSourceDetailsComponent(data.source);
-        // container.innerHTML += createTableComponent("Associated Leads", "leads-table", "leads-search");
-        //
-        container.innerHTML += createTableComponent(
-              'Leads from Query', 'leads',
-              ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
-        );
 
-        createAllTables({
-            leads: data.leads
-        });
+        createTable('source-leads-table', getLeadTableColumns(), data.leads.filter(lead => !lead.hidden));
 
-        initializeClicks();
-        initializeSearches();
-        initializeSelectAll();
-        handleLeadEvents();
+		    initializeClicks();
+		    initializeSearches(['source-leads']);
+		    initializeSelectAll(['source-leads']);
+
+				updateCounts();
     });
 
-    socket.on('leads_hidden', async data => { for (const id of data.lead_ids) {handleHideEvent('leads-table', id);} });
-    socket.on('lead_check_started', async (data) => updateRow('leads-table', data.lead.id, data));
-    socket.on('lead_checked', async (data) => updateRow('leads-table', data.lead.id, data.lead));
-    socket.on('new_lead', async (data) => addRow('leads-table', data.lead));
+    handleLeadEvents('source-leads');
 });

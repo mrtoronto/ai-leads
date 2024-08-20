@@ -1,5 +1,6 @@
 import { CountUp } from "/static/js/countUp.min.js";
 let socket;
+let fetchData;
 
 import { updateRow } from "/static/js/general_script.js";
 
@@ -45,6 +46,10 @@ function initializeSocket() {
     // Get the current value of the credit counter
     const currentValue = parseInt($('#creditValue').text().replace(/[^0-9.-]+/g, ""), 10);
 
+		if (data.credits > currentValue) {
+			return;
+		}
+
     // Create a new CountUp instance
     const countUp = new CountUp(
     		'creditValue',
@@ -66,8 +71,21 @@ function initializeSocket() {
 				}
     });
 	});
+
+
+
 }
 
 initializeSocket();
 
-export { socket };
+fetchData = (data) => {
+    return new Promise(resolve => {
+        socket.once('initial_data', data => {
+            resolve(data);
+        });
+        socket.emit('get_initial_data', data);
+    });
+};
+
+
+export { socket, fetchData };

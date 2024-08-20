@@ -86,21 +86,10 @@ window.current_user_email = "{{ current_user.email }}";
             <textarea class="form-control" id="user-description" name="user_description" rows="3" maxlength="2000">{{ current_user.user_description }}</textarea>
         </div>
         <div class="form-group mb-3">
-            <label for="source-collection-model-preference">Source Collection Model</label>
-            <select class="form-select" id="source-collection-model-preference" name="source_collection_model_preference">
-                <option value="gpt-4o" {{ 'selected' if current_user.source_collection_model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
-                <option value="gpt-4o-mini" {{ 'selected' if current_user.source_collection_model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
-                <!-- <option value="groq/llama-3.1-70b-versatile" {{ 'selected' if current_user.source_collection_model_preference == 'groq/llama-3.1-70b-versatile' else '' }}>LLama 3.1 70B</option> -->
-                <!-- <option value="groq/mixtral-8x7b-32768" {{ 'selected' if current_user.source_collection_model_preference == 'groq/mixtral-8x7b-32768' else '' }}>Mixtral 8x7B</option> -->
-            </select>
-        </div>
-        <div class="form-group mb-3">
-            <label for="lead-validation-model-preference">Lead Validation Model</label>
-            <select class="form-select" id="lead-validation-model-preference" name="lead_validation_model_preference">
-                <option value="gpt-4o" {{ 'selected' if current_user.lead_validation_model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
-                <option value="gpt-4o-mini" {{ 'selected' if current_user.lead_validation_model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
-                <!-- <option value="groq/llama-3.1-70b-versatile" {{ 'selected' if current_user.lead_validation_model_preference == 'groq/llama-3.1-70b-versatile' else '' }}>LLama 3.1 70B</option> -->
-                <!-- <option value="groq/mixtral-8x7b-32768" {{ 'selected' if current_user.lead_validation_model_preference == 'groq/mixtral-8x7b-32768' else '' }}>Mixtral 8x7B</option> -->
+            <label for="model-preference">Model</label>
+            <select class="form-select" id="model-preference" name="model_preference">
+                <option value="gpt-4o" {{ 'selected' if current_user.model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
+                <option value="gpt-4o-mini" {{ 'selected' if current_user.model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
             </select>
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%;">Save</button>

@@ -26,13 +26,15 @@ class Lead(db.Model):
 	created_at = db.Column(db.DateTime, default=lambda: datetime.now(pytz.utc))
 	valid = db.Column(db.Boolean, default=False)
 	checked = db.Column(db.Boolean, default=False)
-	hidden = db.Column(db.Boolean, default=False)
 	liked = db.Column(db.Boolean, default=False)
 	checking = db.Column(db.Boolean, default=False)
-	hidden_at = db.Column(db.DateTime)
 	quality_score = db.Column(db.Float)
 	image_url = db.Column(db.String(255))
 	jobs = db.relationship('Job', backref='lead', lazy='dynamic')
+
+	hidden_at = db.Column(db.DateTime)
+	hidden = db.Column(db.Boolean, default=False)
+	auto_hidden = db.Column(db.Boolean, default=False)
 
 	def to_dict(self):
 		return {
@@ -161,6 +163,16 @@ class Lead(db.Model):
 			print(f'Error adding lead: {e}')
 			db.session.rollback()
 			return None
+
+	def _hide(self):
+		self.hidden = True
+		self.hidden_at = datetime.now(pytz.utc)
+		self.save()
+
+	def _unhide(self):
+		self.hidden = False
+		self.hidden_at = None
+		self.save()
 
 	def _finished(self):
 		self.checked = True

@@ -108,14 +108,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const pref_org_size = document.getElementById('preferred_org_size').value;
         const description = document.getElementById('user-description').value;
         // const searchModelPreference = document.getElementById('search-model-preference').value;
-        const sourceCollectionModelPreference = document.getElementById('source-collection-model-preference').value;
-        const leadValidationModelPreference = document.getElementById('lead-validation-model-preference').value;
+        // const sourceCollectionModelPreference = document.getElementById('source-collection-model-preference').value;
+        // const leadValidationModelPreference = document.getElementById('lead-validation-model-preference').value;
+        const modelPreference = document.getElementById('model-preference').value;
 
         const settingsData = {
             user_description: description,
             // search_model_preference: searchModelPreference,
-            source_collection_model_preference: sourceCollectionModelPreference,
-            lead_validation_model_preference: leadValidationModelPreference,
+            model_preference: modelPreference,
             email: email,
             industry: industry,
             preferred_org_size: pref_org_size

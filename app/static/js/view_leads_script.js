@@ -2,6 +2,7 @@ import { socket } from "./socket.js";
 import {
     dataCache,
     initializeSearches,
+    updateCounts,
     initializeClicks,
     getLeadTableColumns,
     createTable,
@@ -41,18 +42,19 @@ document.addEventListener('DOMContentLoaded', function() {
     );
 
     // Initialize tables
-    fetchData().then(leads => {
-        createTable('all-leads-table', getLeadTableColumns(), leads);
+    fetchData({'get_lead_sources': false, 'get_hidden_leads': true, 'get_requests': false}).then(leads => {
+        createTable('all-leads-table', getLeadTableColumns(), leads.filter(lead => !lead.hidden));
         createTable('hidden-leads-table', getLeadTableColumns(), leads.filter(lead => lead.hidden), true);
-        createTable('checked-leads-table', getLeadTableColumns(), leads.filter(lead => !lead.checking && lead.checked));
-        createTable('unchecked-leads-table', getLeadTableColumns(), leads.filter(lead => !lead.checking && !lead.checked));
+        createTable('checked-leads-table', getLeadTableColumns(), leads.filter(lead => !lead.checking && lead.checked && !lead.hidden));
+        createTable('unchecked-leads-table', getLeadTableColumns(), leads.filter(lead => !lead.checking && !lead.checked && !lead.hidden));
 		    initializeSearches(['all-leads', 'hidden-leads', 'checked-leads', 'unchecked-leads']);
 		    initializeClicks();
 		    initializeSelectAll(['all-leads', 'hidden-leads', 'checked-leads', 'unchecked-leads']);
+				updateCounts();
     });
-    handleLeadEvents('all-leads-table-container');
-    handleLeadEvents('hidden-leads-table-container');
-    handleLeadEvents('checked-leads-table-container');
-    handleLeadEvents('unchecked-leads-table-container');
+    handleLeadEvents('all-leads');
+    handleLeadEvents('hidden-leads');
+    handleLeadEvents('checked-leads');
+    handleLeadEvents('unchecked-leads');
 
 });

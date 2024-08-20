@@ -43,7 +43,7 @@ def handle_check_lead_source(data):
 		lead_source.checking = True
 		lead_source.save()
 		queue_check_lead_source_task(lead_source_id)
-		socketio.emit('lead_source_check_started', {'source': lead_source.to_dict()}, to=f"user_{lead_source.user_id}")
+		socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f"user_{lead_source.user_id}")
 	else:
 		socketio.emit('error', {'message': 'Lead source not found or already checked'}, to=f"user_{lead_source.user_id}")
 
@@ -56,7 +56,7 @@ def handle_contacted_lead(data):
 		lead.liked = not lead.liked if lead.liked != None else True
 		lead.save()
 
-		socketio.emit('lead_liked', {'lead': lead.to_dict()}, to=f"user_{lead.user_id}")
+		socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f"user_{lead.user_id}")
 
 @socketio.on('check_lead')
 @login_required
@@ -73,7 +73,7 @@ def handle_check_lead(data):
 		lead.save()
 
 		queue_check_lead_task(lead_id)
-		socketio.emit('lead_check_started', {'lead': lead.to_dict()}, to=f"user_{lead.user_id}")
+		socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f"user_{lead.user_id}")
 	else:
 		socketio.emit('error', {'message': 'Lead not found'}, to=f"user_{current_user.id}")
 
@@ -83,13 +83,27 @@ def handle_hide_request(data):
 	query_id = data['query_id']
 	request = Query.get_by_id(query_id)
 	if request:
-		hidden_source_ids, hidden_lead_ids = request._hide()
+		hidden_sources, hidden_leads = request._hide()
 
-		socketio.emit('requests_hidden', {'query_ids': [query_id]}, to=f"user_{request.user_id}")
-		socketio.emit('leads_hidden', {'lead_ids': hidden_lead_ids}, to=f"user_{request.user_id}")
-		socketio.emit('sources_hidden', {'source_ids': hidden_source_ids}, to=f"user_{request.user_id}")
+		socketio.emit('requests_updated', {'queries': [request.to_dict()]}, to=f"user_{request.user_id}")
+		socketio.emit('leads_updated', {'leads': [lead.to_dict() for lead in hidden_leads]}, to=f"user_{request.user_id}")
+		socketio.emit('sources_updated', {'sources': [source.to_dict() for source in hidden_sources]}, to=f"user_{request.user_id}")
 	else:
 		socketio.emit('error', {'message': 'Query not found'}, to=f"user_{current_user.id}")
+
+@socketio.on('unhide_request')
+@login_required
+def handle_unhide_request(data):
+    query_id = data['query_id']
+    request = Query.get_by_id(query_id)
+    if request:
+        unhidden_sources, unhidden_leads = request._unhide()
+
+        socketio.emit('requests_updated', {'queries': [request.to_dict()]}, to=f"user_{request.user_id}")
+        socketio.emit('leads_updated', {'leads': [lead.to_dict() for lead in unhidden_leads]}, to=f"user_{request.user_id}")
+        socketio.emit('sources_updated', {'sources': [source.to_dict() for source in unhidden_sources]}, to=f"user_{request.user_id}")
+    else:
+        socketio.emit('error', {'message': 'Query not found'}, to=f"user_{current_user.id}")
 
 @socketio.on('hide_source')
 @login_required
@@ -98,10 +112,10 @@ def handle_hide_source(data):
 	lead_source = LeadSource.get_by_id(source_id)
 	if lead_source:
 		print(f'Hiding source {source_id}')
-		hidden_lead_ids = lead_source._hide()
+		hidden_leads = lead_source._hide()
 
-		socketio.emit('sources_hidden', {'source_ids': [source_id]}, to=f"user_{lead_source.user_id}")
-		socketio.emit('leads_hidden', {'lead_ids': hidden_lead_ids}, to=f"user_{lead_source.user_id}")
+		socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f"user_{lead_source.user_id}")
+		socketio.emit('leads_updated', {'leads': [l.to_dict() for l in hidden_leads]}, to=f"user_{lead_source.user_id}")
 	else:
 		socketio.emit('error', {'message': 'Lead source not found'}, to=f"user_{current_user.id}")
 
@@ -114,9 +128,30 @@ def handle_hide_lead(data):
 	if lead:
 		lead.hidden = True
 		lead.save()
-		socketio.emit('leads_hidden', {'lead_ids': [lead_id]}, to=f"user_{lead.user_id}")
+		socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f"user_{lead.user_id}")
 	else:
 		socketio.emit('error', {'message': 'Lead not found'}, to=f"user_{current_user.id}")
+
+@socketio.on('unhide_lead')
+@login_required
+def handle_unhide_lead(data):
+	lead_id = data['lead_id']
+	lead = Lead().get_by_id(lead_id)
+	if lead:
+		lead.hidden = False
+		lead.save()
+		socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f"user_{lead.user_id}")
+
+@socketio.on('unhide_source')
+@login_required
+def handle_unhide_source(data):
+	source_id = data['source_id']
+	lead_source = LeadSource.get_by_id(source_id)
+	if lead_source:
+		unhidden_leads = lead_source._unhide()
+
+		socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f"user_{lead_source.user_id}")
+		socketio.emit('leads_updated', {'leads': [l.to_dict() for l in unhidden_leads]}, to=f"user_{lead_source.user_id}")
 
 
 @socketio.on('create_lead_source')
@@ -129,7 +164,7 @@ def handle_create_lead_source(data):
 		query_id=None
 	)
 	if new_lead_source:
-		socketio.emit('new_lead_source', {'source': new_lead_source.to_dict()}, to=f'user_{new_lead_source.user_id}')
+		socketio.emit('sources_updated', {'sources': [new_lead_source.to_dict()]}, to=f'user_{new_lead_source.user_id}')
 
 @socketio.on('create_lead')
 @login_required
@@ -142,7 +177,7 @@ def handle_create_lead(data):
 		source_id=None
 	)
 	if new_lead:
-		socketio.emit('new_lead', {'lead': new_lead.to_dict()}, to=f'user_{new_lead.user_id}')
+		socketio.emit('leads_updated', {'leads': [new_lead.to_dict()]}, to=f'user_{new_lead.user_id}')
 
 
 @socketio.on('update_email')
@@ -170,16 +205,14 @@ def handle_update_user_settings(data):
 		user = User.get_by_id(current_user.id)
 		if user:
 			user.user_description = data.get('user_description', user.user_description)
-			user.source_collection_model_preference = data.get('source_collection_model_preference', user.source_collection_model_preference)
-			user.lead_validation_model_preference = data.get('lead_validation_model_preference', user.lead_validation_model_preference)
 			user.industry = data.get('industry', user.industry)
 			user.preferred_org_size = data.get('preferred_org_size', user.preferred_org_size)
+			user.model_preference = data.get('model_preference', user.model_preference)
 
 			db.session.commit()
 			emit('update_user_settings_response', {'success': True}, to=f"user_{user.id}")
 	else:
 		emit('update_user_settings_response', {'success': False}, to=f"user_{current_user.id}")
-
 
 @socketio.on('retrain_model')
 def handle_retrain_model():

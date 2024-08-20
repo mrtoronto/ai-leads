@@ -110,6 +110,42 @@ const mobileLeadNameFormatter = (cell, row) => {
 							</div>`;
 }
 
+const addRowById = (tableId, row) => {
+	switch (tableId) {
+	    case 'requests-table':
+	        return !row.hidden;
+	    case 'sources-table':
+	        return !row.hidden;
+	    case 'checking-lead-sources-table':
+	        return !row.hidden;
+	    case 'leads-table':
+	        return !row.hidden;
+	    case 'liked-leads-table':
+	        return !row.hidden;
+	    case 'checking-leads-table':
+	        return !row.hidden;
+	    case 'checked-leads-table':
+	        return !row.hidden;
+	    case 'unchecked-leads-table':
+	        return !row.hidden;
+	    case 'all-leads-table':
+	        return !row.hidden;
+	    case 'hidden-leads-table':
+	        return row.hidden;
+	    case 'hidden-queries-table':
+	        return row.hidden;
+	    case 'running-queries-table':
+	        return !row.finished && !row.hidden;
+	    default:
+	        if (tableId.includes('queries') || tableId.includes('sources') || tableId.includes('leads')) {
+	            return !row.hidden;
+	        }
+	        console.error(`Unknown table id: ${tableId}`);
+	        return false;
+	}
+
+}
+
 const getTableColumnsById = (tableId) => {
     switch(tableId) {
         case 'requests-table':
@@ -133,6 +169,13 @@ const getTableColumnsById = (tableId) => {
         case 'hidden-leads-table-container':
             return getLeadTableColumns();
         default:
+						if (tableId.includes('queries')) {
+						    return getQueryTableColumns();
+						} else if (tableId.includes('sources')) {
+						    return getSourceTableColumns();
+						} else if (tableId.includes('leads')) {
+						    return getLeadTableColumns();
+						}
             console.error(`Unknown table id: ${tableId}`);
             return [];
     }
@@ -147,15 +190,34 @@ const applyFormatter = (formatter, cell, row) => {
 
 // Helper functions
 function updateCounts() {
-    const tables = ['requests-table', 'sources-table', 'leads-table', 'liked-leads-table'];
+		const tables = [
+		    "requests-table",
+		    "sources-table",
+		    "checking-lead-sources-table",
+		    "leads-table",
+		    "liked-leads-table",
+		    "checking-leads-table",
+		    "checked-leads-table",
+		    "unchecked-leads-table",
+		    "all-leads-table",
+		    "hidden-leads-table",
+				"all-queries-table",
+				"running-queries-table",
+				"hidden-queries-table"
+		];
     tables.forEach(tableId => {
         const table = document.getElementById(tableId);
         if (table) {
-            const count = table.querySelectorAll('.table-row:not(.table-header)').length;
+						const bodyContainer = table.querySelector('.table-body-container');
+						const count = bodyContainer ? bodyContainer.querySelectorAll('.table-row:not(.table-header)').length : 0;
             const countElement = document.getElementById(`${tableId}-count`);
             if (countElement) {
                 countElement.textContent = `Total: ${count}`;
+            } else {
+            	console.log(`Count element not found for table: ${tableId}`);
             }
+        } else {
+        	console.log(`Table not found: ${tableId}`);
         }
     });
 }
@@ -243,8 +305,15 @@ getQueryTableColumns = () => [
     { id: 'reformatted_query', width: '200px', name: 'Reformatted Query', field: 'reformatted_query' },
     { id: 'n_leads', name: '# of Leads', width: '90px', field: 'n_leads' },
     { id: 'n_sources', name: '# of Sources', width: '90px', field: 'n_sources' },
-    { id: 'finished', name: 'Finished', width: '90px', field: 'finished', formatter: (cell) => cell ? '<i class="fa-solid fa-check fa-icon">' : '<i class="fa-solid fa-x"></i>' },
-    { id: 'hidden', name: 'Hide', width: '90px', field: 'hidden', formatter: (_, row) => `<div class="btn-danger-fill-light hide-request-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>` }
+    { id: 'hidden', name: 'Hide', width: '90px', field: 'hidden', formatter: (_, row) => {
+				if (row.hidden) {
+					return `<div class="btn-danger-fill-light unhide-request-btn socket-btn full-width-action-btn" data-id="${row.id}"><i class="fa-solid fa-trash-can-arrow-up fa-icon"></i></div>`
+
+			 } else {
+					return `<div class="btn-danger-fill-light hide-request-btn socket-btn full-width-action-btn" data-id="${row.id}"><i class="fa-solid fa-trash-can fa-icon"></i></div>`
+				}
+			}
+    }
 ];
 
 let getSourceTableColumns;
@@ -306,16 +375,16 @@ getSourceTableColumns = () => [
             if (row.checking) {
                 return `<div class="actions-container">
                             <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner" data-id="${row.id}"></div>
-                            <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash-can fa-icon"></i></div>
                         </div>`;
             } else if (row.checked) {
                 return `<div class="actions-container">
-                            <div class="btn-danger-fill-light hide-source-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-source-btn socket-btn full-width-action-btn" data-id="${row.id}"><i class="fa-solid fa-trash-can fa-icon"></i></div>
                         </div>`;
             } else {
                 return `<div class="actions-container">
                             <div class="btn-primary-fill-dark check-source-btn socket-btn" data-id="${row.id}" style="border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
-                            <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-trash fa-icon"></i></div>
+                            <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-trash-can fa-icon"></i></div>
                         </div>`;
             }
         }
@@ -359,34 +428,40 @@ getLeadTableColumns = () => [
             `;
         }
     },
-    {
-        id: 'actions',
-        width: '120px',
-        name: 'Actions',
-        field: 'actions',
-        formatter: (cell, row) => {
-            if (row.checking) {
-                return `<div class="actions-container">
-                            <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" data-id="${row.id}"></div>
-                            <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
-                        </div>`;
-            } else if ((row.checked) && (row.valid)) {
-                return `<div class="actions-container">
-                            <div class="${row.liked ? 'btn-primary-fill-light' : 'btn-primary-outline-light'} liked-lead-btn socket-btn" data-id="${row.id}" style="border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
-                            <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-trash fa-icon"></i></div>
-                        </div>`;
-            } else if (row.checked) {
-                return `<div class="actions-container">
-                            <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
-                        </div>`;
-            } else {
-                return `<div class="actions-container">
-                            <div class="btn-primary-fill-dark check-lead-btn socket-btn" data-id="${row.id}" style="border-top-right-radius: 0; border-bottom-right-radius: 0; "><i class="fa-brands fa-searchengin fa-icon"></i></div>
-                            <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="border-top-left-radius: 0; border-bottom-left-radius: 0; "><i class="fa-solid fa-trash fa-icon"></i></div>
-                        </div>`;
-            }
-        }
-    }
+		{
+		    id: 'actions',
+		    width: '120px',
+		    name: 'Actions',
+		    field: 'actions',
+		    formatter: (cell, row) => {
+		        if (row.checking) {
+		            return `<div class="actions-container">
+		                        <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" data-id="${row.id}"></div>
+		                        <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}"><i class="fa-solid fa-trash-can fa-icon"></i></div>
+		                    </div>`;
+		        } else if ((row.checked) && (row.valid) && (!row.hidden)) {
+		            return `<div class="actions-container">
+		                        <div class="${row.liked ? 'btn-primary-fill-light' : 'btn-primary-outline-light'} liked-lead-btn socket-btn" data-id="${row.id}" style="border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
+		                        <div class="${row.hidden ? 'btn-danger-fill-light unhide-lead-btn' : 'btn-danger-fill-light hide-lead-btn'} socket-btn action-child-border-left" data-id="${row.id}" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+		                            <i class="fa-solid ${row.hidden ? 'fa-trash-can-arrow-up' : 'fa-trash-can'} fa-icon"></i>
+		                        </div>
+		                    </div>`;
+		        } else if ((row.checked) || (row.hidden)) {
+		            return `<div class="actions-container">
+		                        <div class="${row.hidden ? 'btn-danger-fill-light unhide-lead-btn' : 'btn-danger-fill-light hide-lead-btn'} socket-btn full-width-action-btn" data-id="${row.id}">
+		                            <i class="fa-solid ${row.hidden ? 'fa-trash-can-arrow-up' : 'fa-trash-can'} fa-icon"></i>
+		                        </div>
+		                    </div>`;
+		        } else {
+		            return `<div class="actions-container">
+		                        <div class="btn-primary-fill-dark check-lead-btn socket-btn" data-id="${row.id}" style="border-top-right-radius: 0; border-bottom-right-radius: 0; "><i class="fa-brands fa-searchengin fa-icon"></i></div>
+		                        <div class="${row.hidden ? 'btn-danger-fill-light unhide-lead-btn' : 'btn-danger-fill-light hide-lead-btn'} socket-btn action-child-border-left" data-id="${row.id}" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+		                            <i class="fa-solid ${row.hidden ? 'fa-trash-can-arrow-up' : 'fa-trash-can'} fa-icon"></i>
+		                        </div>
+		                    </div>`;
+		        }
+		    }
+		}
 ];
 
 if (window.is_mobile) {
@@ -417,16 +492,18 @@ if (window.is_mobile) {
 			}
 		},
 		{
-						id: 'actions',
-						name: 'Actions',
-						field: 'actions',
-						formatter: (_, row) => `
-							<div class="actions-container" style="display: flex; margin-top: 0px;">
-										<div style="width: 50%;margin: auto; text-align: center;" class="socket-btn">
-											${row.finished ? '<i class="fa-solid fa-check fa-icon">' : '<i class="fa-solid fa-x fa-icon">'}</i>
-										</div>
-										<div style="width: 50%;margin: auto; text-align: center;" class="btn-danger-fill-light hide-request-btn socket-btn" data-id="${row.id}"><i class="fa-solid fa-trash fa-icon"></i></div>
-							</div>`
+				id: 'actions',
+				name: 'Actions',
+				field: 'actions',
+				formatter: (_, row) => `
+					<div class="actions-container" style="display: flex; margin-top: 0px;">
+								<div style="width: 50%;margin: auto; text-align: center;" class="socket-btn">
+									${row.finished ? '<i class="fa-solid fa-check fa-icon">' : '<i class="fa-solid fa-x fa-icon">'}</i>
+								</div>
+								<div style="width: 50%;margin: auto; text-align: center;" class="${row.hidden ? 'btn-danger-fill-light unhide-request-btn' : 'btn-danger-fill-light hide-request-btn'} socket-btn full-width-action-btn" data-id="${row.id}">
+								    <i class="fa-solid ${row.hidden ? 'fa-trash-can-arrow-up' : 'fa-trash-can'} fa-icon"></i>
+								</div>
+					</div>`
 		}
 	];
 
@@ -513,19 +590,19 @@ if (window.is_mobile) {
                 if (row.checking) {
                     return `<div class="actions-container">
                                 <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner"  data-id="${row.id}"></div>
-                                <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
+                                <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash-can fa-icon"></i></div>
                             </div>`;
                 } else if (row.checked) {
                     return `<div class="actions-container">
-                    						<div class="btn-danger-fill-light hide-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
-                                	<i class="fa-solid fa-trash fa-icon"></i>
+                    						<div class="btn-danger-fill-light hide-source-btn socket-btn full-width-action-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
+                                	<i class="fa-solid fa-trash-can fa-icon"></i>
                                 </div>
                             </div>`;
                 } else {
                     return `<div class="actions-container">
                                 <div class="btn-primary-fill-dark check-source-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
                                 <div class="btn-danger-fill-light hide-source-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-left-radius: 0; border-bottom-left-radius: 0;">
-                                	<i class="fa-solid fa-trash fa-icon"></i>
+                                	<i class="fa-solid fa-trash-can fa-icon"></i>
                                 </div>
                             </div>`;
                 }
@@ -587,33 +664,38 @@ if (window.is_mobile) {
 									}
 					},
 					{
-									id: 'actions',
-									width: '100%',
-									name: 'Actions',
-									field: 'actions',
-									formatter: (cell, row) => {
-													if (row.checking) {
-																	return `<div class="actions-container">
-																						<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" data-id="${row.id}"></div>
-																						<div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
-																					</div>`;
-													} else if ((row.checked) && (row.valid)) {
-																	return `<div class="actions-container">
-																								<div class="${row.liked ? 'btn-primary-fill-light' : 'btn-primary-outline-light'} liked-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
-																								<div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-trash fa-icon"></i></div>
-																				</div>`;
-													} else if (!row.checked) {
-																	return `<div class="actions-container">
-																						<div class="btn-primary-fill-light check-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
-																						<div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-left-radius: 0; border-bottom-left-radius: 0;"><i class="fa-solid fa-trash fa-icon"></i></div>
-																					</div>`;
-													} else {
-																	return `<div class="actions-container">
-																						<div class="btn-danger-fill-light hide-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash fa-icon"></i></div>
-																					</div>`;
-
-													}
-									}
+					    id: 'actions',
+					    width: '100%',
+					    name: 'Actions',
+					    field: 'actions',
+					    formatter: (cell, row) => {
+					        if (row.checking) {
+					            return `<div class="actions-container">
+					                        <div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" data-id="${row.id}"></div>
+					                        <div class="btn-danger-fill-light hide-lead-btn socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;"><i class="fa-solid fa-trash-can fa-icon"></i></div>
+					                    </div>`;
+					        } else if ((row.checked) && (row.valid) && (!row.hidden)) {
+					            return `<div class="actions-container">
+					                        <div class="${row.liked ? 'btn-primary-fill-light' : 'btn-primary-outline-light'} liked-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-${row.liked ? 'solid' : 'regular'} fa-thumbs-up fa-icon"></i></div>
+					                        <div class="${row.hidden ? 'btn-danger-fill-light unhide-lead-btn' : 'btn-danger-fill-light hide-lead-btn'} socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-left-radius: 0; border-bottom-left-radius: 0;">
+					                            <i class="fa-solid ${row.hidden ? 'fa-trash-can-arrow-up' : 'fa-trash-can'} fa-icon"></i>
+					                        </div>
+					                    </div>`;
+					        } else if (!row.checked) {
+					            return `<div class="actions-container">
+					                        <div class="btn-primary-fill-light check-lead-btn socket-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fa-brands fa-searchengin fa-icon"></i></div>
+					                        <div class="${row.hidden ? 'btn-danger-fill-light unhide-lead-btn' : 'btn-danger-fill-light hide-lead-btn'} socket-btn action-child-border-left" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;border-top-left-radius: 0; border-bottom-left-radius: 0;">
+					                            <i class="fa-solid ${row.hidden ? 'fa-trash-can-arrow-up' : 'fa-trash-can'} fa-icon"></i>
+					                        </div>
+					                    </div>`;
+					        } else {
+					            return `<div class="actions-container">
+					                        <div class="${row.hidden ? 'btn-danger-fill-light unhide-lead-btn' : 'btn-danger-fill-light hide-lead-btn'} socket-btn full-width-action-btn" data-id="${row.id}" style="width: 50%;margin: auto; text-align: center;">
+					                            <i class="fa-solid ${row.hidden ? 'fa-trash-can-arrow-up' : 'fa-trash-can'} fa-icon"></i>
+					                        </div>
+					                    </div>`;
+					        }
+					    }
 					}
 	];
 }
@@ -732,52 +814,53 @@ const addClassToTableRow = (row, data) => {
 		row.classList.remove('valid-table-row', 'contactable-table-row', 'invalid-table-row', 'checking-table-row', 'checking-table-row');
 		row.classList.add('unchecked-table-row');
 	}
-
 	return row
 }
 
-const updateRow = (tableId, rowId, newData) => {
-    const tablesToUpdate = tableId === 'leads-table' ? ['leads-table', 'liked-leads-table'] : [tableId];
+const updateRow = (tableId, newData) => {
+		console.log(`Updating table: ${tableId}`);
+		console.log(newData);
+    const tableElement = document.getElementById(tableId);
+    if (!tableElement) return; // Skip if table doesn't exist
 
-    tablesToUpdate.forEach(table => {
-        const tableElement = document.getElementById(table);
-        if (!tableElement) return; // Skip if table doesn't exist
+    let rowId = newData.id;
 
-        let row = tableElement.querySelector(`.table-row[data-id="${rowId}"]`);
-        const columns = getTableColumnsById(table);
+    let row = tableElement.querySelector(`.table-row[data-id="${rowId}"]`);
+    const columns = getTableColumnsById(tableId);
 
-        if (row) {
-        		row = addClassToTableRow(row, newData);
-            // Update existing row
-            const cells = row.getElementsByClassName('table-cell');
-            let visibleIndex = 0;
+    if (addRowById(tableId, newData) && row) {
+    		console.log('updating existing row');
+    		row = addClassToTableRow(row, newData);
+        // Update existing row
+        const cells = row.getElementsByClassName('table-cell');
+        let visibleIndex = 0;
 
-            columns.forEach((column) => {
-                if (!column.hidden) {
-											if (cells[visibleIndex]) {
-												if (column.field === 'contact') {
-													// Special handling for contact field
-													cells[visibleIndex].innerHTML = column.formatter(null, newData);
-												} else {
-													const cellValue = newData[column.field];
-													if ((cellValue !== null && cellValue !== undefined) || (column.field == 'actions')) {
-														cells[visibleIndex].innerHTML = ''; // Clear existing content
-														cells[visibleIndex].innerHTML = column.formatter ? column.formatter(cellValue, newData) : cellValue;
-													}
-												}
-												visibleIndex++;
+        columns.forEach((column) => {
+            if (!column.hidden) {
+									if (cells[visibleIndex]) {
+										if (column.field === 'contact') {
+											// Special handling for contact field
+											cells[visibleIndex].innerHTML = column.formatter(null, newData);
+										} else {
+											const cellValue = newData[column.field];
+											if ((cellValue !== null && cellValue !== undefined) || (column.field == 'actions')) {
+												cells[visibleIndex].innerHTML = ''; // Clear existing content
+												cells[visibleIndex].innerHTML = column.formatter ? column.formatter(cellValue, newData) : cellValue;
 											}
-                }
-            });
-
-            // If the lead is unliked, remove it from the liked leads table
-            if (table === 'liked-leads-table' && !newData.liked) {
-                row.remove();
+										}
+										visibleIndex++;
+									}
             }
-        } else if (table === 'liked-leads-table' && newData.liked) {
-            addRow(table, newData);
-        }
-    });
+        });
+    } else if (addRowById(tableId, newData)) {
+			console.log('adding row');
+			addRow(tableId, newData);
+    } else {
+			console.log('hiding row');
+			handleHideEvent(tableId, rowId);
+    }
+
+    updateCounts();
 };
 
 // Modify the addRow function to ensure it's creating the row correctly
@@ -785,7 +868,14 @@ const addRow = (tableId, newData) => {
     const table = document.getElementById(tableId);
 
     if (!table) {
+			console.log('No table found', tableId);
     	return;
+    }
+    console.log(tableId, newData);
+    if (!addRowById(tableId, newData)) {
+			handleHideEvent(tableId, newData.id);
+			updateCounts();
+			return;
     }
     const bodyContainer = table.querySelector('.table-body-container');
     const columns = getTableColumnsById(tableId);
@@ -827,10 +917,13 @@ const addRow = (tableId, newData) => {
 };
 
 const handleHideEvent = (tableId, rowId) => {
+		console.log('tableId' + tableId);
     const table = document.getElementById(tableId);
-    const row = table.querySelector(`.table-row[data-id="${rowId}"]`);
-    if (row) {
-        row.remove();
+    if (table) {
+	    const row = table.querySelector(`.table-row[data-id="${rowId}"]`);
+	    if (row) {
+	        row.remove();
+	    }
     }
 
     // if table is empty, add .no-data-message with text "No Data Found"
@@ -892,9 +985,7 @@ function initializeClicks() {
             socket.emit('check_lead', { lead_id: leadId });
             target.outerHTML = `<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" 	data-id="${leadId}"></div>`;
             clicked_button = true;
-        }
-
-        if (target.classList.contains('lead-cell-spinner')) {
+        } else if (target.classList.contains('lead-cell-spinner')) {
         	const leadId = target.getAttribute('data-id');
 					Swal.fire({
 						title: 'Retry Checking Lead?',
@@ -911,9 +1002,7 @@ function initializeClicks() {
 							clicked_button = true;
 						}
 					});
-        }
-
-        if (target.classList.contains('source-cell-spinner')) {
+        } else if (target.classList.contains('source-cell-spinner')) {
         	const sourceId = target.getAttribute('data-id');
 					Swal.fire({
 						title: 'Retry Checking Source?',
@@ -930,16 +1019,13 @@ function initializeClicks() {
 							clicked_button = true;
 						}
 					});
-        }
-
-        if (target.classList.contains('liked-lead-btn')) {
+        } else if (target.classList.contains('liked-lead-btn')) {
             const leadId = target.getAttribute('data-id');
             console.log('Liking lead with id:', leadId);
             socket.emit('liked_lead', { lead_id: leadId });
             target.style.opacity = '0.5';
             clicked_button = true;
-        }
-        if (target.classList.contains('hide-lead-btn')) {
+        } else if (target.classList.contains('hide-lead-btn')) {
             const leadId = target.getAttribute('data-id');
             console.log('Hiding lead with id:', leadId);
             if (window.confirmHides) {
@@ -963,15 +1049,13 @@ function initializeClicks() {
                 target.style.opacity = '0.5';
                 clicked_button = true;
             }
-        }
-        if (target.classList.contains('check-source-btn')) {
+        } else if (target.classList.contains('check-source-btn')) {
             const sourceId = target.getAttribute('data-id');
             console.log('Checking source with id:', sourceId);
             socket.emit('check_lead_source', { lead_source_id: sourceId });
             target.outerHTML = `<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner" data-id="${sourceId}"></div>`;
             clicked_button = true;
-        }
-        if (target.classList.contains('hide-source-btn')) {
+        } else if (target.classList.contains('hide-source-btn')) {
             const sourceId = target.getAttribute('data-id');
             console.log('Hiding source with id:', sourceId);
 						if (window.confirmHides) {
@@ -995,10 +1079,9 @@ function initializeClicks() {
 	            target.style.opacity = '0.5';
 	            clicked_button = true;
 						}
-        }
-        if (target.classList.contains('hide-request-btn')) {
+        } else if (target.classList.contains('hide-request-btn')) {
             const requestId = target.getAttribute('data-id');
-            console.log('Hiding request', requestId);
+            console.log('Toggling hide request', requestId);
             if (window.confirmHides) {
              Swal.fire({
                  title: 'Are you sure?',
@@ -1020,9 +1103,79 @@ function initializeClicks() {
 			        target.style.opacity = '0.5';
 			        clicked_button = true;
 		        }
-        }
-
-        if (event.target.classList.contains('copy-email-btn')) {
+        } else if (target.classList.contains('unhide-request-btn')) {
+            const requestId = target.getAttribute('data-id');
+            console.log('unhiding request', requestId);
+            if (window.confirmHides) {
+             Swal.fire({
+                 title: 'Are you sure?',
+                 text: 'This request will be unhidden and shown again.',
+                 icon: 'warning',
+                 showCancelButton: true,
+                 confirmButtonText: 'Yes, unhide it',
+                 cancelButtonText: 'Cancel',
+                 reverseButtons: true
+             }).then((result) => {
+                 if (result.isConfirmed) {
+                     socket.emit('unhide_request', { query_id: requestId });
+                     target.style.opacity = '0.5';
+                     clicked_button = true;
+                 }
+             });
+		        } else {
+			        socket.emit('unhide_request', { query_id: requestId });
+			        target.style.opacity = '0.5';
+			        clicked_button = true;
+		        }
+        } else if (target.classList.contains('unhide-source-btn')) {
+				    const sourceId = target.getAttribute('data-id');
+				    console.log('unhiding source', sourceId);
+				    if (window.confirmHides) {
+				        Swal.fire({
+				            title: 'Are you sure?',
+				            text: 'This source will be unhidden and shown again.',
+				            icon: 'warning',
+				            showCancelButton: true,
+				            confirmButtonText: 'Yes, unhide it',
+				            cancelButtonText: 'Cancel',
+				            reverseButtons: true
+				        }).then((result) => {
+				            if (result.isConfirmed) {
+				                socket.emit('unhide_source', { source_id: sourceId });
+				                target.style.opacity = '0.5';
+				                clicked_button = true;
+				            }
+				        });
+				    } else {
+				        socket.emit('unhide_source', { source_id: sourceId });
+				        target.style.opacity = '0.5';
+				        clicked_button = true;
+				    }
+				} else if (target.classList.contains('unhide-lead-btn')) {
+				    const leadId = target.getAttribute('data-id');
+				    console.log('unhiding lead', leadId);
+				    if (window.confirmHides) {
+				        Swal.fire({
+				            title: 'Are you sure?',
+				            text: 'This lead will be unhidden and shown again.',
+				            icon: 'warning',
+				            showCancelButton: true,
+				            confirmButtonText: 'Yes, unhide it',
+				            cancelButtonText: 'Cancel',
+				            reverseButtons: true
+				        }).then((result) => {
+				            if (result.isConfirmed) {
+				                socket.emit('unhide_lead', { lead_id: leadId });
+				                target.style.opacity = '0.5';
+				                clicked_button = true;
+				            }
+				        });
+				    } else {
+				        socket.emit('unhide_lead', { lead_id: leadId });
+				        target.style.opacity = '0.5';
+				        clicked_button = true;
+				    }
+				} else if (event.target.classList.contains('copy-email-btn')) {
             const email = event.target.getAttribute('data-email');
             console.log('Copying email to clipboard:', email);
             navigator.clipboard.writeText(email).then(() => {
@@ -1036,62 +1189,65 @@ function initializeClicks() {
                 console.error('Failed to copy text: ', err);
             });
             clicked_button = true;
+        } else {
+
+		        const cell = event.target.closest('.table-cell:not(.header-cell)');
+		        if (cell && !clicked_button) {
+		            const row = cell.closest('.table-row');
+		            // skip if table-row is a child of `requests-table`
+		            const table = cell.closest('.table-container');
+		            let tableId = table ? table.id : '';
+
+		            if (tableId === 'requests-table') {
+		                return;
+		            }
+
+		            tableId = tableId.replace('-table', '');
+		            if (row) {
+		                // Contract all other expanded rows
+		                document.querySelectorAll('.table-row.expanded').forEach(expandedRow => {
+		                    if (expandedRow !== row) {
+		                        expandedRow.classList.remove('expanded');
+		                        expandedRow.style.height = '';
+		                        expandedRow.querySelectorAll('.table-cell').forEach(expandedCell => {
+		                            expandedCell.style.whiteSpace = 'nowrap';
+		                            expandedCell.style.overflow = 'hidden';
+		                            expandedCell.style.textOverflow = 'ellipsis';
+		                        });
+		                    }
+		                });
+
+		                if (row.classList.contains('expanded')) {
+		                    row.classList.remove('expanded');
+		                    if (row.classList.contains('table-row-selected')) {
+													row.classList.remove('table-row-selected');
+		                    } else {
+		                    	row.classList.add('table-row-selected');
+		                    }
+		                    updateSelectedCount(tableId);
+		                } else {
+		                    row.classList.toggle('expanded');
+		                    if (row.classList.contains('expanded')) {
+		                        row.style.height = 'auto';
+		                        row.querySelectorAll('.table-cell').forEach(cell => {
+		                            cell.style.whiteSpace = 'normal';
+		                            cell.style.overflow = 'visible';
+		                            cell.style.textOverflow = 'clip';
+		                        });
+		                    } else {
+		                        row.style.height = '';
+		                        row.querySelectorAll('.table-cell').forEach(cell => {
+		                            cell.style.whiteSpace = 'nowrap';
+		                            cell.style.overflow = 'hidden';
+		                            cell.style.textOverflow = 'ellipsis';
+		                        });
+		                    }
+		                }
+		            }
+		        }
+
         }
 
-        const cell = event.target.closest('.table-cell:not(.header-cell)');
-        if (cell && !clicked_button) {
-            const row = cell.closest('.table-row');
-            // skip if table-row is a child of `requests-table`
-            const table = cell.closest('.table-container');
-            let tableId = table ? table.id : '';
-
-            if (tableId === 'requests-table') {
-                return;
-            }
-
-            tableId = tableId.replace('-table', '');
-            if (row) {
-                // Contract all other expanded rows
-                document.querySelectorAll('.table-row.expanded').forEach(expandedRow => {
-                    if (expandedRow !== row) {
-                        expandedRow.classList.remove('expanded');
-                        expandedRow.style.height = '';
-                        expandedRow.querySelectorAll('.table-cell').forEach(expandedCell => {
-                            expandedCell.style.whiteSpace = 'nowrap';
-                            expandedCell.style.overflow = 'hidden';
-                            expandedCell.style.textOverflow = 'ellipsis';
-                        });
-                    }
-                });
-
-                if (row.classList.contains('expanded')) {
-                    row.classList.remove('expanded');
-                    if (row.classList.contains('table-row-selected')) {
-											row.classList.remove('table-row-selected');
-                    } else {
-                    	row.classList.add('table-row-selected');
-                    }
-                    updateSelectedCount(tableId);
-                } else {
-                    row.classList.toggle('expanded');
-                    if (row.classList.contains('expanded')) {
-                        row.style.height = 'auto';
-                        row.querySelectorAll('.table-cell').forEach(cell => {
-                            cell.style.whiteSpace = 'normal';
-                            cell.style.overflow = 'visible';
-                            cell.style.textOverflow = 'clip';
-                        });
-                    } else {
-                        row.style.height = '';
-                        row.querySelectorAll('.table-cell').forEach(cell => {
-                            cell.style.whiteSpace = 'nowrap';
-                            cell.style.overflow = 'hidden';
-                            cell.style.textOverflow = 'ellipsis';
-                        });
-                    }
-                }
-            }
-        }
     });
 }
 
@@ -1147,6 +1303,9 @@ function initializeSelectAll(extra_tables=[]) {
                     clicked_button = true;
                 } else if (e.target.classList.contains('export-csv')) {
                     exportToCSV(tableId);
+                    clicked_button = true;
+                } else if (e.target.classList.contains('unhide-all')) {
+                    unhideAllSelected(tableId);
                     clicked_button = true;
                 }
                 updateSelectedCount(tableId);
@@ -1357,6 +1516,42 @@ function exportToCSV(tableId) {
         link.click();
         document.body.removeChild(link);
     }
+}
+
+function unhideAllSelected(tableId) {
+    const rows = Array.from(document.querySelectorAll(`#${tableId}-table .table-row.table-row-selected:not(.table-header)`))
+                            .filter(row => row.style.display !== 'none');
+    const idsToUnhide = [];
+    let emitCount = 0;
+    rows.forEach(row => {
+        const id = row.getAttribute('data-id');
+        idsToUnhide.push(id);
+        if (tableId === 'requests') {
+            console.log('Unhiding request with id:', id);
+            socket.emit('unhide_request', { query_id: id });
+            emitCount++;
+        }
+    });
+
+    if (emitCount > 0) {
+        iziToast.info({
+            title: 'Unhidden',
+            message: `${emitCount} ${emitCount === 1 ? 'request' : 'requests'} unhidden`,
+            position: 'topRight',
+            timeout: 5000
+        });
+    } else {
+        iziToast.info({
+            title: 'No Requests Unhidden',
+            message: `0 requests unhidden`,
+            position: 'topRight',
+            timeout: 5000
+        });
+    }
+
+    // Remove unhidden rows from the table
+    rows.forEach(row => row.classList.remove('table-row-selected'));
+    updateSelectedCount(tableId);
 }
 
 export {

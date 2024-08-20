@@ -1,11 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-{% include "subtemplates/_sub_navbar.html" %}
-<div class="container mt-5">
-	<div class="loading-icon-container">
-		<img class="loading-icon" src="/static/assets/chunk-loader.svg">
-	</div>
+<div class="container d-flex justify-content-center align-items-center">
+    <div style="width: 100%;">
+    	{% include "subtemplates/_sub_navbar.html" %}
+		<div class="query-container mt-5">
+			<div class="loading-icon-container">
+				<img class="loading-icon" src="/static/assets/chunk-loader.svg">
+			</div>
+		</div>
+	    <div id="query-leads-table-container"></div>
+	    <div id="query-sources-table-container"></div>
+    </div>
 </div>
+
 <input type="hidden" id="query-id" value="{{ query.id }}">
 <script src="/static/js/socket.js?last_updated={{ last_updated }}" type="module"></script>
 <script src="/static/js/view_query_script.js?last_updated={{ last_updated }}" type="module"></script>

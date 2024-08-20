@@ -1,40 +1,44 @@
-import { socket } from "./socket.js";
-import { searchTable, createAllTables, initializeClicks, initializeSearches, initializeSelectAll } from "./general_script.js";
+import { socket, fetchData } from "./socket.js";
+import {
+	createTable,
+	initializeClicks,
+	initializeSearches,
+	initializeSelectAll,
+	getLeadTableColumns,
+	updateCounts,
+	getSourceTableColumns
+} from "./general_script.js";
 import { handleLeadEvents, handleSourceEvents, handleRequestEvents } from "./socket_handlers.js";
 import { createQueryDetailsComponent, createTableComponent } from "./components.js";
 
 document.addEventListener('DOMContentLoaded', function() {
     const queryId = document.getElementById('query-id').value;
-    socket.emit('get_query_data', { query_id: queryId });
 
-    socket.on('query_data', function(data) {
-        const container = document.querySelector('.container');
+    document.getElementById('query-leads-table-container').innerHTML = createTableComponent(
+        'Leads from Query', 'query-leads',
+        ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
+    );
+
+    document.getElementById('query-sources-table-container').innerHTML = createTableComponent(
+        'Sources from Query', 'query-sources',
+        ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
+    );
+
+    fetchData({'query_id': queryId}).then(data => {
+        const container = document.querySelector('.query-container');
         container.innerHTML = '';
 
         container.innerHTML += createQueryDetailsComponent(data.query);
-        // container.innerHTML += createTableComponent("Associated Leads", "leads-table", "leads-search");
-        // container.innerHTML += createTableComponent("Associated Sources", "sources-table", "sources-search");
-        //
-        container.innerHTML += createTableComponent(
-              'Leads from Query', 'leads',
-              ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
-          );
-          container.innerHTML += createTableComponent(
-              'Sources from Query', 'sources',
-              ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
-          );
 
-        createAllTables({
-            leads: data.leads,
-            sources: data.sources
-        });
+        createTable('query-leads-table', getLeadTableColumns(), data.leads.filter(request => !request.hidden));
+        createTable('query-sources-table', getSourceTableColumns(), data.lead_sources.filter(request => !request.hidden));
 
 		    initializeClicks();
-		    initializeSearches();
-		    initializeSelectAll();
+		    initializeSearches(['query-leads', 'query-sources']);
+		    initializeSelectAll(['query-leads', 'query-sources']);
+				updateCounts();
     });
 
-    handleLeadEvents();
-    handleSourceEvents();
-    handleRequestEvents();
+    handleLeadEvents('query-leads');
+    handleSourceEvents('query-sources');
 });

@@ -405,11 +405,15 @@ small {
 	width: 100%;
 }
 
-.hide-lead-btn, .hide-source-btn, .hide-request-btn {
+.hide-lead-btn, .hide-source-btn, .hide-request-btn, .unhide-lead-btn, .unhide-source-btn, .unhide-request-btn {
 	margin-left: auto;
 	width: 50%;
 	padding-top: 0.5em;
 	padding-bottom: 0.5em;
+}
+
+.full-width-action-btn {
+	width: 100%;
 }
 
 .liked-lead-btn, .check-lead-btn, .cell-spinner-container, .check-source-btn {

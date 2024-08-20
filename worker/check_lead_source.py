@@ -40,7 +40,7 @@ def check_lead_source_task(lead_source_id):
 		)
 
 		with min_app.app_context():
-			if 'mini' in lead_source_user.source_collection_model_preference:
+			if 'mini' in lead_source_user.model_preference:
 				mult = min_app.config['PRICING_MULTIPLIERS']['check_source_mini']
 			else:
 				mult = min_app.config['PRICING_MULTIPLIERS']['check_source']
@@ -56,13 +56,13 @@ def check_lead_source_task(lead_source_id):
 			lead_source._finished()
 			lead_source.valid = False
 			lead_source.save()
-			worker_socketio.emit('source_checked', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
+			worker_socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')
 			return
 
 		if validation_output.not_enough_credits:
 			lead_source.checking = False
 			lead_source.save()
-			worker_socketio.emit('source_checked', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
+			worker_socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')
 			return
 
 		if validation_output.is_lead:
@@ -73,7 +73,7 @@ def check_lead_source_task(lead_source_id):
 				source_id=lead_source.id
 			)
 			if new_lead_obj:
-				worker_socketio.emit('new_lead', {'lead': new_lead_obj.to_dict()}, to=f'user_{lead_source.user_id}')
+				worker_socketio.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{lead_source.user_id}')
 
 		lead_source.name = validation_output.name or lead_source.name
 		lead_source.description = validation_output.description or lead_source.description
@@ -95,7 +95,7 @@ def check_lead_source_task(lead_source_id):
 						source_id=lead_source.id
 					)
 					if new_lead_obj:
-						worker_socketio.emit('new_lead', {'lead': new_lead_obj.to_dict()}, to=f'user_{lead_source.user_id}')
+						worker_socketio.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{lead_source.user_id}')
 
 		if validation_output.lead_sources:
 			for new_lead_source in validation_output.lead_sources:
@@ -106,8 +106,8 @@ def check_lead_source_task(lead_source_id):
 						query_id=lead_source.query_id
 					)
 					if new_source_obj:
-						worker_socketio.emit('new_lead_source', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
+						worker_socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')
 
 		lead_source._finished()
 
-		worker_socketio.emit('source_checked', {'source': lead_source.to_dict()}, to=f'user_{lead_source.user_id}')
+		worker_socketio.emit('sources_updated', {'source': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')

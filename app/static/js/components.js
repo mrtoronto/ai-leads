@@ -102,7 +102,6 @@ export function createTableComponent(title, id_prefix, dropdownActionClasses=[])
                     <img class="loading-icon" src="/static/assets/chunk-loader.svg">
                 </div>
             </div>
-            <div id="${tableId}-count" class="text-center small mt-2"></div>
         </div>
     `;
 }
@@ -123,6 +122,8 @@ function getActionDisplayName(actionClass) {
             return 'Check Selected';
         case 'hide-all':
             return 'Hide Selected';
+        case 'unhide-all':
+            return 'Unhide Selected';
         case 'export-csv':
             return 'Export to CSV';
         default:

@@ -47,7 +47,7 @@ def check_lead_task(lead_id):
 		if not first_validation_output:
 			lead._finished()
 			lead.save()
-			worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')
+			worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
 			return
 
 		if first_validation_output.next_link and not first_validation_output.email_address:
@@ -74,7 +74,7 @@ def check_lead_task(lead_id):
 					if validation_output.not_enough_credits or final_validation_output.not_enough_credits:
 						lead.checking = False
 						lead.save()
-						worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')
+						worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
 						return
 
 					if not final_validation_output:
@@ -120,13 +120,13 @@ def check_lead_task(lead_id):
 			logger.error("No validation output")
 			lead._finished()
 			lead.save()
-			worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')
+			worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
 			return
 
 		if final_validation_output.not_enough_credits:
 			lead.checking = False
 			lead.save()
-			worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')
+			worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
 			return
 
 		lead.name = final_validation_output.name or lead.name
@@ -148,7 +148,7 @@ def check_lead_task(lead_id):
 						query_id=lead.query_id
 					)
 					if new_source:
-						worker_socketio.emit('new_lead_source', {'source': new_source.to_dict()}, to=f'user_{lead.user_id}')
+						worker_socketio.emit('sources_updated', {'sources': [new_source.to_dict()]}, to=f'user_{lead.user_id}')
 
 
 		### If lead check had leads in to,
@@ -160,7 +160,7 @@ def check_lead_task(lead_id):
 				query_id=lead.query_id
 			)
 			if new_source:
-				worker_socketio.emit('new_lead_source', {'source': new_source.to_dict()}, to=f'user_{lead.user_id}')
+				worker_socketio.emit('sources_updated', {'sources': [new_source.to_dict()]}, to=f'user_{lead.user_id}')
 
 			for new_lead in final_validation_output.leads:
 				if new_lead and new_lead.url and _useful_url_check(new_lead.url):
@@ -171,14 +171,14 @@ def check_lead_task(lead_id):
 						source_id=new_source.id if new_source else lead.source_id
 					)
 					if new_lead_obj:
-						worker_socketio.emit('new_lead', {'lead': new_lead_obj.to_dict()}, to=f'user_{lead.user_id}')
+						worker_socketio.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{lead.user_id}')
 
 		model = FastTextModel(lead.user_id, ModelTypes.LEAD)
 		lead.quality_score = model.predict_lead(lead_user, lead)
 		lead._finished()
 		db.session.commit()
 
-		if 'mini' in lead_user.lead_validation_model_preference:
+		if 'mini' in lead_user.model_preference:
 			mult = min_app.config['PRICING_MULTIPLIERS']['check_lead_mini']
 		else:
 			mult = min_app.config['PRICING_MULTIPLIERS']['check_lead']
@@ -191,4 +191,4 @@ def check_lead_task(lead_id):
 				app_obj=min_app
 			)
 
-		worker_socketio.emit('lead_checked', {'lead': lead.to_dict()}, to=f'user_{lead.user_id}')
+		worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')

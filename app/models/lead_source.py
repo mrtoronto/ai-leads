@@ -20,13 +20,15 @@ class LeadSource(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 	query_id = db.Column(db.Integer, db.ForeignKey('query.id'))
 	valid = db.Column(db.Boolean, default=False)
-	hidden = db.Column(db.Boolean, default=False)
 	created_at = db.Column(db.DateTime, default=lambda: datetime.now(pytz.utc))
-	hidden_at = db.Column(db.DateTime)
 	checked = db.Column(db.Boolean, default=False)
 	checking = db.Column(db.Boolean, default=False)
 	image_url = db.Column(db.String(255))
 	quality_score = db.Column(db.Float)
+
+	hidden = db.Column(db.Boolean, default=False)
+	hidden_at = db.Column(db.DateTime)
+	auto_hidden = db.Column(db.Boolean, default=False)
 
 	jobs = db.relationship('Job', backref='lead_source', lazy='dynamic')
 	leads = db.relationship('Lead', backref='lead_source', lazy='dynamic')
@@ -40,6 +42,7 @@ class LeadSource(db.Model):
 			'url': self.url,
 			'user_id': self.user_id,
 			'query_id': self.query_id,
+			'query_obj': self.query_obj.to_dict() if self.query else None,
 			'checked': self.checked,
 			'valid': self.valid,
 			'hidden': self.hidden,
@@ -134,14 +137,29 @@ class LeadSource(db.Model):
 
 	def _hide(self):
 		self.hidden = True
-		db.session.add(self)
-		hidden_lead_ids = []
+		hidden_leads = []
 		for lead in self.get_leads():
-			lead.hidden = True
-			hidden_lead_ids.append(lead.id)
-			db.session.add(lead)
+			if not lead.hidden:
+				lead.hidden = True
+				lead.auto_hidden = True
+				lead.hidden_at = datetime.now(pytz.utc)
+				hidden_leads.append(lead)
+
 		db.session.commit()
-		return hidden_lead_ids
+		return hidden_leads
+
+	def _unhide(self):
+		self.hidden = False
+		hidden_leads = []
+		for lead in self.get_leads():
+			if lead.auto_hidden:
+				lead.hidden = False
+				lead.auto_hidden = False
+				lead.hidden_at = None
+				hidden_leads.append(lead)
+
+		db.session.commit()
+		return hidden_leads
 
 	def get_leads(self):
 		return Lead.query.filter_by(source_id=self.id).all()

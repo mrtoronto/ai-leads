@@ -373,7 +373,7 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 		)
 		if new_source_obj and socketio_obj and app_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('new_lead_source', {'source': new_source_obj.to_dict()}, to=f'user_{new_request.user_id}')
+				socketio_obj.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{new_request.user_id}')
 
 		if collected_leads.leads:
 			for lead in collected_leads.leads:
@@ -385,7 +385,7 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 				)
 				if new_lead_obj and socketio_obj and app_obj:
 					with app_obj.app_context():
-						socketio_obj.emit('new_lead', {'lead': new_lead_obj.to_dict()}, to=f'user_{new_request.user_id}')
+						socketio_obj.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{new_request.user_id}')
 
 		if collected_leads.lead_sources:
 			for lead_source in collected_leads.lead_sources:
@@ -396,7 +396,7 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 				)
 				if new_source_obj and socketio_obj and app_obj:
 					with app_obj.app_context():
-						socketio_obj.emit('new_lead_source', {'source': new_source_obj.to_dict()}, to=f'user_{new_request.user_id}')
+						socketio_obj.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{new_request.user_id}')
 
 	return True, "", total_tokens_used
 
@@ -419,7 +419,7 @@ def _llm_validate_lead(link, user):
 			lead_validation_prompt,
 			validation_parser,
 			user,
-			model_name=user.lead_validation_model_preference
+			model_name=user.model_preference
 		)
 		if not output:
 			output = ValidationOutput(
@@ -449,7 +449,7 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 			not_enough_credits=True
 		), None, 0
 
-	if 'groq' in user.lead_validation_model_preference:
+	if 'groq' in user.model_preference:
 		url_collection_mult = 6
 
 	visible_text, opengraph_img_url = get_visible_text_and_links(url)
@@ -460,7 +460,7 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 			parser=collection_parser,
 			user=user,
 			previous_leads=previous_leads,
-			model_name=user.source_collection_model_preference
+			model_name=user.model_preference
 		)
 		return output, opengraph_img_url, tokens_used_usd
 	else:

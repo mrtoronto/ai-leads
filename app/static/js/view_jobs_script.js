@@ -2,6 +2,7 @@ import { socket } from "./socket.js";
 import {
     dataCache,
     getSourceTableColumns,
+    updateCounts,
     getLeadTableColumns,
     createTable,
     getQueryTableColumns,
@@ -40,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
     );
 
-    fetchData().then(data => {
+    fetchData({'get_in_progress':true, 'get_requests': true, 'get_sources': true, 'get_leads': true}).then(data => {
         const queries_unfinished = data.requests.filter(query => !query.finished);
         const lead_sources_checking = data.lead_sources.filter(source => source.checking && !source.hidden);
         const leads_checking = data.leads.filter(lead => lead.checking && !lead.hidden);
@@ -50,12 +51,14 @@ document.addEventListener('DOMContentLoaded', function() {
         createTable('checking-leads-table', getLeadTableColumns(), leads_checking);
 
         initializeClicks();
-		    initializeSearches(['checking-queries-table-container', 'checking-lead-sources-table-container', 'checking-leads-table-container']);
-				initializeSelectAll(['checking-queries-table-container', 'checking-lead-sources-table-container', 'checking-leads-table-container']);
+		    initializeSearches(['checking-queries', 'checking-lead-sources', 'checking-leads']);
+				initializeSelectAll(['checking-queries', 'checking-lead-sources', 'checking-leads']);
+
+				updateCounts();
     });
-		handleLeadEvents('checking-leads-table-container');
-   	handleSourceEvents('checking-lead-sources-table-container');
-   	handleRequestEvents('checking-queries-table-container');
+		handleLeadEvents('checking-leads');
+   	handleSourceEvents('checking-lead-sources');
+   	handleRequestEvents('checking-queries');
 
 
 });

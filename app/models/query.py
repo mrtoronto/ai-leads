@@ -73,17 +73,49 @@ class Query(db.Model):
 		self.hidden = True
 		self.save()
 
-		hidden_lead_ids = []
-		hidden_source_ids = []
+		hidden_leads = []
+		hidden_sources = []
 
 		for lead in self.get_leads():
-			lead.hidden = True
-			lead.save()
-			hidden_lead_ids.append(lead.id)
+			if not lead.hidden:
+				lead.hidden = True
+				lead.auto_hidden = True
+				lead.hidden_at = datetime.now(pytz.utc)
+				hidden_leads.append(lead)
 
 		for lead_source in self.get_sources():
-			lead_source.hidden = True
-			lead_source.save()
-			hidden_source_ids.append(lead_source.id)
+			if not lead_source.hidden:
+				lead_source.hidden = True
+				lead_source.auto_hidden = True
+				lead_source.hidden_at = datetime.now(pytz.utc)
+				hidden_sources.append(lead_source)
 
-		return hidden_source_ids, hidden_lead_ids
+		db.session.commit()
+
+		return hidden_sources, hidden_leads
+
+
+	def _unhide(self):
+		self.hidden = False
+		self.save()
+
+		unhidden_leads = []
+		unhidden_sources = []
+
+		for lead in self.get_leads():
+			if lead.auto_hidden:
+				lead.hidden = False
+				lead.auto_hidden = False
+				lead.hidden_at = None
+				unhidden_leads.append(lead)
+
+		for lead_source in self.get_sources():
+			if lead_source.auto_hidden:
+				lead_source.hidden = False
+				lead_source.auto_hidden = False
+				lead_source.hidden_at = None
+				unhidden_sources.append(lead_source)
+
+		db.session.commit()
+
+		return unhidden_sources, unhidden_leads

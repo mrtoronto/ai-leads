@@ -37,7 +37,7 @@ def search_request_task(query_id):
 				request.save()
 
 
-			worker_socketio.emit('new_request', {'request': request.to_dict()}, to=f'user_{request.user_id}')
+			worker_socketio.emit('requests_updated', {'requests': [request.to_dict()]}, to=f'user_{request.user_id}')
 
 			with min_app.app_context():
 				request.user.move_credits(
@@ -56,7 +56,7 @@ def search_request_task(query_id):
 
 
 			with min_app.app_context():
-				if 'mini' in request.user.source_collection_model_preference:
+				if 'mini' in request.user.model_preference:
 					mult = min_app.config['PRICING_MULTIPLIERS']['check_source_mini']
 				else:
 					mult = min_app.config['PRICING_MULTIPLIERS']['check_source']
@@ -70,9 +70,9 @@ def search_request_task(query_id):
 			if error:
 
 				request._finished(f'Error // {error}')
-				worker_socketio.emit('request_checked', {'request': request.to_dict()}, to=f'user_{request.user_id}')
+				worker_socketio.emit('requests_updated', {'queries': [request.to_dict()]}, to=f'user_{request.user_id}')
 				return
 
 			request._finished()
-			worker_socketio.emit('request_checked', {'request': request.to_dict()}, to=f'user_{request.user_id}')
+			worker_socketio.emit('requests_updated', {'queries': [request.to_dict()]}, to=f'user_{request.user_id}')
 		return
