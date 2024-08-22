@@ -192,3 +192,24 @@
 	    font-size: 28px;
 	}
 }
+
+.video-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.video-wrapper iframe {
+    width: 90%;
+    height: 225px;
+    border-radius: 2em;
+}
+
+@media (min-width: 768px) {
+    .video-wrapper iframe {
+        width: 500px;
+        max-width: 60%;
+        height: 300px;
+    }
+}

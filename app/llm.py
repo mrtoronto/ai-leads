@@ -100,13 +100,10 @@ query_reformatting_prompt = PromptTemplate([
 """
 ])
 
-source_lead_collection_prompt = PromptTemplate("""
-You are a GPT trained to collect leads from a source of leads. The user provided the contents of a page potentially containing leads.
-
-# Instructions
-
-Filter the content and return the metadata relevant to the user.
-
+source_lead_collection_prompt = PromptTemplate([
+	"""You are a GPT trained to collect leads from a source of leads. The user provided the contents of a page potentially containing leads.""",
+	"""Filter the content and return the metadata relevant to the user.""",
+	"""
 ## Description of Leads and Lead Sources
 
 Metadata includes page content and URLs. Relevant links include leads and lead sources.
@@ -120,11 +117,8 @@ Only URLs are relevant. The following are not relevant:
 	- Twitter, Facebook, Instagram or other social media profiles
 	- Maps or directions
 
-Internal links within a site are valid. We will handle transforming them into a full URL.
-
-## Description of User
-
-This user describes their business's industry as "{user_industry}".
+Internal links within a site are valid. We will handle transforming them into a full URL.""",
+	"""This user describes their business's industry as "{user_industry}".
 
 They are interested in finding leads for organizations with {user_pref_org_size} employees.
 
@@ -132,48 +126,46 @@ The user describes their business as:
 {user_description}
 
 Previously the user has liked leads like the following:
-{previous_leads}
-
-## Output Format
-
-You need to provide:
-	- Name: The name of the source company or organization
-	- Description: A brief description of the source material
-	- Leads: Links that are directly applicable to the user's query and may contain contact information
-		- Links to websites that may be interested in the user's services
-		- For example, company websites or contact pages
-		- Provide a max of one lead per organization
-		- If the page contains multiple links to an organization, pick the most relevant one
-		- These are de-duplicated by domain so make sure to only include one link per domain
-		- Do not include links that aren't the main domain of the organization
-	- Lead Sources: Not directly applicable to the user's query but may contain links to relevant sites
-		- Links to websites that may contain links to sites that may be interested in the user's services
-		- For example, blogs, forums, or directories
-		- Provide a max of one lead per organization
-		- If the page contains multiple links to an organization, pick the most relevant one
-		- These are not de-duplicated by domain so include all relevant links
-
-This is the output format. Do not deviate from it. Do not include any text outside of this output format.
+{previous_leads}""",
+	"""You need to provide:
+- Name: The name of the source company or organization
+- Description: A brief description of the source material
+- Leads: Links that are directly applicable to the user's query and may contain contact information
+	- Links to websites that may be interested in the user's services
+	- For example, company websites or contact pages
+	- Provide a max of one lead per organization
+	- If the page contains multiple links to an organization, pick the most relevant one
+	- These are de-duplicated by domain so make sure to only include one link per domain
+	- Do not include links that aren't the main domain of the organization
+- Lead Sources: Not directly applicable to the user's query but may contain links to relevant sites
+	- Links to websites that may contain links to sites that may be interested in the user's services
+	- For example, blogs, forums, or directories
+	- Provide a max of one lead per organization
+	- If the page contains multiple links to an organization, pick the most relevant one
+	- These are not de-duplicated by domain so include all relevant links
+	""",
+	"""This is the output format. Do not deviate from it. Do not include any text outside of this output format.
 {format_instruction}
-""")
+"""
+])
 
-lead_validation_prompt = PromptTemplate("""
-You are a GPT trained to extract contact info from websites. The user will provide you with the text render on a website and your job is to help them find the contact information for the organization.
-
-The user you are finding leads for describes their business's industry as "{user_industry}".
+lead_validation_prompt = PromptTemplate([
+	"""You are a GPT trained to extract contact info from websites. The user will provide you with the text render on a website and your job is to help them find the contact information for the organization.""",
+	"""The user you are finding leads for describes their business's industry as "{user_industry}".
 
 They are interested in finding leads for organizations with {user_pref_org_size} employees.
 
 The user describes their business as:
-{user_description}
+{user_description}""",
 
-If you see an email address visible, output the email address in the "email_address" field.
+	"""If you see an email address visible, output the email address in the "email_address" field.
 If you see a contact page that might have an email address, output the link to the contact page in the "contact_page" field.
 If you do not see anything relevant, use the "no_email_found" field.
-If the link provided does not work, use the "invalid_link" field.
+If the link provided does not work, use the "invalid_link" field.""",
 
+	"""This is the output format. Do not deviate from it. Do not include any text outside of this output format.
 {format_instruction}
-""")
+"""])
 
 
 MODEL_PRICING = {
@@ -194,7 +186,11 @@ MODEL_PRICING = {
 }
 
 
-def _llm(user_input, template, parser, parse_output=True, user=None, previous_leads=[], model_name='gpt-4o'):
+def _llm(user_input, template, parser, parse_output=True, user=None, previous_leads=[], model_name='gpt-4o-mini'):
+
+	if not model_name:
+		model_name='gpt-4o-mini'
+
 	if user:
 		description = user.user_description
 		industry = user.industry
@@ -252,7 +248,8 @@ def _llm(user_input, template, parser, parse_output=True, user=None, previous_le
 	data = {
 		'model': input_model_name,
 		'messages': messages,
-		'max_tokens': 1000
+		'max_tokens': 1000,
+		'temperature': 0.1
 	}
 
 	response = requests.post(url, headers=headers, json=data)
@@ -407,11 +404,14 @@ def search_serpapi(query):
 	else:
 		return None
 
-def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketio_obj=None, search_mult=10):
+def search_and_validate_leads(new_query, previous_leads, app_obj=None, socketio_obj=None, search_mult=10):
+	"""
+	Runs a search query and checks each source found in the query for leads and other lead sources
+	"""
 
-	if new_request.user.credits < 1:
+	if new_query.user.credits < 1:
 		return [], "Insufficient credits", 0
-	search_results = search_serpapi(new_request.reformatted_query)
+	search_results = search_serpapi(new_query.reformatted_query)
 
 	# print(search_results)
 	if not search_results:
@@ -424,7 +424,7 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 
 		collected_leads, image_url, tokens_used_usd = collect_leads_from_url(
 			url=url,
-			user=new_request.user,
+			user=new_query.user,
 			previous_leads=previous_leads,
 			app_obj=app_obj,
 			socketio_obj=socketio_obj
@@ -442,36 +442,36 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 
 		new_source_obj = LeadSource.check_and_add(
 			url,
-			new_request.user_id,
-			new_request.id,
+			new_query.user_id,
+			new_query.id,
 			image_url=image_url
 		)
 		if new_source_obj and socketio_obj and app_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{new_request.user_id}')
+				socketio_obj.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{new_query.user_id}')
 
 		if collected_leads.leads:
 			for lead in collected_leads.leads:
 				new_lead_obj = Lead.check_and_add(
 					url=lead.url,
-					user_id=new_request.user_id,
-					query_id=new_request.id,
+					user_id=new_query.user_id,
+					query_id=new_query.id,
 					source_id=None,
 				)
 				if new_lead_obj and socketio_obj and app_obj:
 					with app_obj.app_context():
-						socketio_obj.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{new_request.user_id}')
+						socketio_obj.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{new_query.user_id}')
 
 		if collected_leads.lead_sources:
 			for lead_source in collected_leads.lead_sources:
 				new_source_obj = LeadSource.check_and_add(
 					lead_source.url,
-					new_request.user_id,
-					new_request.id
+					new_query.user_id,
+					new_query.id
 				)
 				if new_source_obj and socketio_obj and app_obj:
 					with app_obj.app_context():
-						socketio_obj.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{new_request.user_id}')
+						socketio_obj.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{new_query.user_id}')
 
 	return True, "", total_tokens_used
 
@@ -480,6 +480,10 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 
 
 def _llm_validate_lead(link, user):
+	"""
+	Checks if a lead is valid and relevant
+	"""
+
 	print(f'Validating lead from link: {link}')
 	if user.credits < 1:
 		return ValidationOutput(
