@@ -34,6 +34,10 @@ def check_lead_task(lead_id):
 		if lead.checked and lead.valid:
 			return
 
+		if lead.hidden:
+			lead._finished()
+			return
+
 		total_tokens_used_usd = 0
 
 		lead_user = User.get_by_id(lead.user_id)
@@ -44,17 +48,17 @@ def check_lead_task(lead_id):
 		total_tokens_used_usd += tokens_used_usd
 		final_validation_output = first_validation_output
 
+		logger.info(first_validation_output)
 		if not first_validation_output:
 			lead._finished()
 			lead.save()
 			worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
 			return
 
-		if first_validation_output.next_link and not first_validation_output.email_address:
+		if (first_validation_output.next_link or first_validation_output.contact_page) and not first_validation_output.email_address:
 			loop_idx = 0
 			validation_output = first_validation_output
 			while (validation_output.next_link or validation_output.contact_page) and not (validation_output.email_address):
-
 				next_link = (validation_output.next_link or validation_output.contact_page or "")
 
 				if next_link.startswith('/') and lead.url:
@@ -178,7 +182,7 @@ def check_lead_task(lead_id):
 		lead._finished()
 		db.session.commit()
 
-		if 'mini' in lead_user.model_preference:
+		if 'mini' in (lead_user.model_preference or 'gpt-4o-mini'):
 			mult = min_app.config['PRICING_MULTIPLIERS']['check_lead_mini']
 		else:
 			mult = min_app.config['PRICING_MULTIPLIERS']['check_lead']

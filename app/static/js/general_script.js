@@ -10,7 +10,7 @@ const dataCache = {
 window.confirmHides = true;
 
 const desktopLeadNameFormatter = (cell, row) => {
-    let content = cell ? cell : row.url;
+    let content = cell ? cell : row.base_url;
     const isUrl = !cell;
     const percentage = row.quality_score !== null ? Math.floor(row.quality_score * 100) : 0;
     const color = `rgb(${Math.floor(255 - (percentage * 2.55))}, ${Math.floor(percentage * 2.55)}, 0)`;
@@ -42,7 +42,7 @@ const desktopLeadNameFormatter = (cell, row) => {
 						</div>
 		        <div style="display: flex; flex-direction: column; overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
 		        	<a href="/lead/${row.guid}" class="lead-name" data-id="${row.id}" style="${style}">${content}</a>
-		         	<a href="${row.url}" target="_blank" style="${linkStyle}">${row.url}</a>
+		         	<a href="${row.base_url}" target="_blank" style="${linkStyle}">${row.base_url}</a>
 		        </div>
 					</div>`
         : `<div style="${containerStyle}">
@@ -51,7 +51,7 @@ const desktopLeadNameFormatter = (cell, row) => {
 								<img src="${imageUrl}" alt="Lead image" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; opacity: 0.8">
 							</a>
 						</div>
-          	<a href="${row.url}" target="_blank" style="${style}">${content}</a>
+          	<a href="${row.base_url}" target="_blank" style="${style}">${content}</a>
           </div>`;
 }
 
@@ -203,7 +203,9 @@ function updateCounts() {
 		    "hidden-leads-table",
 				"all-queries-table",
 				"running-queries-table",
-				"hidden-queries-table"
+				"hidden-queries-table",
+				"query-leads-table",
+				"query-sources-table"
 		];
     tables.forEach(tableId => {
         const table = document.getElementById(tableId);
@@ -751,7 +753,7 @@ const createTable = (tableId, columns, data, show_hidden=false) => {
 
     if (data.length === 0) {
         table.style.height = 'auto';
-        table.style.maxHeight = 'unset';
+        table.style.maxHeight = '600px';
         table.style.minHeight = '150px';
         const noDataMessage = document.createElement('div');
         noDataMessage.className = 'no-data-message';

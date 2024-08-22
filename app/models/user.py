@@ -29,7 +29,7 @@ class User(UserMixin, db.Model):
 	# search_model_preference = db.Column(db.String(50), default='gpt-4o')
 	# source_collection_model_preference = db.Column(db.String(50), default='gpt-4o')
 	# lead_validation_model_preference = db.Column(db.String(50), default='gpt-4o')
-	model_preference = db.Column(db.String(50), default='gpt-4o')
+	model_preference = db.Column(db.String(50), default='gpt-4o-mini')
 
 	is_admin = db.Column(db.Boolean, default=False)
 
@@ -49,7 +49,7 @@ class User(UserMixin, db.Model):
 		self.last_trained_lead_model_at = kwargs.get('last_trained_lead_model_at')
 		self.last_trained_source_model_at = kwargs.get('last_trained_source_model_at')
 		self.credits = kwargs.get('credits', 0)
-		self.model_preference = kwargs.get('model_preference', 'gpt-4o')
+		self.model_preference = kwargs.get('model_preference', 'gpt-4o-mini')
 		return self
 
 	def to_dict(self):
@@ -65,7 +65,7 @@ class User(UserMixin, db.Model):
 			'last_trained_lead_model_at': self.last_trained_lead_model_at,
 			'last_trained_source_model_at': self.last_trained_source_model_at,
 			'credits': self.credits,
-			'model_preference': self.model_preference,
+			'model_preference': (self.model_preference or 'gpt-4o-mini'),
 			'is_admin': self.is_admin
 		}
 
@@ -132,11 +132,11 @@ class User(UserMixin, db.Model):
 		if query_id:
 			request = Query.get_by_id(query_id)
 			lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False, query_id=query_id).all()
-			leads = Lead.query.filter_by(user_id=cls.id, hidden=False, query_id=query_id).all()
+			leads = Lead.query.filter_by(user_id=cls.id, hidden=False, query_id=query_id).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
 
 		elif source_id:
 			source = LeadSource.get_by_id(source_id)
-			leads = Lead.query.filter_by(user_id=cls.id, hidden=False, source_id=source_id).all()
+			leads = Lead.query.filter_by(user_id=cls.id, hidden=False, source_id=source_id).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
 
 		elif lead_id:
 			lead = Lead.get_by_id(lead_id)

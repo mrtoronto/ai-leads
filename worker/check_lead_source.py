@@ -22,7 +22,11 @@ def check_lead_source_task(lead_source_id):
 		if not lead_source:
 			return
 
-		if lead_source.checked and lead_source.valid:
+		if (lead_source.checked and lead_source.valid):
+			return
+
+		if lead_source.hidden:
+			lead_source._finished()
 			return
 
 		lead_source_user = User.get_by_id(lead_source.user_id)
@@ -39,8 +43,10 @@ def check_lead_source_task(lead_source_id):
 			socketio_obj=worker_socketio
 		)
 
+		logger.info(validation_output)
+
 		with min_app.app_context():
-			if 'mini' in lead_source_user.model_preference:
+			if 'mini' in (lead_source_user.model_preference or 'gpt-4o-mini'):
 				mult = min_app.config['PRICING_MULTIPLIERS']['check_source_mini']
 			else:
 				mult = min_app.config['PRICING_MULTIPLIERS']['check_source']
@@ -110,4 +116,4 @@ def check_lead_source_task(lead_source_id):
 
 		lead_source._finished()
 
-		worker_socketio.emit('sources_updated', {'source': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')
+		worker_socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')

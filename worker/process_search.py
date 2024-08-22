@@ -17,6 +17,16 @@ def search_request_task(query_id):
 		return
 	with min_app.app_context():
 		request = Query.get_by_id(query_id)
+
+		if not request:
+			return
+
+		if request.finished:
+			return
+		if request.hidden:
+			request._finished()
+			return
+
 		request_user = request.user
 		previously_liked_leads = Lead.get_liked_leads(request_user.id, 5)
 
@@ -56,7 +66,7 @@ def search_request_task(query_id):
 
 
 			with min_app.app_context():
-				if 'mini' in request.user.model_preference:
+				if 'mini' in (request.user.model_preference or 'gpt-4o-mini'):
 					mult = min_app.config['PRICING_MULTIPLIERS']['check_source_mini']
 				else:
 					mult = min_app.config['PRICING_MULTIPLIERS']['check_source']

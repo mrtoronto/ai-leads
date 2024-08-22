@@ -9,6 +9,9 @@ from langchain.prompts import PromptTemplate
 from app.utils import _tidy_url
 from app.models import Lead, LeadSource, CreditLedgerType
 
+import logging
+
+logger = logging.getLogger('BDB-2EB')
 
 user_agents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -85,62 +88,41 @@ class PromptTemplate():
 		self.template = template_text
 
 	def render(self, **kwargs):
-		return self.template.format(**kwargs)
+		if isinstance(self.template, list):
+			return [t.format(**kwargs) for t in self.template]
+		else:
+			return self.template.format(**kwargs)
 
-query_reformatting_prompt = PromptTemplate("""
-You are a GPT trained to rewrite user's search queries. The user will provide you with their basic search query and a description of what they're looking for. Your job is to rewrite the query in a way that is more likely to return relevant results.
-
-This is the output format. Do not deviate from it. Do not include any text outside of this output format.
+query_reformatting_prompt = PromptTemplate([
+	"""You are a GPT trained to rewrite user's search queries. The user will provide you with their basic search query and a description of what they're looking for. Your job is to rewrite the query in a way that is more likely to return relevant results.""",
+	"""This is the output format. Do not deviate from it. Do not include any text outside of this output format.
 {format_instruction}
-""")
-
-search_lead_collection_prompt = PromptTemplate("""
-You are a GPT trained to collect lead sources from search results. The user will provide you with search results and your job is to filter the results to only results that may contain leads relevant to the user. Your goal is to provide all of the relevant links on the page.
-
-A lead is a company or organization that may be interested in the user's services. A lead source is a website that is likely to contain leads.
-
-Only URLs are relevant leads. The following are not relevant leads:
-	- Email address
-	- Phone numbers
-	- Skype, AOL or other usernames
-	- Twitter, Facebook, Instagram or other social media profiles
-	- Maps or directions
-
-The user you are finding leads for describes their business's industry as "{user_industry}".
-
-They are interested in finding leads for organizations with {user_pref_org_size} employees.
-
-The user describes their business as:
-{user_description}
-
-Please provide a list of URLs that are either:
-	- Leads: Links that are directly applicable to the user's query and may contain contact information
-		- Links to websites that may be interested in the user's services
-		- For example, company websites or contact pages
-		- These are de-duplicated by domain so make sure to only include one link per domain
-	- Lead Sources: Not directly applicable to the user's query but may contain links to relevant sites
-		- Links to websites that may contain links to organizations interested in the user's services
-		- For example, blogs, forums, or directories
-		- These are not de-duplicated by domain so include all relevant links
-
-Previously the user has liked leads like the following:
-{previous_leads}
-
-This is the output format. Do not deviate from it. Do not include any text outside of this output format.
-{format_instruction}
-""")
+"""
+])
 
 source_lead_collection_prompt = PromptTemplate("""
-You are a GPT trained to collect leads from a lead source. The user will provide the contents of a page potentially containing leads. Your job is to filter the results and return all of the relevant leads and all of the other lead sources to the user.
+You are a GPT trained to collect leads from a source of leads. The user provided the contents of a page potentially containing leads.
 
-A lead is a company or organization that may be interested in the user's services. A lead source is a website that is likely to contain leads.
+# Instructions
 
-Only URLs are relevant leads. The following are not relevant leads:
+Filter the content and return the metadata relevant to the user.
+
+## Description of Leads and Lead Sources
+
+Metadata includes page content and URLs. Relevant links include leads and lead sources.
+	- A lead is a company or organization that may be interested in the user's services.
+	- A lead source is a website that is likely to contain leads.
+
+Only URLs are relevant. The following are not relevant:
 	- Email address
 	- Phone numbers
 	- Skype, AOL or other usernames
 	- Twitter, Facebook, Instagram or other social media profiles
 	- Maps or directions
+
+Internal links within a site are valid. We will handle transforming them into a full URL.
+
+## Description of User
 
 This user describes their business's industry as "{user_industry}".
 
@@ -148,6 +130,11 @@ They are interested in finding leads for organizations with {user_pref_org_size}
 
 The user describes their business as:
 {user_description}
+
+Previously the user has liked leads like the following:
+{previous_leads}
+
+## Output Format
 
 You need to provide:
 	- Name: The name of the source company or organization
@@ -165,9 +152,6 @@ You need to provide:
 		- Provide a max of one lead per organization
 		- If the page contains multiple links to an organization, pick the most relevant one
 		- These are not de-duplicated by domain so include all relevant links
-
-Previously the user has liked leads like the following:
-{previous_leads}
 
 This is the output format. Do not deviate from it. Do not include any text outside of this output format.
 {format_instruction}
@@ -243,12 +227,31 @@ def _llm(user_input, template, parser, parse_output=True, user=None, previous_le
 		url = "https://api.openai.com/v1/chat/completions"
 		headers['Authorization'] = f'Bearer {OPENAI_API_KEY}'
 		input_model_name = model_name
+
+	if isinstance(system_prompt, str):
+
+		messages = [{
+			"role": "system",
+			"content": system_prompt
+		}]
+	elif isinstance(system_prompt, list):
+		messages = [
+			{
+				"role": "system",
+				"content": prompt
+			} for prompt in system_prompt
+		]
+	else:
+		raise ValueError("system_prompt must be a string or list")
+
+	messages += [{
+		"role": "user",
+		"content": user_input
+	}]
+
 	data = {
 		'model': input_model_name,
-		'messages': [
-			{'role': 'system', 'content': system_prompt},
-			{'role': 'user', 'content': user_input}
-		],
+		'messages': messages,
 		'max_tokens': 1000
 	}
 
@@ -271,6 +274,76 @@ def _llm(user_input, template, parser, parse_output=True, user=None, previous_le
 		print(f'LLM Error: {response.status_code} - {response.json()}')
 		return None, 0
 
+
+def get_visible_links(link):
+	headers = {
+		'User-Agent': random.choice(user_agents)
+	}
+	session = requests.Session()
+	try:
+		resp = session.get(link, headers=headers, timeout=10, allow_redirects=True)
+		resp.raise_for_status()  # Raises an HTTPError for bad responses
+	except requests.exceptions.RequestException as e:
+		return None, None
+
+	if resp.status_code != 200:
+		return None, None
+	html = resp.text
+
+	if not html:
+		return None, None
+
+	soup = BeautifulSoup(html, 'html.parser')
+
+	# Remove all script and style elements
+	for script_or_style in soup(['script', 'style']):
+		script_or_style.decompose()
+
+	# Extract text and links
+	visible_text_with_links = []
+	raw_text = []
+	links = []
+
+	for element in soup.descendants:
+		if isinstance(element, str):
+			text = element.strip()
+			if text:
+				raw_text.append(text)
+		elif element.name == 'a' and 'href' in element.attrs:
+			link_text = element.get_text(separator=' ', strip=True)
+			link_url = element.get('href')
+			placeholder_link_text = f"[PLACEHOLDER_LINK_{len(links)}]"
+			raw_text.append(placeholder_link_text)
+			links.append((link_url, link_text, len(raw_text) - 1, placeholder_link_text))
+
+	raw_text = ' '.join(raw_text).split()
+
+	for link_obj in links:
+		link_url, link_text, pos, placeholder_text = link_obj
+		if not link_url:
+			continue
+		if link_url.startswith('tel:') or link_url.startswith('mailto:'):
+			continue
+		start = max(0, pos - 20)
+		end = min(len(raw_text), pos + 21)
+
+		if link_url[0] == '/':
+			link_url = _tidy_url(link, link_url)
+
+		context = ' '.join(raw_text[start:pos]) + f" {link_text} " + ' '.join(raw_text[pos+1:end])
+		visible_text_with_links.append({
+			"url": link_url,
+			"url_id": placeholder_text,
+			"context": context
+		})
+
+	# visible_text_with_links = '\n\n'.join(visible_text_with_links)
+
+	# Get OpenGraph image
+	og_image = soup.find('meta', property='og:image')
+	og_image_url = og_image.get('content') if og_image and og_image.get('content') else None
+
+	return str(visible_text_with_links), og_image_url
 
 def get_visible_text_and_links(link):
 	headers = {
@@ -316,7 +389,7 @@ def get_visible_text_and_links(link):
 		og_image_url = None
 
 	rendered_text = ' '.join(rendered_text)
-	rendered_text = rendered_text[:200000]
+	rendered_text = rendered_text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
 	return rendered_text, og_image_url
 
 
@@ -356,6 +429,8 @@ def search_and_validate_leads(new_request, previous_leads, app_obj=None, socketi
 			app_obj=app_obj,
 			socketio_obj=socketio_obj
 		)
+
+		logger.info(collected_leads)
 
 		total_tokens_used += tokens_used_usd
 
@@ -419,7 +494,7 @@ def _llm_validate_lead(link, user):
 			lead_validation_prompt,
 			validation_parser,
 			user,
-			model_name=user.model_preference
+			model_name=(user.model_preference or 'gpt-4o-mini')
 		)
 		if not output:
 			output = ValidationOutput(
@@ -431,17 +506,6 @@ def _llm_validate_lead(link, user):
 			invalid_link=True
 		), opengraph_img_url, 0
 
-# def collect_leads_from_query(user_query, user, previous_leads, query_collection_mult=3):
-# 	print(f'Collecting leads from query: {user_query}')
-# 	if user.credits < 1:
-# 		return None
-# 	output, tokens_used_usd = _llm(user_query, search_lead_collection_prompt, collection_parser, user)
-# 	user.move_credits(
-# 		tokens_used_usd * -1000 * query_collection_mult,
-# 		CreditLedgerType.CHECK_QUERY
-# 	)
-# 	return output
-
 def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app_obj=None, socketio_obj=None):
 	print(f'Collecting leads from URL: {url}')
 	if user.credits < 1:
@@ -449,10 +513,7 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 			not_enough_credits=True
 		), None, 0
 
-	if 'groq' in user.model_preference:
-		url_collection_mult = 6
-
-	visible_text, opengraph_img_url = get_visible_text_and_links(url)
+	visible_text, opengraph_img_url = get_visible_links(url)
 	if visible_text:
 		output, tokens_used_usd = _llm(
 			user_input=visible_text,
@@ -460,7 +521,7 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 			parser=collection_parser,
 			user=user,
 			previous_leads=previous_leads,
-			model_name=user.model_preference
+			model_name=(user.model_preference or 'gpt-4o-mini')
 		)
 		return output, opengraph_img_url, tokens_used_usd
 	else:

@@ -114,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const settingsData = {
             user_description: description,
-            // search_model_preference: searchModelPreference,
             model_preference: modelPreference,
             email: email,
             industry: industry,

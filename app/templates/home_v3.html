@@ -8,7 +8,7 @@
         <p class="hero-subtitle top-subtitle"><b>AI</b> Augmented B2B <b>Lead Generation</b></p>
         <h1 class="hero-title {% if current_user.is_authenticated %}auth-hero-title{% endif %}"><span style="font-family: monospace;">ai</span><b>Leads</b></h1>
         {% if current_user.is_authenticated %}
-		<form id="lead-form" class="text-center" style="width: 80%; margin: auto;">
+		<form autocomplete="off" id="lead-form" class="text-center" style="width: 80%; margin: auto;">
 			<div class="form-group mb-0">
 				<input placeholder="What are you looking for?" type="text" class="form-control" id="query" name="query" size="32" style="border-bottom-left-radius: 0px;border-bottom-right-radius: 0px; border: 2px solid #E6F6FF; background-color: #E6F6FF; ">
 			</div>

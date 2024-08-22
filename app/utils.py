@@ -11,9 +11,10 @@ def get_standard_url(url):
 	elif 'www.' not in url:
 		url = f'https://www.{url}'
 
-
 	if url[-1] == '/':
 		url = url[:-1]
+
+	url = url.split('?')[0]
 
 	return url
 
@@ -77,6 +78,8 @@ def _real_url_check(url):
 	if url == 'http://www':
 		return False
 	if url == 'https://www':
+		return False
+	if url == 'https://www.www':
 		return False
 	else:
 		return True
