@@ -53,6 +53,6 @@ class Config(object):
 		'query': 400,
 		'check_source': 4,
 		'check_lead': 4,
-		'check_source_mini': 20,
-		'check_lead_mini': 20,
+		'check_source_mini': 10,
+		'check_lead_mini': 10,
 	}
