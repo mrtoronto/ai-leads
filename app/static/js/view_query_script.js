@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     );
 
     fetchData({'query_id': queryId}).then(data => {
+    		console.log(data);
         const container = document.querySelector('.query-container');
         container.innerHTML = '';
 

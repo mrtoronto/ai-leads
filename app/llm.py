@@ -64,6 +64,7 @@ class ValidationOutput(BaseModel):
 	next_link: Optional[str] = Field(None, description="A link to a page that might have an email address (e.g. a contact page)")
 	contact_page: Optional[str] = Field(None, description="A link to a contact page with a contact form")
 	no_email_found: Optional[bool] = Field(None, description="No relevant email address found")
+	relevant_to_user: Optional[bool] = Field(None, description="Mark this value as true if this lead is relevant to the user's query")
 	invalid_link: Optional[bool] = Field(None, description="The link provided by the user is invalid. Do not use this value, it will be set by the system if necessary.")
 	not_enough_credits: Optional[bool] = Field(
 		None,
@@ -152,12 +153,12 @@ Previously the user has liked leads like the following:
 lead_validation_prompt = PromptTemplate([
 	"""You are a GPT trained to extract contact info from websites. The user will provide you with the text render on a website and your job is to help them find the contact information for the organization.""",
 	"""The user you are finding leads for describes their business's industry as "{user_industry}".
+The query they searched in this particular instance is "{user_query}".
 
 They are interested in finding leads for organizations with {user_pref_org_size} employees.
 
 The user describes their business as:
 {user_description}""",
-
 	"""If you see an email address visible, output the email address in the "email_address" field.
 If you see a contact page that might have an email address, output the link to the contact page in the "contact_page" field.
 If you do not see anything relevant, use the "no_email_found" field.
@@ -186,7 +187,7 @@ MODEL_PRICING = {
 }
 
 
-def _llm(user_input, template, parser, parse_output=True, user=None, previous_leads=[], model_name='gpt-4o-mini'):
+def _llm(user_input, template, parser, parse_output=True, user=None, query=None, previous_leads=[], model_name='gpt-4o-mini'):
 
 	if not model_name:
 		model_name='gpt-4o-mini'
@@ -203,11 +204,17 @@ def _llm(user_input, template, parser, parse_output=True, user=None, previous_le
 	if not previous_leads:
 		previous_leads = "No leads have been liked yet."
 
+	if query:
+		user_query = query.reformatted_query
+	else:
+		user_query = "No query provided."
+
 	system_prompt = template.render(
 		format_instruction=parser.get_format_instructions(),
 		user_description=description,
 		user_industry=industry,
 		user_pref_org_size=org_size,
+		user_query=user_query,
 		previous_leads=previous_leads
 	)
 
@@ -479,7 +486,7 @@ def search_and_validate_leads(new_query, previous_leads, app_obj=None, socketio_
 
 
 
-def _llm_validate_lead(link, user):
+def _llm_validate_lead(link, user, query):
 	"""
 	Checks if a lead is valid and relevant
 	"""
@@ -498,6 +505,7 @@ def _llm_validate_lead(link, user):
 			lead_validation_prompt,
 			validation_parser,
 			user,
+			query=query,
 			model_name=(user.model_preference or 'gpt-4o-mini')
 		)
 		if not output:

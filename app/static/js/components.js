@@ -30,7 +30,7 @@ export function createLeadDetailsComponent(lead) {
         <div class="card-text">Contact Page: <a href="${lead.contact_page}" target="_blank">${lead.contact_page}</a></div>
         <hr>
         ${!lead.valid ? `<div class="card-text">Invalid URL</div>` : ''}
-        <div class="card-text">Checked: ${lead.checked ? 'Yes' : 'No'}</div>
+        <div class="card-text">Scanned: ${lead.checked ? 'Yes' : 'No'}</div>
         <div class="card-text">Liked: ${lead.liked ? 'Yes' : 'No'}</div>
         <div class="card-text">Quality Score: ${lead.quality_score || 0}</div>
         ${lead.query_obj ? `<a href="/query/${lead.query_obj.guid}" class="btn btn-primary mt-2">View Query</a>` : ''}
@@ -46,7 +46,7 @@ export function createSourceDetailsComponent(source) {
         <div class="card-text"><a href="${source.url}" target="_blank">${source.url}</a></div>
         <hr>
         ${!source.valid ? `<div class="card-text">Invalid URL</div>` : ''}
-        <div class="card-text">Checked: ${source.checked ? 'Yes' : 'No'}</div>
+        <div class="card-text">Scanned: ${source.checked ? 'Yes' : 'No'}</div>
         <div class="card-text">Quality Score: ${source.quality_score}</div>
         ${source.query_obj ? `<a href="/query/${source.query_obj.guid}" class="btn btn-primary mt-2">View Query</a>` : ''}
         ${source.hidden ? '<div class="card-text">[[ HIDDEN ]]</div>' : ''}
@@ -56,7 +56,7 @@ export function createSourceDetailsComponent(source) {
 export function createQueryDetailsComponent(query) {
     return createCardComponent("Query Details", `
         <div class="card-text card-text-name">${query.user_query}</div>
-        <div class="card-text">Reformatted: ${query.reformatted_query}</div>
+        ${query.reformatted_query ? `<div class="card-text">Reformatted: ${query.reformatted_query}</div>` : ''}
         <hr>
         <div class="card-text">Finished: ${query.finished ? 'Yes' : 'No'}</div>
         ${query.hidden ? '<div class="card-text">[[ HIDDEN ]]</div>' : ''}
@@ -113,13 +113,13 @@ function getActionDisplayName(actionClass) {
         case 'unselect-all':
             return 'Unselect Visible';
         case 'select-checked':
-            return 'Select Checked';
+            return 'Select Scanned';
         case 'select-unchecked':
-            return 'Select Unchecked';
+            return 'Select Unscanned';
         case 'select-invalid':
             return 'Select Invalid';
         case 'check-all':
-            return 'Check Selected';
+            return 'Scan Selected';
         case 'hide-all':
             return 'Hide Selected';
         case 'unhide-all':

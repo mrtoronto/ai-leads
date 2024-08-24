@@ -1,16 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center mb-5">Frequently Asked Questions</h1>
+    {% include "subtemplates/_sub_navbar.html" %}
+
+    <h1 class="text-center mb-5 mt-5">Frequently Asked Questions</h1>
 
     <div class="accordion" id="faqAccordion">
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingOne">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseZero" aria-expanded="true" aria-controls="collapseZero">
+                    How do I get started?
+                </button>
+            </h2>
+            <div id="collapseZero" class="accordion-collapse collapse show" aria-labelledby="headingZero" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Getting started is easy!
+                    <ol>
+                        <li><a style="font-weight: bold;" href="{{ url_for('main.register') }}">Register for an account</a> or <a style="font-weight: bold;" href="{{ url_for('main.login') }}">login</a> if you already have one.</li>
+                        <li><a style="font-weight: bold;" href="{{ url_for('main.index') }}">Buy some credits</a> (the first 2,000 are only $1!).</li>
+                        <li><a style="font-weight: bold;" href="{{ url_for('main.index') }}">Make a query</a> (↑↑↑ look for the magic wand ↑↑↑)</li>
+                        <li>Scan the results for leads</li>
+                        <li>Like or hide leads to refine your future searches</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                     How does the lead generation process work?
                 </button>
             </h2>
-            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
                 <div class="accordion-body">
                     Our lead generation process works as follows:
                     <ol>
@@ -19,7 +40,7 @@
                         <li>Each result is classified as either a lead or a lead source.</li>
                         <li>Both leads and sources are presented to you.</li>
                         <li>Sources are searched again to find additional leads.</li>
-                        <li>Leads are checked for contact information, descriptions and quality.</li>
+                        <li>Leads are scanned for contact information, descriptions and quality.</li>
                         <li>Finally, you can like or hide leads to refine the quality scores and train your model further.</li>
                     </ol>
                     This comprehensive approach ensures you get high-quality leads relevant to your query.
@@ -37,13 +58,13 @@
                 <div class="accordion-body">
                     The Lead Quality Prediction model is a machine learning algorithm that helps you identify <b>high-quality leads</b>. Here's how it works:
                     <ul>
-                        <li>You like at least 50 leads and hide at least 50 leads.</li>
-                        <li>Once you meet this criteria, you can train a model.</li>
-                        <li>The model learns from your preferences based on your liked and hidden leads.</li>
+                        <li>Like and hide at least 50 leads (100 total).</li>
+                        <li>Train your model.</li>
+                        <li>The model trains on your preferences based on your liked and hidden leads.</li>
                         <li>After training, it scores each of your leads with a probability of being a good lead.</li>
                         <li>This helps you focus on the most promising leads, saving you time and effort.</li>
                     </ul>
-                    Each new lead you check will be automatically scored by the model, helping you make better decisions. You can also retrain this model at any time with updated data to improve its accuracy.
+                    Each new lead you scan will be automatically scored by the model, helping you make better decisions. You can also retrain this model at any time with updated data to improve its accuracy.
                 </div>
             </div>
         </div>
@@ -60,7 +81,7 @@
                     <ul>
                         <li>You can purchase credits in packages of 10,000, 25,000, 50,000, or 100,000.</li>
                         <li>Most actions cost around 100 credits, but this can vary based on the length and number of results.</li>
-                        <li>You can switch to gpt-4o-mini in the settings menu to reduce costs by 10x, with slightly lower accuracy.</li>
+                        <li>You can switch to gpt-4o-mini in the settings menu to reduce costs significantly with slightly lower accuracy.</li>
                         <li>Credits are deducted as you use the service, allowing you to pay only for what you use.</li>
                     </ul>
                 </div>
@@ -79,26 +100,7 @@
                         <li><strong>Lead:</strong> A potential customer or client. Our system identifies leads and provides their contact information and a description of what they do.</li>
                         <li><strong>Lead Source:</strong> A site where multiple leads can be found. We search lead sources to find additional leads for you.</li>
                     </ul>
-                    Both are valuable for your lead generation efforts, but we handle all this to ensure you get the best results.
-                </div>
-            </div>
-        </div>
-
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingFive">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                    How can I optimize my credit usage?
-                </button>
-            </h2>
-            <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#faqAccordion">
-                <div class="accordion-body">
-                    To get the most out of your credits:
-                    <ol>
-                        <li>Use <b>specific, targeted queries</b> to get more relevant results.</li>
-                        <li>Use our <b>Lead Quality Prediction models</b> to focus on high-quality leads.</li>
-                        <li>Consider using the <b>gpt-4o-mini</b> option to save credits.</li>
-                        <li>Regularly review and refine your preferences to improve the AI's understanding of your needs.</li>
-                    </ol>
+                    For example, a lead should be a potential customer, a lead source might be a blog post about the best XYZ in ABC. Both are valuable for your lead generation efforts, but we handle all this to ensure you get the best results.
                 </div>
             </div>
         </div>

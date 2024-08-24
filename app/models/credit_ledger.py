@@ -9,6 +9,7 @@ class CreditLedgerType:
 	CHECK_LEAD = 'check_lead'
 	REWRITE_QUERY = 'rewrite_query'
 	CHECK_SOURCE = 'check_source'
+	PAID = 'paid'
 
 class CreditLedger(db.Model):
 	__tablename__ = 'credit_ledger'

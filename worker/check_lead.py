@@ -1,5 +1,5 @@
 from app import worker_socketio, create_minimal_app
-from app.models import LeadSource, Lead, ModelTypes, User, CreditLedgerType
+from app.models import LeadSource, Lead, ModelTypes, User, CreditLedgerType, Job
 from rq import get_current_job
 from app.llm import _llm_validate_lead, collect_leads_from_url
 from app.utils import _tidy_url, _useful_url_check
@@ -21,12 +21,17 @@ def check_lead_task(lead_id):
 		- Has contact information
 	"""
 	job = get_current_job()
-
 	min_app = _make_min_app()
 	if not min_app:
 		logger.error("Failed to create app context")
 		return
 	with min_app.app_context():
+		job = get_current_job()
+
+		job_obj = Job.query.filter_by(lead_id=lead_id).first()
+		if job_obj:
+			job_obj._started(job.id if job else None)
+
 		lead = Lead().get_by_id(lead_id)
 		if not lead:
 			return
@@ -35,22 +40,29 @@ def check_lead_task(lead_id):
 			return
 
 		if lead.hidden:
-			lead._finished()
+			lead._finished(
+				socketio_obj=worker_socketio,
+				app_obj=min_app
+			)
 			return
 
 		total_tokens_used_usd = 0
 
 		lead_user = User.get_by_id(lead.user_id)
 		first_validation_output, opengraph_img_url, tokens_used_usd = _llm_validate_lead(
-			lead.url,
-			lead_user
+			link=lead.url,
+			query=lead.query_obj,
+			user=lead_user
 		)
 		total_tokens_used_usd += tokens_used_usd
 		final_validation_output = first_validation_output
 
-		logger.info(first_validation_output)
+		# logger.info(first_validation_output)
 		if not first_validation_output:
-			lead._finished()
+			lead._finished(
+				socketio_obj=worker_socketio,
+				app_obj=min_app
+			)
 			lead.save()
 			worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
 			return
@@ -67,12 +79,13 @@ def check_lead_task(lead_id):
 					next_link = base_url + next_link
 
 				validation_output, opengraph_img_url, tokens_used_usd = _llm_validate_lead(
-					next_link,
-					lead_user
+					link=next_link,
+					user=lead_user,
+					query=lead.query_obj,
 				)
 
 				total_tokens_used_usd += tokens_used_usd
-				logger.info(validation_output)
+				# logger.info(validation_output)
 				if validation_output:
 
 					if validation_output.not_enough_credits or final_validation_output.not_enough_credits:
@@ -98,6 +111,9 @@ def check_lead_task(lead_id):
 					if not final_validation_output.leads:
 						final_validation_output.leads = validation_output.leads
 
+					if not final_validation_output.relevant_to_user:
+						final_validation_output.relevant_to_user = validation_output.relevant_to_user
+
 					if validation_output.leads:
 						if final_validation_output.leads:
 							final_validation_output.leads += validation_output.leads
@@ -118,11 +134,14 @@ def check_lead_task(lead_id):
 					break
 				loop_idx += 1
 
-		logger.info(final_validation_output)
+		# logger.info(final_validation_output)
 
 		if not final_validation_output:
 			logger.error("No validation output")
-			lead._finished()
+			lead._finished(
+				socketio_obj=worker_socketio,
+				app_obj=min_app
+			)
 			lead.save()
 			worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
 			return
@@ -134,6 +153,7 @@ def check_lead_task(lead_id):
 			return
 
 		lead.name = final_validation_output.name or lead.name
+		lead.relevant = final_validation_output.relevant_to_user or lead.relevant
 		lead.image_url = opengraph_img_url or lead.image_url
 		lead.description = final_validation_output.description or lead.description
 		lead.contact_info = final_validation_output.email_address or lead.contact_info
@@ -161,7 +181,11 @@ def check_lead_task(lead_id):
 			new_source = LeadSource.check_and_add(
 				url=lead.url,
 				user_id=lead.user_id,
-				query_id=lead.query_id
+				query_id=lead.query_id,
+				checked=True,
+				name=lead.name,
+				description=lead.description,
+				image_url=lead.image_url,
 			)
 			if new_source:
 				worker_socketio.emit('sources_updated', {'sources': [new_source.to_dict()]}, to=f'user_{lead.user_id}')
@@ -179,7 +203,10 @@ def check_lead_task(lead_id):
 
 		model = FastTextModel(lead.user_id, ModelTypes.LEAD)
 		lead.quality_score = model.predict_lead(lead_user, lead)
-		lead._finished()
+		lead._finished(
+			socketio_obj=worker_socketio,
+			app_obj=min_app
+		)
 		db.session.commit()
 
 		if 'mini' in (lead_user.model_preference or 'gpt-4o-mini'):

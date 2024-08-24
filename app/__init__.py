@@ -1,3 +1,4 @@
+from flask import Flask, request, g, make_response, after_this_request
 import os
 import redis
 from flask import Flask, request
@@ -11,8 +12,8 @@ from werkzeug.security import generate_password_hash
 from config import Config
 from flask_caching import Cache
 from flask import send_file
+from flask_login import current_user
 import time
-# from google.auth.exceptions import DefaultCredentialsError
 import logging
 from sqlalchemy.exc import OperationalError
 import sqlalchemy
@@ -21,6 +22,9 @@ from flask_mail import Mail, Message
 
 from sqlalchemy.engine.url import URL
 from user_agents import parse
+from app.utils import get_request_hash
+import local_settings
+import stripe
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('BDB-2EB')
@@ -77,11 +81,65 @@ def mobile_middleware(app):
         g.is_mobile = user_agent_parsed.is_mobile
 
 
+
+
+def log_journey_middleware(app):
+	from worker.log_journey import log_journey_task
+
+	@app.before_request
+	def log_journey():
+
+		if request.endpoint and ('static' in request.endpoint):
+			return
+
+		if request.url and ('serviceWorker' in request.url):
+			return
+
+		user_agent = request.headers.get('User-Agent', '').lower()
+		crawlers = ['googlebot', 'bingbot', 'yandex', 'baiduspider', 'slurp', 'duckduckbot', 'facebookexternalhit', 'twitterbot']
+		if any(crawler in user_agent for crawler in crawlers):
+			return
+
+		user_hash = request.cookies.get('user_hash')
+
+		if not user_hash:
+			user_hash = get_request_hash(request.remote_addr or '', request.headers.get('User-Agent', ''), user_hash)
+			if user_hash:
+				@after_this_request
+				def add_cookie(response):
+					response.set_cookie('user_hash', user_hash, max_age=60 * 60 * 24 * 365)  # 1 year expiration
+					return response
+
+			g.user_hash = user_hash
+		else:
+			g.user_hash = user_hash
+
+		if 'twclid' in request.url:
+			twclid = request.args.get('twclid')
+			@after_this_request
+			def add_cookie_twclid(response):
+				response.set_cookie('_twclid', twclid, max_age=60 * 60 * 24 * 30)  # 1 month expiration
+				return response
+
+		user_id = current_user.id if current_user.is_authenticated else None
+		data = {
+			'user_id': user_id,
+			'user_hash': g.user_hash,
+			'endpoint': request.endpoint,
+			'referrer': request.referrer or 'direct',
+			'timestamp': time.time(),
+			'location': request.url,
+			'_type': 'before_request'
+		}
+		app.config['low_priority_queue'].enqueue(log_journey_task, data)
+
+
 def create_app(config_class=Config):
 	# Initialize the Flask application
 	start_time = time.time()
 	flask_app = Flask(__name__)
 	mobile_middleware(flask_app)
+	log_journey_middleware(flask_app)
 	flask_app.config.from_object(config_class)
 	logger.info(f'Config loaded in {time.time() - start_time} seconds')
 	logger.info(f'Running on {flask_app.config["FLASK_ENV"]} environment')
@@ -95,10 +153,17 @@ def create_app(config_class=Config):
 	cache.init_app(flask_app)
 	mail.init_app(flask_app)
 
+	if flask_app.config['FLASK_ENV'] == 'prod':
+		stripe.api_key = local_settings.PROD_STRIPE_SECRET_KEY
+	else:
+		stripe.api_key = local_settings.DEV_STRIPE_SECRET_KEY
+
 	logger.info(f'Initialized plugins in {time.time() - start_time} seconds')
 
 	redis_conn = redis.from_url(os.environ.get('REDIS_URL', flask_app.config['REDIS_URL']))
-	task_queue = Queue('default', connection=redis_conn)
+	flask_app.config['task_queue'] = Queue(connection=redis_conn)
+	flask_app.config['high_priority_queue'] = Queue('high_priority', connection=redis_conn)
+	flask_app.config['low_priority_queue'] = Queue('low_priority', connection=redis_conn)
 
 	from app.routes import bp as room_bp
 	flask_app.register_blueprint(room_bp)
@@ -112,7 +177,6 @@ def create_app(config_class=Config):
 
 	logger.info(f'Running on {flask_app.config["FLASK_ENV"]} environment')
 	logger.info(f'Running redis at {flask_app.config["REDIS_URL"]}')
-
 	logger.info(f'Making DB after {time.time() - start_time} seconds')
 
 

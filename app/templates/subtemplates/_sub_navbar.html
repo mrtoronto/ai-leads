@@ -23,7 +23,14 @@
     transition: transform 0.3s ease;
 }
 
+.subnav-section {
+	width: 80%;
+}
+
 @media (max-width: 767px) {
+	.subnav-section {
+		width: 100%;
+	}
   .btn-nav {
     font-size: 14px;
     width: 40%;
@@ -36,7 +43,7 @@
 }
 </style>
 
-<div style="width: 80%; min-width: 300px; margin: auto;">
+<div class="subnav-section" style="min-width: 300px; margin: auto;">
 	<div class="nav-container">
 	   	{% if request.path != '/' %}
 	  	<a href="/" class="btn-primary-outline-light btn-nav" onclick="this.innerHTML='<span class=\'spinner-border spinner-border-sm\' role=\'status\' aria-hidden=\'true\'></span>'; this.classList.add('disabled');">Home</a>
@@ -61,7 +68,7 @@
 
 </div>
 {% if request.path != '/' %}
-<div style="width: 80%; margin: auto; margin-top: 1em;">
+<div class="subnav-section" style="margin: auto; margin-top: 1em;">
 	<form autocomplete="off" id="lead-form" class="text-center" style="width: 80%; margin: auto;">
 		<div class="form-group mb-0">
 			<input placeholder="What are you looking for?" type="text" class="form-control" id="query" name="query" size="32" style="border-bottom-left-radius: 0px;border-bottom-right-radius: 0px; border: 2px solid #3E8CFF; background-color: #E6F6FF; ">

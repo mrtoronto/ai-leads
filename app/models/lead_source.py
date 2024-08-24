@@ -8,6 +8,7 @@ import requests
 import json
 from app import db
 from app.models.lead import Lead
+from app.models.job import Job
 
 class LeadSource(db.Model):
 	__tablename__ = 'lead_source'
@@ -33,6 +34,16 @@ class LeadSource(db.Model):
 	jobs = db.relationship('Job', backref='lead_source', lazy='dynamic')
 	leads = db.relationship('Lead', backref='lead_source', lazy='dynamic')
 
+	def _get_place_in_queue(self):
+		if self.checking:
+			jobs = self.jobs
+			if jobs:
+				job = jobs.filter_by(finished=False).order_by(Job.created_at.desc()).first()
+				if job:
+					return job.place_in_queue()
+
+		return None
+
 	def to_dict(self):
 		return {
 			'id': self.id,
@@ -49,6 +60,7 @@ class LeadSource(db.Model):
 			'created_at': self.created_at.isoformat() if self.created_at else None,
 			'hidden_at': self.hidden_at.isoformat() if self.hidden_at else None,
 			'checking': self.checking,
+			'place_in_queue': self._get_place_in_queue(),
 			'image_url': self.image_url,
 			'quality_score': self.quality_score,
 			'n_leads': self.leads.count()
@@ -111,7 +123,7 @@ class LeadSource(db.Model):
 		return cls.query.filter_by(user_id=user_id, hidden=False, valid=True).all()
 
 	@classmethod
-	def check_and_add(cls, url, user_id, query_id, image_url=None):
+	def check_and_add(cls, url, user_id, query_id, image_url=None, checked=False, name=None, description=None):
 		url = get_standard_url(url)
 		existing_source = cls.query.filter_by(url=url, hidden=False).first()
 		if existing_source or not _real_url_check(url):
@@ -120,7 +132,11 @@ class LeadSource(db.Model):
 			url=url,
 			user_id=user_id,
 			query_id=query_id,
-			image_url=image_url
+			image_url=image_url,
+			checked=checked,
+			valid=checked,
+			name=name,
+			description=description
 		)
 		try:
 			new_source.save()
@@ -130,10 +146,14 @@ class LeadSource(db.Model):
 			db.session.rollback()
 			return None
 
-	def _finished(self):
+	def _finished(self, socketio_obj=None, app_obj=None):
 		self.checking = False
 		self.checked = True
 		self.save()
+
+		### Finish all jobs
+		for job in self.jobs.filter_by(finished=False, started=True).all():
+			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 
 	def _hide(self):
 		self.hidden = True

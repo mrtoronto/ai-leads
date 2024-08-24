@@ -131,12 +131,32 @@ class User(UserMixin, db.Model):
 
 		if query_id:
 			request = Query.get_by_id(query_id)
-			lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False, query_id=query_id).all()
-			leads = Lead.query.filter_by(user_id=cls.id, hidden=False, query_id=query_id).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
+			lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False, query_id=query_id).order_by(LeadSource.valid.desc(), LeadSource.checked, LeadSource.id.desc()).all()
+			leads = Lead.query.filter_by(
+				user_id=cls.id,
+				hidden=False,
+				query_id=query_id
+			).order_by(
+				Lead.liked,
+				Lead.relevant.desc(),
+				Lead.valid.desc(),
+				Lead.checked,
+				Lead.id.desc()
+			).all()
 
 		elif source_id:
 			source = LeadSource.get_by_id(source_id)
-			leads = Lead.query.filter_by(user_id=cls.id, hidden=False, source_id=source_id).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
+			leads = Lead.query.filter_by(
+				user_id=cls.id,
+				hidden=False,
+				source_id=source_id
+			).order_by(
+				Lead.liked,
+				Lead.relevant.desc(),
+				Lead.valid.desc(),
+				Lead.checked,
+				Lead.id.desc()
+			).all()
 
 		elif lead_id:
 			lead = Lead.get_by_id(lead_id)
@@ -144,29 +164,48 @@ class User(UserMixin, db.Model):
 		else:
 			if get_requests:
 				if get_in_progress:
-					requests = Query.query.filter_by(user_id=cls.id, hidden=False, finished=False).all()
+					requests = Query.query.filter_by(
+						user_id=cls.id,
+						hidden=False,
+						finished=False
+					).order_by(Query.id.desc()).all()
 				else:
 					if get_hidden_queries:
-						requests = Query.query.filter_by(user_id=cls.id).all()
+						requests = Query.query.filter_by(user_id=cls.id).order_by(Query.id.desc()).all()
 					else:
-						requests = Query.query.filter_by(user_id=cls.id, hidden=False).all()
+						requests = Query.query.filter_by(user_id=cls.id, hidden=False).order_by(Query.id.desc()).all()
 			else:
 				requests = []
 			if get_lead_sources:
 				if get_in_progress:
-					lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False, checking=True).all()
+					lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False, checking=True).order_by(LeadSource.valid.desc(), LeadSource.checked, LeadSource.id.desc()).all()
 				else:
-					lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False).all()
+					lead_sources = LeadSource.query.filter_by(user_id=cls.id, hidden=False).order_by(LeadSource.valid.desc(), LeadSource.checked, LeadSource.id.desc()).all()
 			else:
 				lead_sources = []
 
 			if get_leads:
 				if get_in_progress:
-					leads = Lead.query.filter_by(user_id=cls.id, hidden=False, checking=True).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
+					leads = Lead.query.filter_by(
+						user_id=cls.id,
+						hidden=False,
+						checking=True).order_by(
+							Lead.liked,
+							Lead.relevant.desc(),
+							Lead.valid.desc(),
+							Lead.checked,
+							Lead.id.desc()
+						).all()
 					hidden_leads = []
 					liked_leads = []
 				else:
-					leads = Lead.query.filter_by(user_id=cls.id).order_by(Lead.liked, Lead.valid.desc(), Lead.checked, Lead.id.desc()).all()
+					leads = Lead.query.filter_by(user_id=cls.id).order_by(
+						Lead.liked,
+						Lead.relevant.desc(),
+						Lead.valid.desc(),
+						Lead.checked,
+						Lead.id.desc()
+					).all()
 					hidden_leads = [l for l in leads if l.hidden]
 					liked_leads = [l for l in leads if l.liked]
 					if not get_hidden_leads:

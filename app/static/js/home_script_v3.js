@@ -6,16 +6,14 @@ import {
 	searchTable,
 	sortTable,
 	updateCounts,
-	getQueryTableColumns,
-	getSourceTableColumns,
-	getLeadTableColumns,
-	getLikedLeadTableColumns,
 	createTable,
 	updateRow,
 	addRow,
 	handleHideEvent,
 	initializeSelectAll
 } from "./general_script.js";
+
+import { getLeadTableColumns, getLikedLeadTableColumns, getQueryTableColumns, getSourceTableColumns } from "./make_table_columns.js"
 
 import { createTableComponent } from "./components.js";
 

@@ -71,14 +71,17 @@
         </a>
         {% if current_user.is_authenticated %}
         <div id="creditCounter" class="small">
-        	<span id="creditPrefix">Credits: </span>
-        	<span id="creditValue">{{ '{:,.0f}'.format(current_user.credits or 0) }}</span>
-         	<span id="creditSuffix">{% if current_user.credits > 0 %}⚡{% elif current_user.credits == 0 %}😢{% endif %}</span>
+	        	<span id="creditPrefix"><a href="/store" style="text-decoration: underline;">Credits:</a> </span>
+	        	<span id="creditValue">{{ '{:,.0f}'.format(current_user.credits or 0) }}</span>
+	         	<span id="creditSuffix">{% if current_user.credits > 0 %}⚡{% elif current_user.credits == 0 %}😢{% endif %}</span>
         </div>
         {% endif %}
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto nav-dropdown-menu">
                 {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.store') }}">Store</a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.settings') }}">Settings</a>
                     </li>
@@ -116,7 +119,8 @@
 				<span style="color: #fff; text-decoration: none; " >aiLeads</span> |
 		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.faqs') }}">FAQs</a> |
 		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.contact') }}">Contact Us</a> |
-		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.privacy_policy') }}">Privacy Policy</a>
+		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.privacy_policy') }}">Privacy Policy</a> |
+		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.terms_of_service') }}">Terms of Service</a>
 		    </div>
         </div>
     </footer>

@@ -33,11 +33,11 @@ document.addEventListener('DOMContentLoaded', function() {
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
     );
     document.getElementById('checked-leads-table-container').innerHTML = createTableComponent(
-        'Checked Leads', 'checked-leads',
+        'Scanned Leads', 'checked-leads',
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
     );
     document.getElementById('unchecked-leads-table-container').innerHTML = createTableComponent(
-        'Unchecked Leads', 'unchecked-leads',
+        'Unscanned Leads', 'unchecked-leads',
         ['select-all', 'unselect-all', 'select-checked', 'select-unchecked', 'select-invalid','', 'check-all', 'hide-all', 'export-csv']
     );
 

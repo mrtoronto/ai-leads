@@ -1,23 +1,28 @@
 from app import worker_socketio, create_minimal_app
-from app.models import LeadSource, Lead, User, ModelTypes, UserModels, CreditLedgerType
+from app.models import LeadSource, Lead, User, ModelTypes, UserModels, CreditLedgerType, Job
 from rq import get_current_job
 from app.llm import collect_leads_from_url
 from app.utils import _tidy_url, _useful_url_check
 from flask_socketio import emit
 from worker import _make_min_app
 from worker.fasttext import FastTextModel
-
 import logging
 
 logger = logging.getLogger('BDB-2EB')
 
 def check_lead_source_task(lead_source_id):
-	job = get_current_job()
 	min_app = _make_min_app()
 	if not min_app:
 		logger.error("Failed to create app context")
 		return
+
+
 	with min_app.app_context():
+		job = get_current_job()
+
+		job_obj = Job.query.filter_by(source_id=lead_source_id, started=False, finished=False).first()
+		if job_obj:
+			job_obj._started(job.id if job else None)
 		lead_source = LeadSource.get_by_id(lead_source_id)
 		if not lead_source:
 			return
@@ -26,7 +31,10 @@ def check_lead_source_task(lead_source_id):
 			return
 
 		if lead_source.hidden:
-			lead_source._finished()
+			lead_source._finished(
+				socketio_obj=worker_socketio,
+				app_obj=min_app
+			)
 			return
 
 		lead_source_user = User.get_by_id(lead_source.user_id)
@@ -43,7 +51,7 @@ def check_lead_source_task(lead_source_id):
 			socketio_obj=worker_socketio
 		)
 
-		logger.info(validation_output)
+		# logger.info(validation_output)
 
 		with min_app.app_context():
 			if 'mini' in (lead_source_user.model_preference or 'gpt-4o-mini'):
@@ -59,7 +67,10 @@ def check_lead_source_task(lead_source_id):
 			)
 
 		if not validation_output:
-			lead_source._finished()
+			lead_source._finished(
+				socketio_obj=worker_socketio,
+				app_obj=min_app
+			)
 			lead_source.valid = False
 			lead_source.save()
 			worker_socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')
@@ -114,6 +125,9 @@ def check_lead_source_task(lead_source_id):
 					if new_source_obj:
 						worker_socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')
 
-		lead_source._finished()
+		lead_source._finished(
+			socketio_obj=worker_socketio,
+			app_obj=min_app
+		)
 
 		worker_socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')

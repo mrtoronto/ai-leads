@@ -15,6 +15,14 @@ window.current_user_email = "{{ current_user.email }}";
 	background-color: transparent !important;
 }
 
+.btn-secondary:hover {
+	color: #fff !important;
+}
+
+.btn-secondary:hover a {
+	color: #fff !important;
+}
+
 .btn-primary-outline-light {
 	color: #67596F !important;
 }
@@ -64,6 +72,8 @@ window.current_user_email = "{{ current_user.email }}";
     <div class="mt-4" style="display: flex; gap: 1em;">
         {% if not current_user.email_verified %}
         <button id="resend-verification-email" class="btn btn-secondary" style="width: 50%;">Resend Verification Email</button>
+        {% else %}
+        <a class="btn btn-secondary" style="text-decoration: none; width: 50%;" href="/store">Get Credits</a>
         {% endif %}
         <button id="resend-password-reset-email" class="btn btn-secondary" style="width: 50%;">Reset Password</button>
     </div>

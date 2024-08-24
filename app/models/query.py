@@ -6,6 +6,7 @@ import json
 from app import db
 from app.models.lead import Lead
 from app.models.lead_source import LeadSource
+from app.models.job import Job
 
 class Query(db.Model):
 	__tablename__ = 'query'
@@ -26,6 +27,15 @@ class Query(db.Model):
 
 	jobs = db.relationship('Job', backref='query_obj', lazy='dynamic')
 
+	def _get_place_in_queue(self):
+		if self.checking:
+			jobs = self.jobs
+			if jobs:
+				job = jobs.filter_by(finished=False).order_by(Job.created_at.desc()).first()
+				if job:
+					return job.place_in_queue()
+		return None
+
 	def to_dict(self):
 		return {
 			'id': self.id,
@@ -38,6 +48,7 @@ class Query(db.Model):
 			'created_at': self.created_at.isoformat(),
 			'hidden_at': self.hidden_at.isoformat() if self.hidden_at else None,
 			'checking': self.checking,
+			'place_in_queue': self._get_place_in_queue(),
 			'hidden': self.hidden,
 			'n_sources': self.sources.filter_by(hidden=False).count(),
 			'n_leads': self.leads.filter_by(hidden=False).count()
@@ -56,12 +67,16 @@ class Query(db.Model):
 			db.session.add(self)
 		db.session.commit()
 
-	def _finished(self, run_notes=None):
+	def _finished(self, run_notes=None, socketio_obj=None, app_obj=None):
 		self.checking = False
 		self.finished = True
 		if run_notes:
 			self.run_notes = run_notes
 		self.save()
+
+		### Finish all jobs
+		for job in self.jobs.filter_by(finished=False, started=True).all():
+			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 
 	def get_leads(self):
 		return Lead.query.filter_by(query_id=self.id).all()

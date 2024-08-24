@@ -134,3 +134,29 @@ def download_blob_if_exists(bucket_name, source_blob_name, destination_file_name
 		print(
 			f"Blob {source_blob_name} does not exist."
 		)
+
+
+import random
+import hashlib
+from local_settings import SALT
+import logging
+
+logger = logging.getLogger('BDB2-2EB')
+
+def get_request_hash(ip_address, user_agent, user_hash):
+	if not user_hash:
+		try:
+			hasher = hashlib.sha256()
+
+			# Generate a random number
+			random_number = random.randint(0, int(1e7))
+
+			# Combine IP address, User-Agent, random number, and SALT
+			hash_input = f"{ip_address}{user_agent}{random_number}{SALT}"
+			hasher.update(hash_input.encode('utf-8'))
+			user_hash = hasher.hexdigest()
+		except Exception as e:
+			logger.error(f'Error generating user hash: {e}')
+			user_hash = None
+
+	return user_hash

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Journey List</h1>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>GUID</th>
+            <th>Type</th>
+            <th>Created At</th>
+            <th>User ID</th>
+            <th>User Hash</th>
+            <th>Location</th>
+            <th>Endpoint</th>
+            <th>Referrer</th>
+            <th>User Agent</th>
+            <th>Last Active</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for journey in journeys %}
+        <tr>
+            <td>{{ journey.id }}</td>
+            <td>{{ journey.guid }}</td>
+            <td>{{ journey._type }}</td>
+            <td>{{ journey.created_at }}</td>
+            <td>{{ journey.user_id }}</td>
+            <td>{{ journey.user_hash }}</td>
+            <td>{{ journey.location }}</td>
+            <td>{{ journey.endpoint }}</td>
+            <td>{{ journey.referrer }}</td>
+            <td>{{ journey.user_agent }}</td>
+            <td>{{ journey.last_active }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

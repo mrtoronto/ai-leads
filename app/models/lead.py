@@ -8,6 +8,7 @@ import requests
 import json
 from app import db
 from app.models.user_models import ModelTypes
+from app.models.job import Job, JobTypes
 
 class Lead(db.Model):
 	__tablename__ = 'lead'
@@ -28,6 +29,7 @@ class Lead(db.Model):
 	checked = db.Column(db.Boolean, default=False)
 	liked = db.Column(db.Boolean, default=False)
 	checking = db.Column(db.Boolean, default=False)
+	relevant = db.Column(db.Boolean, default=False)
 	quality_score = db.Column(db.Float)
 	image_url = db.Column(db.String(255))
 	jobs = db.relationship('Job', backref='lead', lazy='dynamic')
@@ -35,6 +37,16 @@ class Lead(db.Model):
 	hidden_at = db.Column(db.DateTime)
 	hidden = db.Column(db.Boolean, default=False)
 	auto_hidden = db.Column(db.Boolean, default=False)
+
+	def _get_place_in_queue(self):
+		if self.checking:
+			jobs = self.jobs
+			if jobs:
+				job = jobs.filter_by(finished=False).order_by(Job.created_at.desc()).first()
+				if job:
+					return job.place_in_queue()
+
+		return None
 
 	def to_dict(self):
 		return {
@@ -56,12 +68,16 @@ class Lead(db.Model):
 			'hidden': self.hidden,
 			'liked': self.liked,
 			'checking': self.checking,
+			'place_in_queue': self._get_place_in_queue(),
+			'relevant': self.relevant,
 			'hidden_at': self.hidden_at.isoformat() if self.hidden_at else None,
 			'quality_score': self.quality_score,
 			'image_url': self.image_url,
 			'lead_source': self.lead_source.to_dict() if self.lead_source else None,
 			'query_obj': self.query_obj.to_dict() if self.query_obj else None,
 		}
+
+
 
 	@classmethod
 	def get_by_id(cls, lead_id):
@@ -174,11 +190,14 @@ class Lead(db.Model):
 		self.hidden_at = None
 		self.save()
 
-	def _finished(self):
+	def _finished(self, socketio_obj=None, app_obj=None):
 		self.checked = True
 		self.checking = False
-
 		self.save()
+
+		### Finish all jobs
+		for job in self.jobs.filter_by(finished=False, started=True).all():
+			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 
 
 	@classmethod
