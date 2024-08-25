@@ -12,13 +12,14 @@
                 <input type="text" class="form-control" id="email" name="email">
 				{% endif %}
             </div>
+            <input type="hidden" name="next" value="{{ next }}">
             <div class="form-group">
                 <label for="password">Password:</label>
                 <input type="password" class="form-control" id="password" name="password">
             </div>
             <button type="submit" class="btn btn-primary btn-block">Login</button>
         </form>
-        <p class="text-center mt-3">Need an account? <a href="{{ url_for('main.register') }}">Register here</a></p>
+        <p class="text-center mt-3">Need an account? <a href="{{ url_for('main.register', next=next) }}">Register here</a></p>
     </div>
 </div>
 

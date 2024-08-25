@@ -94,52 +94,61 @@ def index():
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
+	next_url = request.args.get('next', None)
+
 	if request.method == 'POST':
 		email = request.form.get('email')
 		password = request.form.get('password')
-		print(f'Attempt to login with email: {email}')
+		next_url = request.form.get('next', next_url)
+		print(f'Attempt to login with email: {email} and {next_url}')
 
 		if not email or not email.strip() or not password or not password.strip():
 			print('Email and password are required')
 			flash('Email and password are required')
-			return render_template('login.html', email=email)
+			return render_template('login.html', email=email, next=next_url)
 
 		user = User.get_by_email(email)
 		if not user:
 			print('User not found')
 			flash('User not found')
-			return render_template('login.html', email=email)
+			return render_template('login.html', email=email, next=next_url)
 		if user and user.password:
 			if check_password_hash(user.password, password):
 				print('User logged in successfully')
 				flash('Welcome!')
 				login_user(user)
+				logger.info(f'next_url: {next_url}')
+				if next_url:
+					return redirect(next_url)
 			else:
 				print('Invalid credentials')
 				flash('Invalid credentials')
-				return render_template('login.html', email=email)
+				return render_template('login.html', email=email, next=next_url)
 			return redirect(url_for('main.index'))
 		print('User not found')
-		return render_template('login.html', email=email)
-	return render_template('login.html', title='Login')
+		return render_template('login.html', email=email, next=next_url)
+	return render_template('login.html', title='Login', next=next_url)
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
+
+	next_url = request.args.get('next', None)
 
 	if request.method == 'POST':
 		email = request.form.get('email')
 		password = request.form.get('password')
 		password2 = request.form.get('password2')
+		next_url = request.form.get('next', next_url)
 
 		if password != password2:
 			flash('Passwords do not match')
 			print('Passwords do not match')
-			return render_template('register.html', email=email)
+			return render_template('register.html', email=email, next=next_url)
 
 		if not email or not email.strip() or not password or not password.strip():
 			flash('Email and password are required')
 			print('Email and password are required')
-			return render_template('register.html', email=email)
+			return render_template('register.html', email=email, next=next_url)
 
 		# Check if user already exists
 		email = email.lower()
@@ -148,7 +157,7 @@ def register():
 		if existing_user:
 			flash('Email already exists')
 			print(f'Email already exists - {existing_user.email}')
-			return render_template('register.html', email=email)
+			return render_template('register.html', email=email, next=next_url)
 
 		hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
 		new_user = User(email=email, password=hashed_password)
@@ -162,16 +171,19 @@ def register():
 		send_email(new_user.email, 'Welcome to aiLeads!', 'welcome_email', name=new_user.username, confirm_url=confirm_url)
 
 		# Redirect to setup preferences page
-		return redirect(url_for('main.setup_preferences')) # New route after registration
+		return redirect(url_for('main.setup_preferences', next=next_url))
 	if current_user.is_authenticated:
 		flash('You are already logged in!')
+		if next_url:
+			return redirect(next_url)
 		return redirect(url_for('main.index'))
-	return render_template('register.html', title='Register')
+	return render_template('register.html', title='Register', next=next_url)
 
 @bp.route('/setup_preferences')
 @login_required
 def setup_preferences():
-	return render_template('setup_preferences.html')
+	next_url = request.args.get('next', None)
+	return render_template('setup_preferences.html', next=next_url)
 
 @bp.route('/settings')
 @login_required
@@ -430,7 +442,15 @@ def handle_exception(e):
 	if isinstance(e, PermissionError):
 		return render_template('403.html', error=str(e)), 403
 	if isinstance(e, Unauthorized):
-		return render_template('401.html', error=str(e)), 401
+		flash('You must be logged in to access this page.', 'warning')
+		logger.info(
+			f'Unauthorized access attempt (redirect to login): {e}\n'
+			f'Request Path: {request.path}\n'
+			f'Method: {request.method}\n'
+			f'User Agent: {request.user_agent}\n'
+			f'IP Address: {request.remote_addr}'
+		)
+		return redirect(url_for('main.login', next=request.url))
 	logger.error(
 		f'An error occurred (error page displayed): {e}\n'
 		f'File: {e.__traceback__.tb_frame.f_code.co_filename}\n'

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <script>
+	window.next_page = "{{ next }}";
+
   document.addEventListener('DOMContentLoaded', function() {
     setupPreferences();
   });
@@ -62,7 +64,14 @@
 
         if (response.ok) {
           await Swal.fire('Success', 'Preferences saved successfully!', 'success');
-          window.location.href = '/'; // Redirect to home or wherever
+          if (window.next_page) {
+          	window.location.href = window.next_page;
+          } else {
+          	window.location.href = '/'; // Redirect to home or wherever
+
+          }
+
+
         } else {
           await Swal.fire('Error', 'There was an error saving your preferences. Please try again.', 'error');
         }
