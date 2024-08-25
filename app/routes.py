@@ -13,6 +13,7 @@ from flask import Blueprint, current_app
 from app import db
 import redis
 import os
+from werkzeug.exceptions import Unauthorized
 import stripe
 
 bp = Blueprint('main', __name__, static_url_path='/static')
@@ -426,6 +427,10 @@ def internal_server_error(e):
 
 @bp.app_errorhandler(Exception)
 def handle_exception(e):
+	if isinstance(e, PermissionError):
+		return render_template('403.html', error=str(e)), 403
+	if isinstance(e, Unauthorized):
+		return render_template('401.html', error=str(e)), 401
 	logger.error(
 		f'An error occurred (error page displayed): {e}\n'
 		f'File: {e.__traceback__.tb_frame.f_code.co_filename}\n'
