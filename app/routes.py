@@ -246,8 +246,6 @@ def view_lead(guid):
 
 @bp.route('/faqs')
 def faqs():
-	if current_user.is_a_moron:
-		return redirect(url_for('main.index'))
 	return render_template('faqs.html', title='FAQs')
 
 
