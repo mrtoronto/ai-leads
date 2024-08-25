@@ -1,46 +1,37 @@
-document.addEventListener('DOMContentLoaded', function() {
-		console.log(window.is_mobile);
+document.addEventListener('DOMContentLoaded', function () {
+	console.log(window.is_mobile);
 
+	const dynamicText = $('.hero-dynamic-text')[0];
+	const textArray = [
+			"<b>AI-Augmented</b>",
+			"<b>Lightweight</b>",
+			"<b>Low Cost</b>",
+			"<b>Usage-based</b>",
+			"<b>On-Demand</b>",
+	];
+	let currentIndex = 0;
 
-    // document.getElementById('retrain-model-btn').addEventListener('click', function() {
-    //   // can you make the button disabled and a spinner
-    //   $('#retrain-model-btn').prop('disabled', true);
-    //   $('#retrain-model-btn').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Retraining...');
-    // 	socket.emit('retrain_model');
-    // });
+	function changeText() {
+		// First, add the fade-out animation class
+		dynamicText.classList.add("hero-fade-out");
 
-    // socket.on('model_retrained', function(data) {
-    //     $('#retrain-model-btn').prop('disabled', false);
-    //     $('#retrain-model-btn').html('Retrain Model');
-    //     if (data.trained_at) {
-    //         $('#last-trained-time').text(`Last trained: ${new Date(data.trained_at).toLocaleString()}`);
-    //     }
-    // });
+		// After the fade-out animation ends, change the text and add the fade-in animation
+		setTimeout(() => {
+			dynamicText.innerHTML = textArray[currentIndex];
+			dynamicText.classList.remove("hero-fade-out");
+			dynamicText.classList.add("hero-fade-in");
 
-    // Add event listeners for forms and buttons
-    // document.getElementById('create-lead-source-form').addEventListener('submit', function(event) {
-    //     event.preventDefault();
-    //     const url = document.getElementById('lead-source-url').value;
-    //     socket.emit('create_lead_source', { url });
-    //     document.getElementById('lead-source-url').value = '';
-    // });
+			// Remove the fade-in class after animation completes to reset
+			setTimeout(() => {
+				dynamicText.classList.remove("hero-fade-in");
+			}, 500); // Match with the duration of fade-in animation
 
-    // Toggle Lead Source Form
-    // document.getElementById('toggle-lead-source-form').addEventListener('click', function() {
-    //     const formContainer = document.getElementById('lead-source-form-container');
-    //     formContainer.style.display = (formContainer.style.display === 'none' || formContainer.style.display === '') ? 'block' : 'none';
-    // });
+			// Update the index to the next value
+			currentIndex = (currentIndex + 1) % textArray.length;
+		}, 500); // Match with the duration of fade-out animation
+	}
 
-    // document.getElementById('toggle-lead-form').addEventListener('click', function() {
-    //     const formContainer = document.getElementById('lead-form-container');
-    //     formContainer.style.display = (formContainer.style.display === 'none' || formContainer.style.display === '') ? 'block' : 'none';
-    // });
-
-    // document.getElementById('create-lead-form').addEventListener('submit', function(event) {
-    //     event.preventDefault();
-    //     const url = document.getElementById('lead-url').value;
-    //     socket.emit('create_lead', { url });
-    //     document.getElementById('lead-url').value = '';
-    // });
-
+	// Set an interval to change the text every 3 seconds (3000 milliseconds)
+	setInterval(changeText, 3000);
+	changeText();
 });

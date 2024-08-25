@@ -5,7 +5,12 @@
 
 <div class="hero-section">
     <div class="hero-content">
-        <p class="hero-subtitle top-subtitle"><b>AI</b> Augmented B2B <b>Lead Generation</b></p>
+	    <p class="hero-subtitle top-subtitle">
+	        <b>
+			<span id="hero-dynamic-text-container" class="hero-dynamic-text"></span>
+	        B2B Lead Generation
+			</b>
+	    </p>
         <h1 class="hero-title {% if current_user.is_authenticated %}auth-hero-title{% endif %}"><span style="font-family: monospace;">ai</span><b>Leads</b></h1>
         {% if current_user.is_authenticated %}
 		<form autocomplete="off" id="lead-form" class="text-center" style="width: 80%; margin: auto;">

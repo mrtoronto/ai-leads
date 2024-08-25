@@ -213,3 +213,34 @@
         height: 300px;
     }
 }
+
+
+@keyframes hero-fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes hero-fadeOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+.hero-fade-in {
+    animation: hero-fadeIn 1s ease-out forwards;
+}
+
+.hero-fade-out {
+    animation: hero-fadeOut 1s ease-out forwards;
+}
