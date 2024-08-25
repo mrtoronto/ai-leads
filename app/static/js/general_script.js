@@ -213,16 +213,16 @@ const createTable = (tableId, columns, data, show_hidden=false) => {
 	            if (column.width) {
 	                headerCell.style.width = column.width;
 	            }
-				if (column.maxWidth) {
+							if (column.maxWidth) {
 	                headerCell.style.maxWidth = column.maxWidth;
-				}
-				if (column.marginLeft) {
+							}
+							if (column.marginLeft) {
 	                headerCell.style.marginLeft = column.marginLeft;
-				}
+							}
 	            if (column.textAlign) {
 	                headerCell.style.textAlign = column.textAlign;
 	            } else {
-	            	headerCell.style.textAlign = 'center';
+	            		headerCell.style.textAlign = 'center';
 	            }
 	            if (column.whiteSpace) {
 										headerCell.style.whiteSpace = column.whiteSpace;
@@ -264,10 +264,10 @@ const createTable = (tableId, columns, data, show_hidden=false) => {
                     }
                     if (column.maxWidth) {
 		                cell.style.maxWidth = column.maxWidth;
-					}
+                    }
                     if (column.marginLeft) {
 		                cell.style.marginLeft = column.marginLeft;
-					}
+                    }
                     if (column.textAlign) {
                         cell.style.textAlign = column.textAlign;
                     } else {

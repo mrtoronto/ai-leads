@@ -17,8 +17,8 @@ import stripe
 bp = Blueprint('main', __name__, static_url_path='/static')
 
 def read_txt_file(file_path):
-    with open(file_path, 'r') as file:
-        return file.read()
+	with open(file_path, 'r') as file:
+		return file.read()
 
 def dir_last_updated(folder):
 	return str(max(os.path.getmtime(os.path.join(root_path, f))
@@ -27,11 +27,11 @@ def dir_last_updated(folder):
 
 @bp.context_processor
 def inject_is_mobile():
-    return {
-        'is_mobile': getattr(g, 'is_mobile', False),
-        'last_updated': dir_last_updated('app'),
-        'FLASK_ENV': current_app.config['FLASK_ENV']
-    }
+	return {
+		'is_mobile': getattr(g, 'is_mobile', False),
+		'last_updated': dir_last_updated('app'),
+		'FLASK_ENV': current_app.config['FLASK_ENV']
+	}
 
 import logging
 
@@ -440,13 +440,13 @@ def contact():
 
 @bp.route('/privacy_policy')
 def privacy_policy():
-    privacy_policy_text = read_txt_file('app/static/privacy_policy.txt')
-    return render_template('privacy_policy.html', title='Privacy Policy', content=privacy_policy_text)
+	privacy_policy_text = read_txt_file('app/static/privacy_policy.txt')
+	return render_template('privacy_policy.html', title='Privacy Policy', content=privacy_policy_text)
 
 @bp.route('/terms_of_service')
 def terms_of_service():
-    tos_text = read_txt_file('app/static/terms_of_service.txt')
-    return render_template('tos.html', title='Terms of Service', content=tos_text)
+	tos_text = read_txt_file('app/static/terms_of_service.txt')
+	return render_template('tos.html', title='Terms of Service', content=tos_text)
 
 @bp.route('/store')
 def store():
@@ -487,76 +487,81 @@ def save_preferences():
 @bp.route('/leads')
 @login_required
 def leads():
-    return render_template('view_leads.html', title="Your Leads")
+	return render_template('view_leads.html', title="Your Leads")
 
 
 @bp.route('/jobs')
 @login_required
 def jobs():
-    return render_template('view_jobs.html', title="In-Progress")
+	return render_template('view_jobs.html', title="In-Progress")
 
 
 @bp.route('/queries')
 @login_required
 def queries():
-    return render_template('view_queries.html', title="Your Queries")
+	return render_template('view_queries.html', title="Your Queries")
 
 
 
 @bp.route('/api/create-checkout-session', methods=['POST'])
 def create_checkout_session():
-    try:
-        data = request.json or {}
-        credit_amount = data.get('creditAmount')
-        price = data.get('price')
+	try:
+		data = request.json or {}
+		credit_amount = data.get('creditAmount')
+		price = data.get('price')
 
-        if not credit_amount or not price:
-        	return jsonify(error='Credit amount and price are required'), 400
+		if not credit_amount or not price:
+			return jsonify(error='Credit amount and price are required'), 400
 
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'usd',
-                    'product_data': {
-                        'name': f'{credit_amount} credits',
-                    },
-                    'unit_amount': price * 100,
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            success_url=url_for('main.payment_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=url_for('main.payment_cancelled', _external=True),
-        )
+		session = stripe.checkout.Session.create(
+			payment_method_types=['card'],
+			line_items=[{
+				'price_data': {
+					'currency': 'usd',
+					'product_data': {
+						'name': f'{credit_amount} credits',
+					},
+					'unit_amount': price * 100,
+				},
+				'quantity': 1,
+			}],
+			mode='payment',
+			success_url=url_for('main.payment_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+			cancel_url=url_for('main.payment_cancelled', _external=True),
+		)
 
-        return jsonify(id=session.id)
-    except Exception as e:
-        logger.error(f'Error creating checkout session: {e}')
-        return jsonify(error=str(e)), 403
+		return jsonify(id=session.id)
+	except Exception as e:
+		logger.error(f'Error creating checkout session: {e}')
+		return jsonify(error=str(e)), 403
 
 @bp.route('/payment/success')
 def payment_success():
-    session_id = request.args.get('session_id')
-    if session_id:
-        checkout_session = stripe.checkout.Session.retrieve(session_id)
-        determined_amount_credits = checkout_session.amount_total * 10
+	session_id = request.args.get('session_id')
+	if session_id:
+		checkout_session = stripe.checkout.Session.retrieve(session_id)
+		determined_amount_credits = checkout_session.amount_total * 10
 
-        current_user.move_credits(
-            amount=determined_amount_credits,
-            trxn_type=CreditLedgerType.PAID,
-            app_obj=current_app,
-            socketio_obj=socketio
-        )
-        db.session.commit()
+		if determined_amount_credits == 1000:
+			determined_amount_credits = determined_amount_credits * 2
+			current_user.claimed_signup_bonus = True
+			db.session.commit()
 
-        flash(f'Payment successful! <b>{determined_amount_credits}</b> credits have been added to your account.', 'success')
-    else:
-        flash('Payment could not be processed. Please try again.', 'danger')
+		current_user.move_credits(
+			amount=determined_amount_credits,
+			trxn_type=CreditLedgerType.PAID,
+			app_obj=current_app,
+			socketio_obj=socketio
+		)
+		db.session.commit()
 
-    return redirect(url_for('main.store'))
+		flash(f'Payment successful! <b>{determined_amount_credits}</b> credits have been added to your account.', 'success')
+	else:
+		flash('Payment could not be processed. Please try again.', 'danger')
+
+	return redirect(url_for('main.store'))
 
 @bp.route('/payment/cancelled')
 def payment_cancelled():
-    flash('Payment cancelled. No credits were added to your account.', 'warning')
-    return redirect(url_for('main.store'))
+	flash('Payment cancelled. No credits were added to your account.', 'warning')
+	return redirect(url_for('main.store'))

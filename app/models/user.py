@@ -33,6 +33,8 @@ class User(UserMixin, db.Model):
 
 	is_admin = db.Column(db.Boolean, default=False)
 
+	claimed_signup_bonus = db.Column(db.Boolean, default=False)
+
 	queries = db.relationship('Query', backref='user', lazy='dynamic')
 	leads = db.relationship('Lead', backref='user', lazy='dynamic')
 	sources = db.relationship('LeadSource', backref='user', lazy='dynamic')

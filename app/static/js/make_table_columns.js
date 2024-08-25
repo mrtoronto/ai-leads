@@ -108,8 +108,8 @@ const mobileLeadNameFormatter = (cell, row) => {
 
 getQueryTableColumns = () => [
     { id: 'id', name: 'ID', field: 'id', hidden: true },
-    { id: 'user_query', width: '200px', name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
-    { id: 'reformatted_query', width: '200px', name: 'Reformatted Query', field: 'reformatted_query' },
+    { id: 'user_query', textAlign: "left", width: '200px', name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
+    { id: 'reformatted_query', textAlign: "left", width: '200px', name: 'Reformatted Query', field: 'reformatted_query' },
     { id: 'n_leads', name: '# of Leads', width: '90px', field: 'n_leads' },
     { id: 'n_sources', name: '# of Sources', width: '90px', field: 'n_sources' },
     { id: 'hidden', name: 'Hide', width: '90px', field: 'hidden', formatter: (_, row) => {
@@ -210,7 +210,6 @@ getLeadTableColumns = () => [
     {
         id: 'name', maxWidth: '70%', textAlign: 'left !important', name: 'Name', field: 'name', formatter: (cell, row) => desktopLeadNameFormatter(cell, row)
     },
-    // { id: 'description', whiteSpace: 'wrap !important', width: '300px', name: 'Description', field: 'description', formatter: (cell) => `<div style="font-size: 12px;">${cell || "---"}</div>` },
     {
         id: 'contact',
         width: 'fit-content',
@@ -286,8 +285,8 @@ getLeadTableColumns = () => [
 if (window.is_mobile) {
 	getQueryTableColumns = () => [
 		{ id: 'id', name: 'ID', field: 'id', hidden: true },
-		{ id: 'user_query', name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
-		{ id: 'reformatted_query', name: 'Reformatted Query', field: 'reformatted_query' },
+		{ id: 'user_query', textAlign: "left", name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
+		{ id: 'reformatted_query',textAlign: "left", name: 'Reformatted Query', field: 'reformatted_query' },
 		{
 			id: 'totals',
 			name: 'Totals',

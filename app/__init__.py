@@ -193,14 +193,13 @@ def create_app(config_class=Config):
 	@flask_app.route('/static/<path:filename>')
 	def custom_static(filename):
 		if "gzip" in request.headers.get('Accept-Encoding', ''):
-			return send_file(os.path.join(app.static_folder, filename+'.gz'),
+			return send_file(os.path.join(flask_app.static_folder, filename+'.gz'),
 							as_attachment=False,
 							attachment_filename=filename,
 							mimetype='application/json',
 							headers={'Content-Encoding': 'gzip'})
 		else:
-			return app.send_static_file(filename)
-
+			return flask_app.send_static_file(filename)
 
 	logger.info(f'Returning app after {time.time() - start_time} seconds')
 

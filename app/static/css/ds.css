@@ -51,6 +51,10 @@
 	text-decoration: none;
 }
 
+.btn-primary-fill-light:disabled {
+	opacity: 0.6;
+}
+
 .btn-primary-fill-light:hover, .btn-primary-fill-light:focus, .btn-primary-fill-light:active {
 	background-color: #387EE4;
 	color: #E6F6FF !important;
