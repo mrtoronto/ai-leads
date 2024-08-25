@@ -13,6 +13,7 @@ from config import Config
 from flask_caching import Cache
 from flask import send_file
 from flask_login import current_user
+from logging.handlers import SMTPHandler
 import time
 import logging
 from sqlalchemy.exc import OperationalError
@@ -200,6 +201,28 @@ def create_app(config_class=Config):
 							headers={'Content-Encoding': 'gzip'})
 		else:
 			return flask_app.send_static_file(filename)
+
+	# if os.environ.get('FLASK_ENV', 'dev') == 'prod':
+	if flask_app.config['MAIL_SERVER']:
+		auth = None
+		if flask_app.config['MAIL_USERNAME'] or flask_app.config['MAIL_PASSWORD']:
+			auth = (flask_app.config['MAIL_USERNAME'], flask_app.config['MAIL_PASSWORD'])
+		secure = None
+		if flask_app.config['MAIL_USE_TLS']:
+			secure = ()
+
+		mail_handler = SMTPHandler(
+			mailhost=(flask_app.config['MAIL_SERVER'], flask_app.config['MAIL_PORT']),
+			fromaddr=flask_app.config['ADMINS'][0],
+			toaddrs=flask_app.config['ADMINS'],
+			subject='AI-LEADS ERRRRROOOOOORRRRRRRRR',
+			credentials=auth,
+			secure=secure
+		)
+
+		mail_handler.setLevel(logging.ERROR)
+		logger.addHandler(mail_handler)
+
 
 	logger.info(f'Returning app after {time.time() - start_time} seconds')
 

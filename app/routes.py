@@ -1,3 +1,4 @@
+import traceback
 import requests
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, g
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -245,6 +246,8 @@ def view_lead(guid):
 
 @bp.route('/faqs')
 def faqs():
+	if current_user.is_a_moron:
+		return redirect(url_for('main.index'))
 	return render_template('faqs.html', title='FAQs')
 
 
@@ -411,7 +414,31 @@ def page_not_found(e):
 
 @bp.app_errorhandler(500)
 def internal_server_error(e):
-	return render_template('500.html'), 500
+	logger.error(
+		f'Internal Server Error (error page displayed): {e}\n'
+		f'File: {e.__traceback__.tb_frame.f_code.co_filename}\n'
+		f'Line: {e.__traceback__.tb_lineno}\n'
+		f'Stack Trace: {traceback.format_exc()}\n'
+		f'Request Path: {request.path}\n'
+		f'Method: {request.method}\n'
+		f'User Agent: {request.user_agent}\n'
+		f'IP Address: {request.remote_addr}'
+	)
+	return render_template('500.html', error=str(e)), 500
+
+@bp.app_errorhandler(Exception)
+def handle_exception(e):
+	logger.error(
+		f'An error occurred (error page displayed): {e}\n'
+		f'File: {e.__traceback__.tb_frame.f_code.co_filename}\n'
+		f'Line: {e.__traceback__.tb_lineno}\n'
+		f'Stack Trace: {traceback.format_exc()}\n'
+		f'Request Path: {request.path}\n'
+		f'Method: {request.method}\n'
+		f'User Agent: {request.user_agent}\n'
+		f'IP Address: {request.remote_addr}'
+	)
+	return render_template('500.html', error=str(e)), 500
 
 
 @bp.route('/contact', methods=['GET', 'POST'])

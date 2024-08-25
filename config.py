@@ -47,6 +47,10 @@ class Config(object):
 	MAIL_PASSWORD = local_settings.SENDGRID_API_KEY
 	MAIL_DEFAULT_SENDER = ('Matt — aiLeads', 'matt@ai-leads.xyz')
 
+	ADMINS = [
+		'matt@ai-leads.xyz'
+	]
+
 	SECURITY_PASSWORD_SALT = local_settings.SECURITY_PASSWORD_SALT
 
 	PRICING_MULTIPLIERS = {
