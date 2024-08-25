@@ -77,7 +77,7 @@ def _test_connection_string(flask_app):
 def mobile_middleware(app):
     @app.before_request
     def detect_mobile():
-        user_agent = request.headers.get('User-Agent')
+        user_agent = request.headers.get('User-Agent', "")
         user_agent_parsed = parse(user_agent)
         g.is_mobile = user_agent_parsed.is_mobile
 

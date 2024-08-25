@@ -135,6 +135,7 @@ function purchaseCredits(btn, special_deal=false) {
     document.getElementById("buy-5000-credits").disabled = true;
     document.getElementById("buy-10000-credits").disabled = true;
     document.getElementById("buy-20000-credits").disabled = true;
+    document.getElementById("buy-50000-credits").disabled = true;
 
     fetch('/api/create-checkout-session', {
         method: 'POST',
