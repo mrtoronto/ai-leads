@@ -3,11 +3,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	const dynamicText = $('.hero-dynamic-text')[0];
 	const textArray = [
-			"<b>AI-Augmented</b>",
-			"<b>Lightweight</b>",
-			"<b>Low Cost</b>",
-			"<b>Usage-based</b>",
-			"<b>On-Demand</b>",
+			"Lightweight",
+			"Low Cost",
+			"Usage-based",
+			"On-Demand",
+			"AI-Augmented",
 	];
 	let currentIndex = 0;
 
