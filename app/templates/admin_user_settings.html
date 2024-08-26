@@ -15,4 +15,10 @@
 
     <input type="submit" value="Update User">
 </form>
+
+<h2>Reset User Password</h2>
+<form method="POST" action="/admin/password_reset_request">
+    <input type="hidden" name="user_id" value="{{ user.id }}">
+    <input type="submit" value="Send Password Reset Email">
+</form>
 {% endblock %}

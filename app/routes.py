@@ -379,6 +379,21 @@ def password_reset_request():
 			return render_template('password_reset_request.html')
 	return render_template('password_reset_request.html')
 
+@bp.route('/admin/password_reset_request', methods=['GET', 'POST'])
+def admin_password_reset_request():
+	if request.method == 'POST':
+		user_id = request.form.get('user_id') or request.json.get('user_id')
+		user = User.query.get(user_id)
+		if user:
+			token = generate_confirmation_token(user.email)
+			reset_url = url_for('main.reset_password', token=token, _external=True)
+			send_email(user.email, 'Reset Your Password', 'reset_password_email', reset_url=reset_url)
+			return jsonify(message='Password reset email sent successfully'), 200
+		else:
+			flash('This user is not registered in our system.', 'danger')
+			return render_template('admin_panel.html')
+	return render_template('admin_panel.html')
+
 @bp.route('/confirm_email/<token>')
 def confirm_email(token):
 	try:
