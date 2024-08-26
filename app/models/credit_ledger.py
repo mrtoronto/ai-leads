@@ -18,13 +18,15 @@ class CreditLedger(db.Model):
 	guid = db.Column(db.String(36), nullable=False, default=lambda: str(uuid.uuid4()))
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 	amount = db.Column(db.Float, nullable=False)
+	cost_usd = db.Column(db.Float)
 	created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(pytz.utc))
 	transaction_type = db.Column(db.String(50), nullable=False)
 	transaction_description = db.Column(db.String(255), nullable=True)
 
-	def __init__(self, user_id, amount, transaction_type, transaction_description=None):
+	def __init__(self, user_id, amount, transaction_type, cost_usd=None, transaction_description=None):
 		self.user_id = user_id
 		self.amount = amount
+		self.cost_usd = cost_usd
 		self.transaction_type = transaction_type
 		self.transaction_description = transaction_description
 

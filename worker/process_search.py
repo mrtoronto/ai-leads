@@ -59,8 +59,9 @@ def search_request_task(query_id):
 
 			with min_app.app_context():
 				request.user.move_credits(
-					min_app.config['PRICING_MULTIPLIERS']['query'] * -1,
-					CreditLedgerType.QUERY,
+					amount=min_app.config['PRICING_MULTIPLIERS']['query'] * -1,
+					cost_usd=0.01,
+					trxn_type=CreditLedgerType.QUERY,
 					socketio_obj=worker_socketio,
 					app_obj=min_app
 				)
@@ -78,8 +79,9 @@ def search_request_task(query_id):
 				else:
 					mult = min_app.config['PRICING_MULTIPLIERS']['check_source']
 				request.user.move_credits(
-					mult * -1000 * tokens_used,
-					CreditLedgerType.CHECK_QUERY,
+					amount=mult * -1000 * tokens_used,
+					cost_usd=tokens_used,
+					trxn_type=CreditLedgerType.CHECK_QUERY,
 					socketio_obj=worker_socketio,
 					app_obj=min_app
 				)

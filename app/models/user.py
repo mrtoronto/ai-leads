@@ -88,13 +88,14 @@ class User(UserMixin, db.Model):
 			db.session.add(self)
 		db.session.commit()
 
-	def move_credits(self, amount, trxn_type, trxn_description="", app_obj=None, socketio_obj=None):
+	def move_credits(self, amount, cost_usd, trxn_type, trxn_description="", app_obj=None, socketio_obj=None):
 		self.credits += amount
 		self.save()
 
 		entry = CreditLedger(
 			user_id=self.id,
 			amount=amount,
+			cost_usd=cost_usd,
 			transaction_type=trxn_type,
 			transaction_description=trxn_description
 		)

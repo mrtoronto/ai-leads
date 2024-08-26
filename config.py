@@ -54,7 +54,7 @@ class Config(object):
 	SECURITY_PASSWORD_SALT = local_settings.SECURITY_PASSWORD_SALT
 
 	PRICING_MULTIPLIERS = {
-		'query': 400,
+		'query': 200,
 		'check_source': 4,
 		'check_lead': 4,
 		'check_source_mini': 10,

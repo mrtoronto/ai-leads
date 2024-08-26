@@ -6,7 +6,10 @@
     <thead>
         <tr>
             <th>User ID</th>
-            <th>Amount</th>
+            <th>Amount (credits)</th>
+            <th>Amount (usd)</th>
+            <th>Cost (usd)</th>
+            <th>Margin ((amount / 1000) / cost)</th>
             <th>Transaction Type</th>
             <th>Description</th>
             <th>Created At</th>
@@ -17,6 +20,13 @@
         <tr>
             <td>{{ entry.user_id }}</td>
             <td>{{ entry.amount }}</td>
+            <td>{{ entry.amount / -1000 }}</td>
+            <td>{{ entry.cost_usd }}</td>
+            {% if entry.cost_usd %}
+            <td>{{ (entry.amount / -1000) / entry.cost_usd }}</td>
+            {% else %}
+            <td>---</td>
+			{% endif %}
             <td>{{ entry.transaction_type }}</td>
             <td>{{ entry.transaction_description }}</td>
             <td>{{ entry.created_at }}</td>

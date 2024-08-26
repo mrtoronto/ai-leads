@@ -444,7 +444,11 @@ def search_and_validate_leads(new_query, previous_leads, app_obj=None, socketio_
 			url,
 			new_query.user_id,
 			new_query.id,
-			image_url=image_url
+			image_url=image_url,
+			checked=True,
+			name=collected_leads.name,
+			description=collected_leads.description,
+			valid=(True if collected_leads.name else False)
 		)
 		if new_source_obj and socketio_obj and app_obj:
 			with app_obj.app_context():
@@ -540,8 +544,9 @@ def rewrite_query(user_query, user, rewrite_query_mult=10, socketio_obj=None):
 		return None
 	output, tokens_used_usd = _llm(user_query, query_reformatting_prompt, rewriting_parser, user)
 	user.move_credits(
-		tokens_used_usd * -1000 * rewrite_query_mult,
-		CreditLedgerType.CHECK_QUERY,
+		amount=tokens_used_usd * -1000 * rewrite_query_mult,
+		cost_usd=tokens_used_usd,
+		trxn_type=CreditLedgerType.CHECK_QUERY,
 		socketio_obj=socketio_obj
 	)
 	return output

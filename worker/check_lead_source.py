@@ -60,8 +60,9 @@ def check_lead_source_task(lead_source_id):
 				mult = min_app.config['PRICING_MULTIPLIERS']['check_source']
 
 			lead_source_user.move_credits(
-				mult * -1000 * tokens_used,
-				CreditLedgerType.CHECK_SOURCE,
+				amount=mult * -1000 * tokens_used,
+				cost_usd=tokens_used,
+				trxn_type=CreditLedgerType.CHECK_SOURCE,
 				socketio_obj=worker_socketio,
 				app_obj=min_app
 			)

@@ -327,8 +327,27 @@ def admin_journeys():
 	if not current_user.is_admin:
 		flash('You do not have permission to access this page.')
 		return redirect(url_for('main.index'))
-	journeys = Journey.query.all()
+	journeys = Journey.query.order_by(Journey.created_at.desc()).all()
 	return render_template('admin_journeys.html', journeys=journeys)
+
+@bp.route('/admin/logged_in_journeys')
+@login_required
+def admin_logged_in_journeys():
+	if not current_user.is_admin:
+		flash('You do not have permission to access this page.')
+		return redirect(url_for('main.index'))
+	journeys = Journey.query.filter(Journey.user_id != None).order_by(Journey.created_at.desc()).all()
+	return render_template('admin_journeys.html', journeys=journeys)
+
+@bp.route('/admin/journeys/<user_hash>')
+@login_required
+def admin_user_journeys(user_hash):
+	if not current_user.is_admin:
+		flash('You do not have permission to access this page.')
+		return redirect(url_for('main.index'))
+	journeys = Journey.query.filter_by(user_hash=user_hash).order_by(Journey.created_at.desc()).all()
+	return render_template('admin_journeys.html', journeys=journeys)
+
 
 @bp.route('/admin/user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
@@ -343,6 +362,8 @@ def admin_user_settings(user_id):
 		user.email = request.form['email']
 		user.credits = int(request.form['credits'])
 		user.is_admin = 'is_admin' in request.form
+		user.industry = request.form['industry']
+		user.user_description = request.form['user_description']
 		db.session.commit()
 		flash('User settings updated successfully.')
 		return redirect(url_for('main.admin_users'))
@@ -642,9 +663,9 @@ def payment_success():
 			determined_amount_credits = determined_amount_credits * 2
 			current_user.claimed_signup_bonus = True
 			db.session.commit()
-
 		current_user.move_credits(
 			amount=determined_amount_credits,
+			cost_usd=None,
 			trxn_type=CreditLedgerType.PAID,
 			app_obj=current_app,
 			socketio_obj=socketio

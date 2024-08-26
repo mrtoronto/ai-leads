@@ -123,7 +123,7 @@ class LeadSource(db.Model):
 		return cls.query.filter_by(user_id=user_id, hidden=False, valid=True).all()
 
 	@classmethod
-	def check_and_add(cls, url, user_id, query_id, image_url=None, checked=False, name=None, description=None):
+	def check_and_add(cls, url, user_id, query_id, image_url=None, checked=False, name=None, description=None, valid=False):
 		url = get_standard_url(url)
 		existing_source = cls.query.filter_by(url=url, hidden=False).first()
 		if existing_source or not _real_url_check(url):
@@ -134,7 +134,7 @@ class LeadSource(db.Model):
 			query_id=query_id,
 			image_url=image_url,
 			checked=checked,
-			valid=checked,
+			valid=valid,
 			name=name,
 			description=description
 		)

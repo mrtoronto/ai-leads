@@ -216,8 +216,9 @@ def check_lead_task(lead_id):
 
 		with min_app.app_context():
 			lead_user.move_credits(
-				total_tokens_used_usd * -1000 * mult,
-				CreditLedgerType.CHECK_LEAD,
+				amount=total_tokens_used_usd * -1000 * mult,
+				cost_usd=total_tokens_used_usd,
+				trxn_type=CreditLedgerType.CHECK_LEAD,
 				socketio_obj=worker_socketio,
 				app_obj=min_app
 			)
