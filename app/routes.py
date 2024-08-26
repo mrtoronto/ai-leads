@@ -195,19 +195,28 @@ def register():
 		send_email(new_user.email, 'Welcome to aiLeads!', 'welcome_email', name=new_user.username, confirm_url=confirm_url)
 
 		# Redirect to setup preferences page
-		return redirect(url_for('main.setup_preferences', next=next_url))
+		if next_url:
+			return redirect(url_for('main.setup_preferences', next=next_url))
+		else:
+			return redirect(url_for('main.setup_preferences'))
 	if current_user.is_authenticated:
 		flash('You are already logged in!')
 		if next_url:
 			return redirect(next_url)
 		return redirect(url_for('main.index'))
-	return render_template('register.html', title='Register', next=next_url)
+	if next_url:
+		return render_template('register.html', title='Register', next=next_url)
+	else:
+		return render_template('register.html', title='Register')
 
 @bp.route('/setup_preferences')
 @login_required
 def setup_preferences():
-	next_url = request.args.get('next', None)
-	return render_template('setup_preferences.html', next=next_url)
+	next_url = request.args.get('next', '')
+	if next_url:
+		return render_template('setup_preferences.html', next=next_url)
+	else:
+		return render_template('setup_preferences.html')
 
 @bp.route('/settings')
 @login_required
