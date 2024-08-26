@@ -10,27 +10,15 @@
   async function setupPreferences() {
     const { value: industry } = await Swal.fire({
       title: 'Step 1',
-      html: `
-      	<div style="font-size:small;">Help the bot get to know you.</div>
-      	<hr>
-        <div style="display: flex; flex-direction: column;">
-        <label style="font-size:medium;" for="industry-input">What do you do?</label>
-        <input type="text" id="industry-input" class="swal2-input" placeholder="We sell shoes to runners" />
-        </div>
-        <br><br>
-        <div style="display: flex; flex-direction: column;">
-        <label style="font-size:medium;" for="org-size-input">What size businesses are you looking for?</label>
-        <input type="text" id="org-size-input" class="swal2-input" placeholder="Example: 50-100 people" />
-        </div>
-        <br>
-      	<div style="font-size:small;">You can update this later, don't worry.</div>
-      `,
+      html: 'Help the bot get to know you. ',
+      input: 'textarea',
+      inputLabel: 'What does your business sell?',
+      inputPlaceholder: 'We sell a SaaS product that makes logistics easier for office cleaning and supply companies',
       confirmButtonText: 'Next',
       focusConfirm: false,
-      preConfirm: () => {
+      preConfirm: (value) => {
         return {
-          industry: document.getElementById('industry-input').value,
-          orgSize: document.getElementById('org-size-input').value
+          industry: value
         }
       }
     });
@@ -39,7 +27,8 @@
       const { value: description } = await Swal.fire({
         title: 'Step 2',
         input: 'textarea',
-        inputLabel: `Describe what type of business you're looking for`,
+        html: 'Help the bot get to know you.',
+        inputLabel: `Describe the customer you're looking for`,
         inputPlaceholder: 'Enter description here',
         inputAttributes: {
           'aria-label': 'Type your description here'

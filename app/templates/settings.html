@@ -81,18 +81,13 @@ window.current_user_email = "{{ current_user.email }}";
     <form id="settings-form" style="margin-top: 2em;">
     	<h4>Run Settings</h4>
         <div class="form-group mb-3">
-            <label for="industry">Organization Type</label>
-            <small class="form-text text-muted">What type of organization are you looking for?</small>
-            <input class="form-control" id="industry" name="industry" value="{{ current_user.industry }}">
+            <label for="industry">About you</label>
+            <small class="form-text text-muted">What product is your business selling?</small>
+            <textarea class="form-control" id="industry" name="industry" rows="3" maxlength="1000">{{ current_user.industry }}</textarea>
         </div>
         <div class="form-group mb-3">
-            <label for="preferred_org_size">Preferred Organization Size</label>
-            <small class="form-text text-muted">What size organization are you looking for?</small>
-            <input class="form-control" id="preferred_org_size" name="preferred_org_size" value="{{ current_user.preferred_org_size }}">
-        </div>
-        <div class="form-group mb-3">
-            <label for="user-description">Description</label>
-            <small class="form-text text-muted">Tell the bot more about you and the type of organization you're looking for.</small>
+            <label for="user-description">Customer Description</label>
+            <small class="form-text text-muted">What type of customers are your looking for?
             <textarea class="form-control" id="user-description" name="user_description" rows="3" maxlength="2000">{{ current_user.user_description }}</textarea>
         </div>
         <div class="form-group mb-3">

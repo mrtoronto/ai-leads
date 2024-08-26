@@ -105,7 +105,6 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(event) {
         event.preventDefault();
         const industry = document.getElementById('industry').value;
-        const pref_org_size = document.getElementById('preferred_org_size').value;
         const description = document.getElementById('user-description').value;
         // const searchModelPreference = document.getElementById('search-model-preference').value;
         // const sourceCollectionModelPreference = document.getElementById('source-collection-model-preference').value;
@@ -116,8 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
             user_description: description,
             model_preference: modelPreference,
             email: email,
-            industry: industry,
-            preferred_org_size: pref_org_size
+            industry: industry
         };
 
         socket.emit('update_user_settings', settingsData);

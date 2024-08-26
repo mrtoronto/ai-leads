@@ -19,7 +19,7 @@ class User(UserMixin, db.Model):
 	email = db.Column(db.String(150), unique=True, nullable=False)
 	email_verified = db.Column(db.Boolean, default=False)
 	password = db.Column(db.String(128), nullable=False)
-	industry = db.Column(db.String(150))
+	industry = db.Column(db.String(2000))
 	preferred_org_size = db.Column(db.String(150))
 	created_at = db.Column(db.DateTime, default=lambda: datetime.now(pytz.utc))
 	user_description = db.Column(db.String(5000))

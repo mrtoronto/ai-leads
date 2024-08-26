@@ -245,7 +245,6 @@ def handle_update_user_settings(data):
 		if user:
 			user.user_description = data.get('user_description', user.user_description)
 			user.industry = data.get('industry', user.industry)
-			user.preferred_org_size = data.get('preferred_org_size', user.preferred_org_size)
 			user.model_preference = data.get('model_preference', user.model_preference)
 
 			db.session.commit()

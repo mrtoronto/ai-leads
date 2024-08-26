@@ -119,11 +119,9 @@ Only URLs are relevant. The following are not relevant:
 	- Maps or directions
 
 Internal links within a site are valid. We will handle transforming them into a full URL.""",
-	"""This user describes their business's industry as "{user_industry}".
+	"""This user describes their product as "{user_industry}".
 
-They are interested in finding leads for organizations with {user_pref_org_size} employees.
-
-The user describes their business as:
+The user describes their ideal customer as:
 {user_description}
 
 Previously the user has liked leads like the following:
@@ -152,12 +150,10 @@ Previously the user has liked leads like the following:
 
 lead_validation_prompt = PromptTemplate([
 	"""You are a GPT trained to extract contact info from websites. The user will provide you with the text render on a website and your job is to help them find the contact information for the organization.""",
-	"""The user you are finding leads for describes their business's industry as "{user_industry}".
+	"""This user describes their product as "{user_industry}".
 The query they searched in this particular instance is "{user_query}".
 
-They are interested in finding leads for organizations with {user_pref_org_size} employees.
-
-The user describes their business as:
+The user describes their ideal customer as:
 {user_description}""",
 	"""If you see an email address visible, output the email address in the "email_address" field.
 If you see a contact page that might have an email address, output the link to the contact page in the "contact_page" field.
@@ -195,11 +191,9 @@ def _llm(user_input, template, parser, parse_output=True, user=None, query=None,
 	if user:
 		description = user.user_description
 		industry = user.industry
-		org_size = user.preferred_org_size
 	else:
 		description = "This user has not provided a description. Assume they are looking for organizations like their query describes."
 		industry = "General"
-		org_size = "1-1000"
 
 	if not previous_leads:
 		previous_leads = "No leads have been liked yet."
@@ -213,7 +207,6 @@ def _llm(user_input, template, parser, parse_output=True, user=None, query=None,
 		format_instruction=parser.get_format_instructions(),
 		user_description=description,
 		user_industry=industry,
-		user_pref_org_size=org_size,
 		user_query=user_query,
 		previous_leads=previous_leads
 	)

@@ -105,13 +105,19 @@ def login():
 		if not email or not email.strip() or not password or not password.strip():
 			print('Email and password are required')
 			flash('Email and password are required')
-			return render_template('login.html', email=email, next=next_url)
+			if next_url:
+				return render_template('login.html', email=email, next=next_url)
+			else:
+				return render_template('login.html', email=email)
 
 		user = User.get_by_email(email)
 		if not user:
 			print('User not found')
 			flash('User not found')
-			return render_template('login.html', email=email, next=next_url)
+			if next_url:
+				return render_template('login.html', email=email, next=next_url)
+			else:
+				return render_template('login.html', email=email)
 		if user and user.password:
 			if check_password_hash(user.password, password):
 				print('User logged in successfully')
@@ -123,11 +129,20 @@ def login():
 			else:
 				print('Invalid credentials')
 				flash('Invalid credentials')
-				return render_template('login.html', email=email, next=next_url)
+				if next_url:
+					return render_template('login.html', email=email, next=next_url)
+				else:
+					return render_template('login.html', email=email)
 			return redirect(url_for('main.index'))
 		print('User not found')
-		return render_template('login.html', email=email, next=next_url)
-	return render_template('login.html', title='Login', next=next_url)
+		if next_url:
+			return render_template('login.html', email=email, next=next_url)
+		else:
+			return render_template('login.html', email=email)
+	if next_url:
+		return render_template('login.html', title='Login', next=next_url)
+	else:
+		return render_template('login.html', title='Login')
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -143,12 +158,18 @@ def register():
 		if password != password2:
 			flash('Passwords do not match')
 			print('Passwords do not match')
-			return render_template('register.html', email=email, next=next_url)
+			if next_url:
+				return render_template('register.html', email=email, next=next_url)
+			else:
+				return render_template('register.html', email=email)
 
 		if not email or not email.strip() or not password or not password.strip():
 			flash('Email and password are required')
 			print('Email and password are required')
-			return render_template('register.html', email=email, next=next_url)
+			if next_url:
+				return render_template('register.html', email=email, next=next_url)
+			else:
+				return render_template('register.html', email=email)
 
 		# Check if user already exists
 		email = email.lower()
@@ -157,7 +178,10 @@ def register():
 		if existing_user:
 			flash('Email already exists')
 			print(f'Email already exists - {existing_user.email}')
-			return render_template('register.html', email=email, next=next_url)
+			if next_url:
+				return render_template('register.html', email=email, next=next_url)
+			else:
+				return render_template('register.html', email=email)
 
 		hashed_password = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
 		new_user = User(email=email, password=hashed_password)
@@ -537,11 +561,9 @@ def save_preferences():
 		data = request.get_json()
 		if data:
 			industry = data.get('industry')
-			org_size = data.get('orgSize')
 			description = data.get('description')
 
 			current_user.industry = industry
-			current_user.preferred_org_size = org_size
 			current_user.user_description = description
 			db.session.commit()
 
