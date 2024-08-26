@@ -751,6 +751,58 @@ function initializeClicks() {
         }
 
     });
+
+		initializeHovers();
+}
+
+function initializeHovers() {
+    document.addEventListener('mouseover', function(event) {
+        const target = event.target;
+
+        const resetAllButtons = () => {
+            document.querySelectorAll('.check-lead-btn, .check-source-btn').forEach(button => {
+                button.innerHTML = '<i class="fa-brands fa-searchengin fa-icon"></i>';
+                button.style.paddingTop = '';
+                button.style.paddingBottom = '';
+            });
+        };
+
+        if (target.classList.contains('check-lead-btn')) {
+            setTimeout(() => {
+                if (target.matches(':hover')) {
+                    resetAllButtons();
+                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">50-100</span></div>';
+                    target.style.paddingTop = '0.25em';
+                    target.style.paddingBottom = '0.25em';
+                }
+            }, 500);
+
+            target.addEventListener('mouseout', function() {
+                if (!target.matches(':hover')) {
+                    target.innerHTML = '<i class="fa-brands fa-searchengin fa-icon"></i>';
+                    target.style.paddingTop = '';
+                    target.style.paddingBottom = '';
+                }
+            });
+        } else if (target.classList.contains('check-source-btn')) {
+            setTimeout(() => {
+                if (target.matches(':hover')) {
+                    resetAllButtons();
+                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">100-150</span></div>';
+                    target.style.paddingTop = '0.25em';
+                    target.style.paddingBottom = '0.25em';
+                }
+            }, 500);
+
+            target.addEventListener('mouseout', function() {
+                if (!target.matches(':hover')) {
+                    target.innerHTML = '<i class="fa-brands fa-searchengin fa-icon"></i>';
+                    target.style.paddingTop = '';
+                    target.style.paddingBottom = '';
+                }
+            });
+        }
+    });
 }
 
 function initializeSelectAll(extra_tables=[]) {
