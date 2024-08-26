@@ -23,7 +23,11 @@
             </div>
             <button type="submit" class="btn btn-primary btn-block">Register</button>
         </form>
+		{% if next %}
+        <p class="text-center mt-3">Already have an account? <a href="{{ url_for('main.login', next=next) }}">Login here</a></p>
+		{% else %}
         <p class="text-center mt-3">Already have an account? <a href="{{ url_for('main.login') }}">Login here</a></p>
+		{% endif %}
     </div>
 </div>
 

@@ -465,9 +465,9 @@ def search_and_validate_leads(new_query, previous_leads, app_obj=None, socketio_
 		if collected_leads.lead_sources:
 			for lead_source in collected_leads.lead_sources:
 				new_source_obj = LeadSource.check_and_add(
-					lead_source.url,
-					new_query.user_id,
-					new_query.id
+					url=lead_source.url,
+					user_id=new_query.user_id,
+					query_id=new_query.id
 				)
 				if new_source_obj and socketio_obj and app_obj:
 					with app_obj.app_context():
