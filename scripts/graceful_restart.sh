@@ -1,4 +1,3 @@
-```bash
 #!/bin/bash
 
 # Configuration
@@ -10,7 +9,19 @@ WORKER_COUNT=3  # Adjust this to the number of worker instances you have
 restart_main_service() {
     local SERVICE_NAME=$1
     echo "Restarting $SERVICE_NAME..."
-    sudo systemctl restart "$SERVICE_NAME"
+
+    if sudo systemctl is-active --quiet "$SERVICE_NAME"; then
+        echo "Service $SERVICE_NAME is active. Attempting to reload..."
+        if sudo systemctl reload "$SERVICE_NAME"; then
+            echo "Successfully reloaded $SERVICE_NAME."
+        else
+            echo "Reload failed for $SERVICE_NAME. Attempting restart..."
+            sudo systemctl restart "$SERVICE_NAME"
+        fi
+    else
+        echo "Service $SERVICE_NAME is not active. Starting..."
+        sudo systemctl start "$SERVICE_NAME"
+    fi
 
     if sudo systemctl is-active --quiet "$SERVICE_NAME"; then
         echo "$SERVICE_NAME is now active."
@@ -22,22 +33,19 @@ restart_main_service() {
 # Function to restart a worker service
 restart_worker_service() {
     local SERVICE_NAME=$1
+    local INSTANCE_NUMBER=$2
     echo "Restarting $SERVICE_NAME..."
 
     # Stop the service
     sudo systemctl stop "$SERVICE_NAME"
 
-    # Forcefully kill any remaining RQ processes for this worker
-    sudo pkill -f "rq worker.*worker-${SERVICE_NAME##*@}"
-
-    # Wait to ensure processes are terminated
-    sleep 5
+    # Ensure all worker processes are terminated
+    sleep 2  # Wait briefly to ensure the service has stopped
+    local WORKER_NAME="worker-${INSTANCE_NUMBER}-$(hostname)"
+    sudo pkill -f "rq worker.*$WORKER_NAME"
 
     # Start the service
     sudo systemctl start "$SERVICE_NAME"
-
-    # Wait for the service to start
-    sleep 5
 
     if sudo systemctl is-active --quiet "$SERVICE_NAME"; then
         echo "$SERVICE_NAME is now active."
@@ -50,7 +58,7 @@ restart_worker_service() {
 # Function to restart worker services
 restart_workers() {
     for i in $(seq 1 $WORKER_COUNT); do
-        restart_worker_service "${WORKER_SERVICE}@$i"
+        restart_worker_service "${WORKER_SERVICE}@$i" "$i"
     done
 }
 
