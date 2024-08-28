@@ -8,9 +8,9 @@ restart_service() {
 
     if [ "$IS_WORKER" = true ]; then
         # For workers, we'll handle multiple instances
-        for i in {1..3}; do  # Adjust the range based on how many worker instances you have
-            WORKER_SERVICE="${SERVICE_NAME}@$i.service"
-            PIDs=$(ps aux | grep "$CMD_GREP" | grep "worker-$i" | grep -v grep | awk '{ print $2 }')
+        for i in 1 2 3; do  # Adjust these numbers based on how many worker instances you have
+            WORKER_SERVICE="${SERVICE_NAME}@$i"
+            PIDs=$(pgrep -f "$CMD_GREP.*worker-$i")
 
             if [ -z "$PIDs" ]; then
                 echo "$WORKER_SERVICE not found. Starting it up."
@@ -24,7 +24,7 @@ restart_service() {
 
                 # Verify the processes are still running, a simple sleep can help
                 sleep 2
-                NEW_PIDs=$(ps aux | grep "$CMD_GREP" | grep "worker-$i" | grep -v grep | awk '{ print $2 }')
+                NEW_PIDs=$(pgrep -f "$CMD_GREP.*worker-$i")
 
                 if [ -z "$NEW_PIDs" ]; then
                     echo "$WORKER_SERVICE processes did not remain active. Restarting service."
@@ -36,7 +36,7 @@ restart_service() {
         done
     else
         # For non-worker services, use the original logic
-        PIDs=$(ps aux | grep "$CMD_GREP" | grep -v grep | awk '{ print $2 }')
+        PIDs=$(pgrep -f "$CMD_GREP")
 
         if [ -z "$PIDs" ]; then
             echo "$SERVICE_NAME service not found. Starting it up."
@@ -50,7 +50,7 @@ restart_service() {
 
             # Verify the processes are still running, a simple sleep can help
             sleep 2
-            NEW_PIDs=$(ps aux | grep "$CMD_GREP" | grep -v grep | awk '{ print $2 }')
+            NEW_PIDs=$(pgrep -f "$CMD_GREP")
 
             if [ -z "$NEW_PIDs" ]; then
                 echo "$SERVICE_NAME processes did not remain active. Restarting service."
@@ -66,4 +66,4 @@ restart_service() {
 restart_service "ai_leads" ".*run:app" false
 
 # Restart RQ worker processes for AI Leads
-restart_service "ai-leads-worker" ".*rq worker" true
+restart_service "ai-leads-worker" "rq worker" true
