@@ -41,5 +41,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     handleQueryCardUpdate('.query-container', queryId);
     handleLeadEvents('query-leads', queryId);
-    handleSourceEvents('query-sources');
+    handleSourceEvents('query-sources', queryId);
 });
