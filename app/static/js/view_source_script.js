@@ -28,5 +28,5 @@ document.addEventListener('DOMContentLoaded', function() {
 				updateCounts();
     });
 
-    handleLeadEvents('source-leads');
+    handleLeadEvents('source-leads', sourceId);
 });
