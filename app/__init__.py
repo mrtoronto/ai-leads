@@ -251,6 +251,27 @@ def create_minimal_app(config_class=Config):
 	logger.info(f'Running on {flask_app.config["FLASK_ENV"]} environment')
 	logger.info(f'Running redis at {flask_app.config["REDIS_URL"]}')
 
+	if os.environ.get('FLASK_ENV', 'dev') == 'prod':
+		if flask_app.config['MAIL_SERVER']:
+			auth = None
+			if flask_app.config['MAIL_USERNAME'] or flask_app.config['MAIL_PASSWORD']:
+				auth = (flask_app.config['MAIL_USERNAME'], flask_app.config['MAIL_PASSWORD'])
+			secure = None
+			if flask_app.config['MAIL_USE_TLS']:
+				secure = ()
+
+			mail_handler = SMTPHandler(
+				mailhost=(flask_app.config['MAIL_SERVER'], flask_app.config['MAIL_PORT']),
+				fromaddr=flask_app.config['ADMINS'][0],
+				toaddrs=flask_app.config['ADMINS'],
+				subject='AI-LEADS ERRRRROOOOOORRRRRRRRR',
+				credentials=auth,
+				secure=secure
+			)
+
+			mail_handler.setLevel(logging.ERROR)
+			logger.addHandler(mail_handler)
+
 
 	return flask_app
 
