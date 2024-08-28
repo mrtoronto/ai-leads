@@ -1,69 +1,53 @@
 #!/bin/bash
 
-# Function to send HUP signal or restart service
-restart_service() {
-    SERVICE_NAME=$1
-    CMD_GREP=$2
-    IS_WORKER=$3
+# Configuration
+MAIN_SERVICE="ai_leads"
+WORKER_SERVICE="ai-leads-worker"
+WORKER_COUNT=3  # Adjust this to the number of worker instances you have
 
-    if [ "$IS_WORKER" = true ]; then
-        # For workers, we'll handle multiple instances
-        for i in 1 2 3; do  # Adjust these numbers based on how many worker instances you have
-            WORKER_SERVICE="${SERVICE_NAME}@$i"
-            PIDs=$(pgrep -f "$CMD_GREP.*worker-$i")
+# Function to restart a single service
+restart_single_service() {
+    local SERVICE_NAME=$1
+    echo "Restarting $SERVICE_NAME..."
 
-            if [ -z "$PIDs" ]; then
-                echo "$WORKER_SERVICE not found. Starting it up."
-                sudo systemctl start "$WORKER_SERVICE"
-            else
-                echo "Sending HUP signal to $WORKER_SERVICE processes (PIDs: $PIDs) to gracefully reload."
-                for PID in $PIDs; do
-                    sudo kill -HUP $PID
-                    echo "Sent HUP signal to $PID"
-                done
-
-                # Verify the processes are still running, a simple sleep can help
-                sleep 2
-                NEW_PIDs=$(pgrep -f "$CMD_GREP.*worker-$i")
-
-                if [ -z "$NEW_PIDs" ]; then
-                    echo "$WORKER_SERVICE processes did not remain active. Restarting service."
-                    sudo systemctl restart "$WORKER_SERVICE"
-                else
-                    echo "$WORKER_SERVICE processes are still active."
-                fi
-            fi
-        done
-    else
-        # For non-worker services, use the original logic
-        PIDs=$(pgrep -f "$CMD_GREP")
-
-        if [ -z "$PIDs" ]; then
-            echo "$SERVICE_NAME service not found. Starting it up."
-            sudo systemctl start "$SERVICE_NAME"
+    # Check if the service is active
+    if sudo systemctl is-active --quiet "$SERVICE_NAME"; then
+        # Service is running, attempt to reload
+        echo "Service $SERVICE_NAME is active. Attempting to reload..."
+        if sudo systemctl reload "$SERVICE_NAME"; then
+            echo "Successfully reloaded $SERVICE_NAME."
         else
-            echo "Sending HUP signal to $SERVICE_NAME service processes (PIDs: $PIDs) to gracefully reload."
-            for PID in $PIDs; do
-                sudo kill -HUP $PID
-                echo "Sent HUP signal to $PID"
-            done
-
-            # Verify the processes are still running, a simple sleep can help
-            sleep 2
-            NEW_PIDs=$(pgrep -f "$CMD_GREP")
-
-            if [ -z "$NEW_PIDs" ]; then
-                echo "$SERVICE_NAME processes did not remain active. Restarting service."
-                sudo systemctl restart "$SERVICE_NAME"
-            else
-                echo "$SERVICE_NAME processes are still active."
-            fi
+            echo "Reload failed for $SERVICE_NAME. Attempting restart..."
+            sudo systemctl restart "$SERVICE_NAME"
         fi
+    else
+        # Service is not running, start it
+        echo "Service $SERVICE_NAME is not active. Starting..."
+        sudo systemctl start "$SERVICE_NAME"
+    fi
+
+    # Verify the service status after restart/reload
+    if sudo systemctl is-active --quiet "$SERVICE_NAME"; then
+        echo "$SERVICE_NAME is now active."
+    else
+        echo "Failed to start $SERVICE_NAME. Please check the logs."
     fi
 }
 
-# Restart Gunicorn master process for AI Leads
-restart_service "ai_leads" ".*run:app" false
+# Function to restart worker services
+restart_workers() {
+    for i in $(seq 1 $WORKER_COUNT); do
+        restart_single_service "${WORKER_SERVICE}@$i"
+    done
+}
 
-# Restart RQ worker processes for AI Leads
-restart_service "ai-leads-worker" "rq worker" true
+# Main execution
+echo "Starting graceful restart process..."
+
+# Restart the main application service
+restart_single_service "$MAIN_SERVICE"
+
+# Restart the worker services
+restart_workers
+
+echo "Graceful restart process completed."
