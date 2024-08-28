@@ -160,13 +160,13 @@ class LeadSource(db.Model):
 			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 
 		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
-			self._hide()
+			self._hide(app_obj=app_obj, socketio_obj=socketio_obj)
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
 				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f'user_{self.user_id}')
 
-	def _hide(self):
+	def _hide(self, app_obj=None, socketio_obj=None):
 		self.hidden = True
 		hidden_leads = []
 		for lead in self.get_leads():
@@ -176,12 +176,12 @@ class LeadSource(db.Model):
 				lead.hidden_at = datetime.now(pytz.utc)
 				hidden_leads.append(lead)
 
-			lead._finished(checked=False)
+			lead._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
 
 		db.session.commit()
 
 		for job in self.jobs.filter_by(finished=False).all():
-			job._finished()
+			job._finished(app_obj=app_obj, socketio_obj=socketio_obj)
 
 		return hidden_leads
 

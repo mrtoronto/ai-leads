@@ -119,7 +119,7 @@ class Query(db.Model):
 	def get_sources(self):
 		return LeadSource.query.filter_by(query_id=self.id).all()
 
-	def _hide(self):
+	def _hide(self, socketio_obj=None, app_obj=None):
 		self.hidden = True
 		self.save()
 
@@ -134,7 +134,7 @@ class Query(db.Model):
 				hidden_leads.append(lead)
 				db.session.commit()
 
-			lead._finished(checked=False)
+			lead._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
 
 		for lead_source in self.get_sources():
 			if not lead_source.hidden:
@@ -144,10 +144,10 @@ class Query(db.Model):
 				hidden_sources.append(lead_source)
 				db.session.commit()
 
-			lead_source._finished(checked=False)
+			lead_source._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
 
 		for job in self.jobs.filter_by(finished=False).all():
-			job._finished()
+			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 
 		db.session.commit()
 

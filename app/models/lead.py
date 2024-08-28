@@ -208,13 +208,13 @@ class Lead(db.Model):
 			db.session.rollback()
 			return None
 
-	def _hide(self):
+	def _hide(self, app_obj=None, socketio_obj=None):
 		self.hidden = True
 		self.hidden_at = datetime.now(pytz.utc)
 		self.save()
 
 		for job in self.jobs.filter_by(finished=False).all():
-			job._finished()
+			job._finished(app_obj=app_obj, socketio_obj=socketio_obj)
 
 	def _unhide(self):
 		self.hidden = False

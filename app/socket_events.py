@@ -1,5 +1,6 @@
 import re
 from app import socketio, db
+from flask import current_app
 from flask_login import login_required, current_user
 from app.models import LeadSource, Lead, Query, User
 from flask_socketio import join_room, emit
@@ -104,7 +105,7 @@ def handle_hide_request(data):
 	query_id = data['query_id']
 	request = Query.get_by_id(query_id)
 	if request:
-		hidden_sources, hidden_leads = request._hide()
+		hidden_sources, hidden_leads = request._hide(app_obj=current_app, socketio_obj=socketio)
 
 		socketio.emit('queries_updated', {'queries': [request.to_dict()]}, to=f"user_{request.user_id}")
 		socketio.emit('leads_updated', {'leads': [lead.to_dict() for lead in hidden_leads]}, to=f"user_{request.user_id}")
@@ -137,7 +138,7 @@ def handle_hide_source(data):
 	lead_source = LeadSource.get_by_id(source_id)
 	if lead_source:
 		print(f'Hiding source {source_id}')
-		hidden_leads = lead_source._hide()
+		hidden_leads = lead_source._hide(app_obj=current_app, socketio_obj=socketio)
 
 		socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f"user_{lead_source.user_id}")
 		socketio.emit('leads_updated', {'leads': [l.to_dict() for l in hidden_leads]}, to=f"user_{lead_source.user_id}")
@@ -153,7 +154,7 @@ def handle_hide_lead(data):
 	print(f'Hiding lead {lead_id}')
 	lead = Lead().get_by_id(lead_id)
 	if lead:
-		lead.hidden = True
+		lead._hide(app_obj=current_app, socketio_obj=socketio)
 		lead.save()
 		socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f"user_{lead.user_id}")
 	else:
@@ -167,7 +168,7 @@ def handle_unhide_lead(data):
 	lead_id = data['lead_id']
 	lead = Lead().get_by_id(lead_id)
 	if lead:
-		lead.hidden = False
+		lead._unhide(app_obj=current_app, socketio_obj=socketio)
 		lead.save()
 		socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f"user_{lead.user_id}")
 
