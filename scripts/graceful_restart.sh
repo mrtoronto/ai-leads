@@ -33,5 +33,8 @@ restart_service() {
 # Restart Gunicorn master process for Zakaya
 restart_service "ai_leads" ".*run:app"
 
-# Restart Gunicorn worker process for Zakaya
-restart_service "ai-leads-worker" ".*rq worker"
+# Restart ai-leads-worker instances
+for i in {1..3}; do
+    INSTANCE_NAME="ai-leads-worker@$i.service"
+    restart_service "$INSTANCE_NAME" ".*rq worker"
+done
