@@ -115,6 +115,7 @@ query_reformatting_prompt = PromptTemplate([
 	"""This user describes their product as: {user_industry}""",
 	"""The user describes their ideal customer as: {user_description}.""",
 	"""The user has provided the following examples of good leads. Its very important that you rewrite their query to find more leads like these: \n{example_leads_text}""",
+	"""It is very important that you write a query that will return customers that may be interested in the users product. You are not looking for similar products. You are looking for customers that will want to buy the users product.""",
 	"""This is the output format. Do not deviate from it. Do not include any text outside of this output format. \n\n {format_instruction}"""
 ])
 
@@ -460,9 +461,9 @@ def rewrite_query(request, socketio_obj=None):
 		'example_leads_text': example_leads_text,
 	})
 
-	output, tokens_used_usd = _llm(data, query_reformatting_prompt, rewriting_parser, model_name=(user.model_preference or 'gpt-4o-mini'))
+	output, tokens_used_usd = _llm(data, query_reformatting_prompt, rewriting_parser, model_name='gpt-4o')
 	user.move_credits(
-		amount=tokens_used_usd * -1000,
+		amount=tokens_used_usd * -1000 * 2,
 		cost_usd=tokens_used_usd,
 		trxn_type=CreditLedgerType.CHECK_QUERY,
 		socketio_obj=socketio_obj
