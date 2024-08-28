@@ -27,7 +27,7 @@ function handleSourceEvents(tableId='sources', query_id=null) {
 function handleLeadEvents(tableId='leads', query_id=null, source_id=null) {
 		tableId = tableId + '-table';
     socket.on('leads_updated', async data => { for (const lead of data.leads) {
-    	if ((query_id && lead.query_id == query_id) || (lead.source_id == source_id)) {
+    	if ((query_id && lead.query_id == query_id) || (source_id && lead.source_id == source_id)) {
     		updateRow(tableId, lead);
      	} else if (!query_id && !source_id) {
 		 		updateRow(tableId, lead);
