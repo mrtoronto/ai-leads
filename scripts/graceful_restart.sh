@@ -33,10 +33,17 @@ restart_main_service() {
 # Function to restart a worker service
 restart_worker_service() {
     local SERVICE_NAME=$1
+    local INSTANCE_NUMBER=$2
     echo "Restarting $SERVICE_NAME..."
 
-    # For workers, we'll always do a full restart
-    sudo systemctl restart "$SERVICE_NAME"
+    # Stop the service first
+    sudo systemctl stop "$SERVICE_NAME"
+
+    # Wait a bit to ensure the service has stopped
+    sleep 5
+
+    # Start the service with a unique name
+    sudo systemctl start "$SERVICE_NAME"
 
     # Wait a bit for the service to start up
     sleep 5
@@ -53,7 +60,7 @@ restart_worker_service() {
 # Function to restart worker services
 restart_workers() {
     for i in $(seq 1 $WORKER_COUNT); do
-        restart_worker_service "${WORKER_SERVICE}@$i"
+        restart_worker_service "${WORKER_SERVICE}@$i" "$i"
     done
 }
 
