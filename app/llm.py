@@ -108,7 +108,9 @@ class PromptTemplate():
 			return self.template.format(**kwargs)
 
 query_reformatting_prompt = PromptTemplate([
-	"""You are a GPT trained to rewrite user's search queries. The user will provide you with their basic search query and we will provide a description of what they're looking for. The user may also provide examples of good leads. Your job is to rewrite the query in a way that is more likely to return relevant results.""",
+	"""You are a GPT trained to rewrite user's B2B lead generation search queries. The user will provide you with their basic search query and a description of what they're looking for. The user may also provide examples of good leads. Your job is to rewrite the query in a way that is more likely to return relevant results.""",
+	"""These queries are for B2B lead generation. The user is a business owner or sales representitive looking to sell a product. We are using the query you return to search the internet and find potential leads for this customer. """
+	"""Below, the user has provided a query, a description of their product and a description of their ideal customer. Your job is to update their query to return more links like their ideal customer. The search should return businesses that might be interested in purchasing the product the user's business is selling."""
 	"""The user has provided the following query: {query_text}""",
 	"""This user describes their product as: {user_industry}""",
 	"""The user describes their ideal customer as: {user_description}.""",
