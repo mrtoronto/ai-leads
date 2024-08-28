@@ -702,3 +702,15 @@ def payment_success():
 def payment_cancelled():
 	flash('Payment cancelled. No credits were added to your account.', 'warning')
 	return redirect(url_for('main.store'))
+
+
+@bp.route('/admin/clear_all_jobs')
+def admin_clear_jobs():
+	if not current_user.is_authenticated and current_user.admin:
+		return redirect(url_for('main.index'))
+
+	jobs = Job.query.filter_by(finished=False).all()
+	for job in jobs:
+		job._finished()
+
+	return redirect(url_for('main.admin_panel'))

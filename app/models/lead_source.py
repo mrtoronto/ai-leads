@@ -156,7 +156,7 @@ class LeadSource(db.Model):
 		self.save()
 
 		### Finish all jobs
-		for job in self.jobs.filter_by(finished=False, started=True).all():
+		for job in self.jobs.filter_by(finished=False).all():
 			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 
 		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
@@ -175,6 +175,8 @@ class LeadSource(db.Model):
 				lead.auto_hidden = True
 				lead.hidden_at = datetime.now(pytz.utc)
 				hidden_leads.append(lead)
+
+			lead._finished(checked=False)
 
 		db.session.commit()
 

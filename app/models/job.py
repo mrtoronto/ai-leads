@@ -81,8 +81,9 @@ class Job(db.Model):
 		self.finished_at = datetime.now(pytz.utc)
 		db.session.commit()
 
-		elapsed_time = self.finished_at - self.started_at
-		print('Job {} finished in {} seconds'.format(self.guid, elapsed_time.total_seconds()))
+		if self.started_at:
+			elapsed_time = self.finished_at - self.started_at
+			print('Job {} finished in {} seconds'.format(self.guid, elapsed_time.total_seconds()))
 
 	def _started(self, redis_job_id):
 		self.started = True

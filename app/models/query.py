@@ -97,19 +97,15 @@ class Query(db.Model):
 		self.save()
 
 		### Finish all jobs
-		for job in self.jobs.filter_by(finished=False, started=True).all():
+		for job in self.jobs.filter_by(finished=False).all():
 			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 
 		if self.over_budget:
 			### If query is overbudget, finish all started leads and sources
 			for lead in self.leads.query.filter_by(checking=True).all():
 				lead._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
-				for job in lead.jobs.filter_by(finished=False).all():
-					job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 			for source in self.sources.query.filter_by(checking=True).all():
 				source._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
-				for job in source.jobs.filter_by(finished=False).all():
-					job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 
 			db.session.commit()
 
@@ -136,6 +132,9 @@ class Query(db.Model):
 				lead.auto_hidden = True
 				lead.hidden_at = datetime.now(pytz.utc)
 				hidden_leads.append(lead)
+				db.session.commit()
+
+			lead._finished(checked=False)
 
 		for lead_source in self.get_sources():
 			if not lead_source.hidden:
@@ -143,6 +142,9 @@ class Query(db.Model):
 				lead_source.auto_hidden = True
 				lead_source.hidden_at = datetime.now(pytz.utc)
 				hidden_sources.append(lead_source)
+				db.session.commit()
+
+			lead_source._finished(checked=False)
 
 		for job in self.jobs.filter_by(finished=False).all():
 			job._finished()

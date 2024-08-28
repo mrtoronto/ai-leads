@@ -227,7 +227,7 @@ class Lead(db.Model):
 		self.save()
 
 		### Finish all jobs
-		for job in self.jobs.filter_by(finished=False, started=True).all():
+		for job in self.jobs.filter_by(finished=False).all():
 			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
 
 		### Hide if invalid
