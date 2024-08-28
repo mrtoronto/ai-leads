@@ -30,30 +30,27 @@ restart_main_service() {
     fi
 }
 
-# Function to restart a worker service
-restart_worker_service() {
-    local SERVICE_NAME=$1
-    echo "Restarting $SERVICE_NAME..."
-
-    # Stop the service
-    sudo systemctl stop "$SERVICE_NAME"
+# Function to stop all worker services
+stop_worker_services() {
+    echo "Stopping all worker services..."
+    for i in $(seq 1 $WORKER_COUNT); do
+        sudo systemctl stop "${WORKER_SERVICE}@$i"
+    done
 }
 
-# Function to restart worker services
-restart_workers() {
-    # Stop all worker services
-    for i in $(seq 1 $WORKER_COUNT); do
-        restart_worker_service "${WORKER_SERVICE}@$i"
-    done
-
-    # Ensure all worker processes are terminated
-    sleep 2  # Wait briefly to ensure the services have stopped
+# Function to kill all RQ worker processes
+kill_all_workers() {
+    echo "Killing all RQ worker processes..."
     sudo pkill -f "rq worker"
+}
 
-    # Start all worker services
+# Function to start worker services
+start_worker_services() {
+    echo "Starting all worker services..."
     for i in $(seq 1 $WORKER_COUNT); do
         sudo systemctl start "${WORKER_SERVICE}@$i"
-        # Wait for the service to start
+
+        # Allow some time for each worker to start
         sleep 5
 
         if sudo systemctl is-active --quiet "${WORKER_SERVICE}@$i"; then
@@ -71,7 +68,16 @@ echo "Starting graceful restart process..."
 # Restart the main application service
 restart_main_service "$MAIN_SERVICE"
 
-# Restart the worker services
-restart_workers
+# Stop all worker services
+stop_worker_services
+
+# Ensure all worker processes are terminated
+kill_all_workers
+
+# Allow a brief pause to ensure all processes are killed
+sleep 5
+
+# Start all worker services
+start_worker_services
 
 echo "Graceful restart process completed."
