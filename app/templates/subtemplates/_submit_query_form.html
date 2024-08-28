@@ -41,14 +41,14 @@
 		<div class="form-group submit-query-form-group mt-3" >
 	        <label for="budget">Search Results to Check: <i class="fa-solid fa-circle-info submit-query-tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Number of google search results to scan"></i></label>
 	        <div style="display: flex; align-items: center;">
-	            <input type="range" value="10" class="form-range" id="n_results" step="1" name="n_results" min="1" max="100" style="flex-grow: 1; margin-right: 10px;" list="nResultsMarkers" >
+	            <input type="range" value="10" class="form-range" id="n_results" step="1" name="n_results" min="1" max="50" style="flex-grow: 1; margin-right: 10px;" list="nResultsMarkers" >
 	            <datalist id="nResultsMarkers">
 	                <option value="1" label="1 result"></option>
 	                <option value="10" label="10 results"></option>
-	                <option value="25" label="25 results"></option>
+	                <option value="20" label="20 results"></option>
+	                <option value="30" label="30 results"></option>
+	                <option value="40" label="40 results"></option>
 	                <option value="50" label="50 results"></option>
-	                <option value="75" label="75 results"></option>
-	                <option value="100" label="100 results"></option>
 
 	            </datalist>
 	            <output for="n_results" id="nResultsOutput" style="font-size: 12px; min-width: 30px;text-wrap: nowrap;">10 Results</output>

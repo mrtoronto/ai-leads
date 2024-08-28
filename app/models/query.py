@@ -123,6 +123,10 @@ class Query(db.Model):
 		self.hidden = True
 		self.save()
 
+		if app_obj and socketio_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('queries_updated', {'queries': [self.to_dict()]}, to=f'user_{self.user_id}')
+
 		hidden_leads = []
 		hidden_sources = []
 

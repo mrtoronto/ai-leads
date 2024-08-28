@@ -168,6 +168,12 @@ class LeadSource(db.Model):
 
 	def _hide(self, app_obj=None, socketio_obj=None):
 		self.hidden = True
+		db.session.commit()
+
+		if app_obj and socketio_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f'user_{self.user_id}')
+
 		hidden_leads = []
 		for lead in self.get_leads():
 			if not lead.hidden:

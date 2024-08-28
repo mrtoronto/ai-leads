@@ -232,7 +232,7 @@ class Lead(db.Model):
 
 		### Hide if invalid
 		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
-			self._hide()
+			self._hide(app_obj=app_obj, socketio_obj=socketio_obj)
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
