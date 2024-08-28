@@ -168,6 +168,7 @@ class LeadSource(db.Model):
 
 	def _hide(self, app_obj=None, socketio_obj=None):
 		self.hidden = True
+		self.checking = False
 		db.session.commit()
 
 		if app_obj and socketio_obj:

@@ -1,7 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+
+.registerContainer {
+	width: 50%;
+}
+
+@media (max-width: 768px) {
+	.registerContainer {
+		width: 80%;
+	}
+}
+
+</style>
 <div class="d-flex justify-content-center align-items-center" style="height: 80vh;">
-    <div class="w-50">
+    <div class="registerContainer">
         <h1 class="text-center">Register</h1>
         <form method="POST" action="{{ url_for('main.register') }}">
             <div class="form-group">
@@ -21,7 +34,7 @@
                 <label for="password">Retype Password:</label>
                 <input type="password" class="form-control" id="password2" name="password2">
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Register</button>
+            <button type="submit" class="btn btn-primary btn-block mt-2 w-100">Register</button>
         </form>
 		{% if next %}
         <p class="text-center mt-3">Already have an account? <a href="{{ url_for('main.login', next=next) }}">Login here</a></p>

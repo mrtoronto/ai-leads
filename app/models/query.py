@@ -121,6 +121,8 @@ class Query(db.Model):
 
 	def _hide(self, socketio_obj=None, app_obj=None):
 		self.hidden = True
+		self.finished = True
+		self.checking = False
 		self.save()
 
 		if app_obj and socketio_obj:
