@@ -34,4 +34,4 @@ restart_service() {
 restart_service "ai_leads" ".*run:app"
 
 # Restart Gunicorn worker process for Zakaya
-restart_service "ai_leads_worker" ".*rq worker"
+restart_service "ai-leads-worker" ".*rq worker"
