@@ -34,9 +34,4 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Set an interval to change the text every 3 seconds (3000 milliseconds)
 	setInterval(changeText, 3000);
 
-	const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-	const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-		return new bootstrap.Tooltip(tooltipTriggerEl)
-	});
-
 });

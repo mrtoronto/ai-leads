@@ -36,9 +36,15 @@
 					{% else %}
 	                <hr style="margin-top: 1em; margin-bottom:1em; color: #387EE3; opacity: 1;width: 100%;">
 					{% endif %}
+					{% if current_user.is_authenticated %}
 	                <a href="/settings">
 	                    Back to Settings
 	                </a>
+	                {% else %}
+	                <a href="/">
+	                    Back to Home
+	                </a>
+	                {% endif %}
                 </div>
             </div>
         </div>

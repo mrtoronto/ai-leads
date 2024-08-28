@@ -28,13 +28,6 @@
 	        <label for="budget">Budget: <i class="fa-solid fa-circle-info submit-query-tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Max spend for this query"></i></label>
 	        <div style="display: flex; align-items: center;">
 	            <input type="range" value="0" class="form-range" id="budget" step="100" name="budget" min="0" max="{{ current_user.credits }}" style="flex-grow: 1; margin-right: 10px;" list="budgetMarkers" disabled>
-	            <datalist id="budgetMarkers">
-	                <option value="0" label="0%"></option>
-	                <option value="{{ ((current_user.credits * 0.25) // 100 * 100) | int }}" label="25%"></option>
-	                <option value="{{ ((current_user.credits * 0.5) // 100 * 100) | int }}" label="50%"></option>
-	                <option value="{{ ((current_user.credits * 0.75) // 100 * 100) | int }}" label="75%"></option>
-	                <option value="{{ (current_user.credits // 100 * 100) | int }}" label="100%"></option>
-	            </datalist>
 	            <output for="budget" id="budgetOutput" style="font-size: 12px; min-width: 30px;text-wrap: nowrap;">No Budget</output>
 	        </div>
 	    </div>
@@ -42,15 +35,6 @@
 	        <label for="budget">Search Results to Check: <i class="fa-solid fa-circle-info submit-query-tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Number of google search results to scan"></i></label>
 	        <div style="display: flex; align-items: center;">
 	            <input type="range" value="10" class="form-range" id="n_results" step="1" name="n_results" min="1" max="50" style="flex-grow: 1; margin-right: 10px;" list="nResultsMarkers" >
-	            <datalist id="nResultsMarkers">
-	                <option value="1" label="1 result"></option>
-	                <option value="10" label="10 results"></option>
-	                <option value="20" label="20 results"></option>
-	                <option value="30" label="30 results"></option>
-	                <option value="40" label="40 results"></option>
-	                <option value="50" label="50 results"></option>
-
-	            </datalist>
 	            <output for="n_results" id="nResultsOutput" style="font-size: 12px; min-width: 30px;text-wrap: nowrap;">10 Results</output>
 	        </div>
 	    </div>
@@ -67,3 +51,14 @@
 		<i class="fa-solid fa-wand-magic-sparkles"></i>
 	</button>
 </form>
+
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+
+		if (!window.is_auth) {
+			// disable form elements
+			document.querySelectorAll('#lead-form input').forEach(input => input.disabled = true);
+			$('#lead-form button').attr('title', 'You must be logged in to use this feature');
+		}
+	});
+</script>
