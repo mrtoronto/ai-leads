@@ -1,34 +1,39 @@
 #!/bin/bash
 
+# Function to send HUP signal or restart service
+restart_service() {
+    SERVICE_NAME=$1
+    CMD_GREP=$2
+
+    PIDs=$(ps aux | grep "$CMD_GREP" | grep -v grep | awk '{ print $2 }')
+
+    if [ -z "$PIDs" ]; then
+        echo "$SERVICE_NAME service not found. Starting it up."
+        sudo systemctl start "$SERVICE_NAME"
+    else
+        echo "Sending HUP signal to $SERVICE_NAME service processes (PIDs: $PIDs) to gracefully reload."
+        for PID in $PIDs; do
+            sudo kill -HUP $PID
+            echo "Sent HUP signal to $PID"
+        done
+
+        # Verify the processes are still running, a simple sleep can help
+        sleep 2
+        NEW_PIDs=$(ps aux | grep "$CMD_GREP" | grep -v grep | awk '{ print $2 }')
+
+        if [ -z "$NEW_PIDs" ]; then
+            echo "$SERVICE_NAME processes did not remain active. Restarting service."
+            sudo systemctl restart "$SERVICE_NAME"
+        else
+            echo "$SERVICE_NAME processes are still active."
+        fi
+    fi
+}
+
 # Configuration
 MAIN_SERVICE="ai_leads"
 WORKER_SERVICE="ai-leads-worker"
 WORKER_COUNT=3  # Adjust this to the number of worker instances you have
-
-# Function to restart the main service
-restart_main_service() {
-    local SERVICE_NAME=$1
-    echo "Restarting $SERVICE_NAME..."
-
-    if sudo systemctl is-active --quiet "$SERVICE_NAME"; then
-        echo "Service $SERVICE_NAME is active. Attempting to reload..."
-        if sudo systemctl reload "$SERVICE_NAME"; then
-            echo "Successfully reloaded $SERVICE_NAME."
-        else
-            echo "Reload failed for $SERVICE_NAME. Attempting restart..."
-            sudo systemctl restart "$SERVICE_NAME"
-        fi
-    else
-        echo "Service $SERVICE_NAME is not active. Starting..."
-        sudo systemctl start "$SERVICE_NAME"
-    fi
-
-    if sudo systemctl is-active --quiet "$SERVICE_NAME"; then
-        echo "$SERVICE_NAME is now active."
-    else
-        echo "Failed to start $SERVICE_NAME. Please check the logs."
-    fi
-}
 
 # Function to stop all worker services
 stop_worker_services() {
@@ -44,7 +49,7 @@ kill_all_workers() {
     sudo pkill -f "rq worker"
 }
 
-# Function to start worker services
+# Function to start all worker services
 start_worker_services() {
     echo "Starting all worker services..."
     for i in $(seq 1 $WORKER_COUNT); do
@@ -66,7 +71,7 @@ start_worker_services() {
 echo "Starting graceful restart process..."
 
 # Restart the main application service
-restart_main_service "$MAIN_SERVICE"
+restart_service "$MAIN_SERVICE" ".*run:app"
 
 # Stop all worker services
 stop_worker_services
