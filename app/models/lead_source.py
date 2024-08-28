@@ -169,6 +169,7 @@ class LeadSource(db.Model):
 	def _hide(self, app_obj=None, socketio_obj=None):
 		self.hidden = True
 		self.checking = False
+		self.hidden_at = datetime.now(pytz.utc)
 		db.session.commit()
 
 		if app_obj and socketio_obj:

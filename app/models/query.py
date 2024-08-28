@@ -122,7 +122,9 @@ class Query(db.Model):
 	def _hide(self, socketio_obj=None, app_obj=None):
 		self.hidden = True
 		self.finished = True
+		self.n_results_requested = self.n_results_retrieved
 		self.checking = False
+		self.hidden_at = datetime.now(pytz.utc)
 		self.save()
 
 		if app_obj and socketio_obj:
