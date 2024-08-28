@@ -207,6 +207,7 @@ def check_lead_task(lead_id):
 				user_id=lead.user_id,
 				query_id=lead.query_id,
 				checked=True,
+				valid=True,
 				name=lead.name,
 				description=lead.description,
 				image_url=lead.image_url,
