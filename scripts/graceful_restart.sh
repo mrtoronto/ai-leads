@@ -34,7 +34,7 @@ restart_service() {
 restart_service "ai_leads" ".*run:app"
 
 # Restart ai-leads-worker instances
-for i in {1..3}; do
+for i in $(seq 1 3); do
     INSTANCE_NAME="ai-leads-worker@$i.service"
     restart_service "$INSTANCE_NAME" ".*rq worker"
 done
