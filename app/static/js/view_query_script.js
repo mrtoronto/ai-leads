@@ -8,7 +8,7 @@ import {
 	updateCounts,
 	getSourceTableColumns
 } from "./general_script.js";
-import { handleLeadEvents, handleSourceEvents, handleRequestEvents } from "./socket_handlers.js";
+import { handleLeadEvents, handleSourceEvents, handleRequestEvents, handleQueryCardUpdate } from "./socket_handlers.js";
 import { createQueryDetailsComponent, createTableComponent } from "./components.js";
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
     		console.log(data);
         const container = document.querySelector('.query-container');
         container.innerHTML = '';
-
         container.innerHTML += createQueryDetailsComponent(data.query);
 
         createTable('query-leads-table', getLeadTableColumns(), data.leads.filter(request => !request.hidden));
@@ -40,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				updateCounts();
     });
 
-    handleLeadEvents('query-leads');
+    handleQueryCardUpdate('.query-container', queryId);
+    handleLeadEvents('query-leads', queryId);
     handleSourceEvents('query-sources');
 });

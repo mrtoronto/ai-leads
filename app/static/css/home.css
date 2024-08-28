@@ -2,6 +2,7 @@
     background-image: linear-gradient(245deg, #255499, #3E8CFF);
     color: #E6F6FF;
     padding: 100px 0;
+    padding-bottom: 0px;
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -243,4 +244,24 @@
 
 .hero-fade-out {
     animation: hero-fadeOut 1s ease-out forwards;
+}
+
+.submit-query-form-group .form-control {
+    border: 1px solid #3B3141;
+}
+
+.submit-request-form-query-input {
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+	border: 6px solid #E6F6FF !important;
+	background-color: #E6F6FF;
+	border-bottom: 1px solid #3B3141 !important;
+}
+
+
+
+#advancedOptionsContainer {
+	background-color: #E6F6FF;
+	border-image: linear-gradient(to bottom, #E6F6FF, #3E8CFF) 1;
+	border-top: 6px solid #3E8CFF;
 }

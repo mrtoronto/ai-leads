@@ -22,6 +22,18 @@ class Query(db.Model):
 	checking = db.Column(db.Boolean, default=True)
 	hidden = db.Column(db.Boolean, default=False)
 
+	auto_check = db.Column(db.Boolean, default=False)
+	auto_hide_invalid = db.Column(db.Boolean, default=False)
+
+	budget = db.Column(db.Float)
+	over_budget = db.Column(db.Boolean, default=False)
+
+	location = db.Column(db.String(255))
+	location_country = db.Column(db.String(10))
+
+	n_results_retrieved = db.Column(db.Integer, default=0)
+	n_results_requested = db.Column(db.Integer, default=0)
+
 	leads = db.relationship('Lead', backref='query_obj', lazy='dynamic')
 	sources = db.relationship('LeadSource', backref='query_obj', lazy='dynamic')
 
@@ -36,7 +48,7 @@ class Query(db.Model):
 					return job.place_in_queue()
 		return None
 
-	def to_dict(self):
+	def to_dict(self, example_leads=False):
 		return {
 			'id': self.id,
 			'guid': self.guid,
@@ -51,7 +63,17 @@ class Query(db.Model):
 			'place_in_queue': self._get_place_in_queue(),
 			'hidden': self.hidden,
 			'n_sources': self.sources.filter_by(hidden=False).count(),
-			'n_leads': self.leads.filter_by(hidden=False).count()
+			'n_leads': self.leads.filter_by(hidden=False).count(),
+			'example_leads': [l.to_dict() for l in self.leads.filter_by(example_lead=True).all()] if example_leads else [],
+			'location': self.location,
+			'location_country': self.location_country,
+			'budget': self.budget,
+			'n_results_retrieved': self.n_results_retrieved,
+			'n_results_requested': self.n_results_requested,
+			'over_budget': self.over_budget,
+			'auto_check': self.auto_check,
+			'auto_hide_invalid': self.auto_hide_invalid
+
 		}
 
 	@classmethod
@@ -77,6 +99,23 @@ class Query(db.Model):
 		### Finish all jobs
 		for job in self.jobs.filter_by(finished=False, started=True).all():
 			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
+
+		if self.over_budget:
+			### If query is overbudget, finish all started leads and sources
+			for lead in self.leads.query.filter_by(checking=True).all():
+				lead._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
+				for job in lead.jobs.filter_by(finished=False).all():
+					job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
+			for source in self.sources.query.filter_by(checking=True).all():
+				source._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
+				for job in source.jobs.filter_by(finished=False).all():
+					job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
+
+			db.session.commit()
+
+		if app_obj and socketio_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('queries_updated', {'queries': [self.to_dict()]}, to=f'user_{self.user_id}')
 
 	def get_leads(self):
 		return Lead.query.filter_by(query_id=self.id).all()
@@ -104,6 +143,9 @@ class Query(db.Model):
 				lead_source.auto_hidden = True
 				lead_source.hidden_at = datetime.now(pytz.utc)
 				hidden_sources.append(lead_source)
+
+		for job in self.jobs.filter_by(finished=False).all():
+			job._finished()
 
 		db.session.commit()
 

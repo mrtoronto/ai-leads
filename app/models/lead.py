@@ -31,12 +31,15 @@ class Lead(db.Model):
 	checking = db.Column(db.Boolean, default=False)
 	relevant = db.Column(db.Boolean, default=False)
 	quality_score = db.Column(db.Float)
-	image_url = db.Column(db.String(255))
+	image_url = db.Column(db.String(1000))
 	jobs = db.relationship('Job', backref='lead', lazy='dynamic')
 
 	hidden_at = db.Column(db.DateTime)
 	hidden = db.Column(db.Boolean, default=False)
 	auto_hidden = db.Column(db.Boolean, default=False)
+
+	### Lead added by user as good example for this query
+	example_lead = db.Column(db.Boolean, default=False)
 
 	def _get_place_in_queue(self):
 		if self.checking:
@@ -72,6 +75,7 @@ class Lead(db.Model):
 			'relevant': self.relevant,
 			'hidden_at': self.hidden_at.isoformat() if self.hidden_at else None,
 			'quality_score': self.quality_score,
+			'example_lead': self.example_lead,
 			'image_url': self.image_url,
 			'lead_source': self.lead_source.to_dict() if self.lead_source else None,
 			'query_obj': self.query_obj.to_dict() if self.query_obj else None,
@@ -157,7 +161,7 @@ class Lead(db.Model):
 		return updates, failed_updates, user.last_trained_source_model_at
 
 	@classmethod
-	def check_and_add(cls, url, user_id, query_id, source_id, image_url=None):
+	def check_and_add(cls, url, user_id, query_id, source_id, image_url=None, example_lead=False):
 		url = get_standard_url(url)
 		base_url = get_base_url(url)
 
@@ -171,6 +175,30 @@ class Lead(db.Model):
 			query_id=query_id,
 			source_id=source_id,
 			image_url=image_url,
+			example_lead=example_lead
+		)
+		try:
+			new_lead.save()
+
+			return new_lead
+		except Exception as e:
+			print(f'Error adding lead: {e}')
+			db.session.rollback()
+			return None
+
+	@classmethod
+	def _add(cls, url, user_id, query_id, source_id, image_url=None, example_lead=False):
+		url = get_standard_url(url)
+		base_url = get_base_url(url)
+
+		new_lead = cls(
+			url=url,
+			base_url=base_url,
+			user_id=user_id,
+			query_id=query_id,
+			source_id=source_id,
+			image_url=image_url,
+			example_lead=example_lead
 		)
 		try:
 			new_lead.save()
@@ -185,19 +213,30 @@ class Lead(db.Model):
 		self.hidden_at = datetime.now(pytz.utc)
 		self.save()
 
+		for job in self.jobs.filter_by(finished=False).all():
+			job._finished()
+
 	def _unhide(self):
 		self.hidden = False
 		self.hidden_at = None
 		self.save()
 
-	def _finished(self, socketio_obj=None, app_obj=None):
-		self.checked = True
+	def _finished(self, checked=True, socketio_obj=None, app_obj=None):
+		self.checked = checked
 		self.checking = False
 		self.save()
 
 		### Finish all jobs
 		for job in self.jobs.filter_by(finished=False, started=True).all():
 			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
+
+		### Hide if invalid
+		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
+			self._hide()
+
+		if app_obj and socketio_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('leads_updated', {'leads': [self.to_dict()]}, to=f'user_{self.user_id}')
 
 
 	@classmethod

@@ -5,7 +5,7 @@ import uuid
 
 class CreditLedgerType:
 	QUERY = 'query'
-	CHECK_QUERY = 'check_query'
+	CHECK_QUERY = 'check_query_source'
 	CHECK_LEAD = 'check_lead'
 	REWRITE_QUERY = 'rewrite_query'
 	CHECK_SOURCE = 'check_source'

@@ -26,12 +26,20 @@ def check_lead_source_task(lead_source_id):
 		lead_source = LeadSource.get_by_id(lead_source_id)
 		if not lead_source:
 			return
-
 		if (lead_source.checked and lead_source.valid):
+			lead_source._finished(
+				socketio_obj=worker_socketio,
+				app_obj=min_app
+			)
 			return
 
-		if lead_source.hidden:
+
+		if (
+			(lead_source.hidden) or \
+			(lead_source.query_obj and (lead_source.query_obj.hidden or lead_source.query_obj.over_budget))
+		):
 			lead_source._finished(
+				checked=False,
 				socketio_obj=worker_socketio,
 				app_obj=min_app
 			)
@@ -45,6 +53,7 @@ def check_lead_source_task(lead_source_id):
 
 		validation_output, opengraph_img_url, tokens_used = collect_leads_from_url(
 			lead_source.url,
+			lead_source.query_obj,
 			lead_source_user,
 			previous_leads,
 			app_obj=min_app,

@@ -106,7 +106,7 @@ def handle_hide_request(data):
 	if request:
 		hidden_sources, hidden_leads = request._hide()
 
-		socketio.emit('requests_updated', {'queries': [request.to_dict()]}, to=f"user_{request.user_id}")
+		socketio.emit('queries_updated', {'queries': [request.to_dict()]}, to=f"user_{request.user_id}")
 		socketio.emit('leads_updated', {'leads': [lead.to_dict() for lead in hidden_leads]}, to=f"user_{request.user_id}")
 		socketio.emit('sources_updated', {'sources': [source.to_dict() for source in hidden_sources]}, to=f"user_{request.user_id}")
 	else:
@@ -122,7 +122,7 @@ def handle_unhide_request(data):
 	if request:
 		unhidden_sources, unhidden_leads = request._unhide()
 
-		socketio.emit('requests_updated', {'queries': [request.to_dict()]}, to=f"user_{request.user_id}")
+		socketio.emit('queries_updated', {'queries': [request.to_dict()]}, to=f"user_{request.user_id}")
 		socketio.emit('leads_updated', {'leads': [lead.to_dict() for lead in unhidden_leads]}, to=f"user_{request.user_id}")
 		socketio.emit('sources_updated', {'sources': [source.to_dict() for source in unhidden_sources]}, to=f"user_{request.user_id}")
 	else:

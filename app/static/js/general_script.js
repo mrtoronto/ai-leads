@@ -314,8 +314,6 @@ const addClassToTableRow = (row, data) => {
 }
 
 const updateRow = (tableId, newData) => {
-		console.log(`Updating table: ${tableId}`);
-		console.log(newData);
     const tableElement = document.getElementById(tableId);
     if (!tableElement) return; // Skip if table doesn't exist
 
@@ -325,7 +323,6 @@ const updateRow = (tableId, newData) => {
     const columns = getTableColumnsById(tableId);
 
     if (addRowById(tableId, newData) && row) {
-    		console.log('updating existing row');
     		row = addClassToTableRow(row, newData);
         // Update existing row
         const cells = row.getElementsByClassName('table-cell');
@@ -349,10 +346,8 @@ const updateRow = (tableId, newData) => {
             }
         });
     } else if (addRowById(tableId, newData)) {
-			console.log('adding row');
 			addRow(tableId, newData);
     } else {
-			console.log('hiding row');
 			handleHideEvent(tableId, rowId);
     }
 
@@ -364,10 +359,8 @@ const addRow = (tableId, newData) => {
     const table = document.getElementById(tableId);
 
     if (!table) {
-			console.log('No table found', tableId);
     	return;
     }
-    console.log(tableId, newData);
     if (!addRowById(tableId, newData)) {
 			handleHideEvent(tableId, newData.id);
 			updateCounts();
@@ -419,7 +412,6 @@ const addRow = (tableId, newData) => {
 };
 
 const handleHideEvent = (tableId, rowId) => {
-		console.log('tableId' + tableId);
     const table = document.getElementById(tableId);
     if (table) {
 	    const row = table.querySelector(`.table-row[data-id="${rowId}"]`);
@@ -483,7 +475,6 @@ function initializeClicks() {
 
         if (target.classList.contains('check-lead-btn')) {
             const leadId = target.getAttribute('data-id');
-            console.log('Checking lead with id:', leadId);
             socket.emit('check_lead', { lead_id: leadId });
             target.outerHTML = `<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" 	data-id="${leadId}"></div>`;
             clicked_button = true;
@@ -498,7 +489,6 @@ function initializeClicks() {
 						cancelButtonText: 'No, cancel'
 					}).then((result) => {
 						if (result.isConfirmed) {
-							console.log('Checking lead with id:', leadId);
 							socket.emit('check_lead', { lead_id: leadId });
 							target.outerHTML = `<img src="/static/assets/loadingGears.svg" class="cell-spinner lead-cell-spinner" data-id="${leadId}">`;
 							clicked_button = true;
@@ -515,7 +505,6 @@ function initializeClicks() {
 						cancelButtonText: 'No, cancel'
 					}).then((result) => {
 						if (result.isConfirmed) {
-							console.log('Checking source with id:', sourceId);
 							socket.emit('check_lead_source', { lead_source_id: sourceId });
 							target.outerHTML = `<img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner" data-id="${sourceId}">`;
 							clicked_button = true;
@@ -523,13 +512,11 @@ function initializeClicks() {
 					});
         } else if (target.classList.contains('liked-lead-btn')) {
             const leadId = target.getAttribute('data-id');
-            console.log('Liking lead with id:', leadId);
             socket.emit('liked_lead', { lead_id: leadId });
             target.style.opacity = '0.5';
             clicked_button = true;
         } else if (target.classList.contains('hide-lead-btn')) {
             const leadId = target.getAttribute('data-id');
-            console.log('Hiding lead with id:', leadId);
             if (window.confirmHides) {
                 Swal.fire({
                     title: 'Are you sure?',
@@ -553,13 +540,11 @@ function initializeClicks() {
             }
         } else if (target.classList.contains('check-source-btn')) {
             const sourceId = target.getAttribute('data-id');
-            console.log('Checking source with id:', sourceId);
             socket.emit('check_lead_source', { lead_source_id: sourceId });
             target.outerHTML = `<div class="cell-spinner-container"><img src="/static/assets/loadingGears.svg" class="cell-spinner source-cell-spinner" data-id="${sourceId}"></div>`;
             clicked_button = true;
         } else if (target.classList.contains('hide-source-btn')) {
             const sourceId = target.getAttribute('data-id');
-            console.log('Hiding source with id:', sourceId);
 						if (window.confirmHides) {
 							Swal.fire({
 									title: 'Are you sure?',
@@ -583,7 +568,6 @@ function initializeClicks() {
 						}
         } else if (target.classList.contains('hide-request-btn')) {
             const requestId = target.getAttribute('data-id');
-            console.log('Toggling hide request', requestId);
             if (window.confirmHides) {
              Swal.fire({
                  title: 'Are you sure?',
@@ -607,7 +591,6 @@ function initializeClicks() {
 		        }
         } else if (target.classList.contains('unhide-request-btn')) {
             const requestId = target.getAttribute('data-id');
-            console.log('unhiding request', requestId);
             if (window.confirmHides) {
              Swal.fire({
                  title: 'Are you sure?',
@@ -631,7 +614,6 @@ function initializeClicks() {
 		        }
         } else if (target.classList.contains('unhide-source-btn')) {
 				    const sourceId = target.getAttribute('data-id');
-				    console.log('unhiding source', sourceId);
 				    if (window.confirmHides) {
 				        Swal.fire({
 				            title: 'Are you sure?',
@@ -655,7 +637,6 @@ function initializeClicks() {
 				    }
 				} else if (target.classList.contains('unhide-lead-btn')) {
 				    const leadId = target.getAttribute('data-id');
-				    console.log('unhiding lead', leadId);
 				    if (window.confirmHides) {
 				        Swal.fire({
 				            title: 'Are you sure?',
@@ -679,7 +660,6 @@ function initializeClicks() {
 				    }
 				} else if (event.target.classList.contains('copy-email-btn')) {
             const email = event.target.getAttribute('data-email');
-            console.log('Copying email to clipboard:', email);
             navigator.clipboard.writeText(email).then(() => {
                 // Optionally, provide some visual feedback
                 const originalIcon = event.target.innerHTML;
@@ -771,7 +751,7 @@ function initializeHovers() {
             setTimeout(() => {
                 if (target.matches(':hover')) {
                     resetAllButtons();
-                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">50-100</span></div>';
+                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">30-100</span></div>';
                     target.style.paddingTop = '0.25em';
                     target.style.paddingBottom = '0.25em';
                 }
@@ -788,7 +768,7 @@ function initializeHovers() {
             setTimeout(() => {
                 if (target.matches(':hover')) {
                     resetAllButtons();
-                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">100-150</span></div>';
+                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">50-100</span></div>';
                     target.style.paddingTop = '0.25em';
                     target.style.paddingBottom = '0.25em';
                 }
@@ -811,7 +791,6 @@ function initializeSelectAll(extra_tables=[]) {
 
 
     tables.forEach(tableId => {
-    		console.log(`Setting up ${tableId}`);
         const selectAllCheckbox = document.getElementById(`${tableId}-select-all`);
         const dropdownMenu = document.querySelector(`#${tableId}-dropdown + .dropdown-menu`);
         if (selectAllCheckbox) {
@@ -924,7 +903,6 @@ function checkAllSelected(tableId) {
         const checkButton = row.querySelector('.check-lead-btn, .check-source-btn');
         if (checkButton) {
             const id = checkButton.getAttribute('data-id');
-            console.log(`Checking ${tableId} with id:`, id);
             if (tableId.includes('leads')) {
                 socket.emit('check_lead', { lead_id: id });
                 emitCount++;
@@ -964,15 +942,12 @@ function hideAllSelected(tableId) {
         const id = row.getAttribute('data-id');
         idsToHide.push(id);
         if (tableId === 'leads' || tableId === 'liked-leads') {
-            console.log('Hiding lead with id:', id);
             socket.emit('hide_lead', { lead_id: id });
             emitCount++;
         } else if (tableId === 'sources') {
-            console.log('Hiding source with id:', id);
             socket.emit('hide_source', { source_id: id });
             emitCount++;
         } else if (tableId === 'requests') {
-            console.log('Hiding request with id:', id);
             socket.emit('hide_request', { query_id: id });
             emitCount++;
         }
@@ -1083,7 +1058,6 @@ function unhideAllSelected(tableId) {
         const id = row.getAttribute('data-id');
         idsToUnhide.push(id);
         if (tableId === 'requests') {
-            console.log('Unhiding request with id:', id);
             socket.emit('unhide_request', { query_id: id });
             emitCount++;
         }

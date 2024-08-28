@@ -1,5 +1,5 @@
 from app import worker_socketio, create_minimal_app
-from app.models import LeadSource, Lead, ModelTypes, User, CreditLedgerType, Job
+from app.models import LeadSource, Lead, ModelTypes, User, CreditLedgerType, Job, JobTypes
 from rq import get_current_job
 from app.llm import _llm_validate_lead, collect_leads_from_url
 from app.utils import _tidy_url, _useful_url_check
@@ -7,6 +7,9 @@ from flask_socketio import emit
 from worker.fasttext import FastTextModel
 from app import db
 from worker import _make_min_app
+from worker.process_search import search_request_task
+# from app.tasks import queue_search_request
+
 
 import logging
 
@@ -28,23 +31,44 @@ def check_lead_task(lead_id):
 	with min_app.app_context():
 		job = get_current_job()
 
-		job_obj = Job.query.filter_by(lead_id=lead_id).first()
-		if job_obj:
-			job_obj._started(job.id if job else None)
+		lead_job_obj = Job.query.filter_by(lead_id=lead_id).first()
+		if lead_job_obj:
+			lead_job_obj._started(job.id if job else None)
+
 
 		lead = Lead().get_by_id(lead_id)
 		if not lead:
 			return
 
-		if lead.checked and lead.valid:
-			return
 
-		if lead.hidden:
+		if (lead.checked and lead.valid):
 			lead._finished(
 				socketio_obj=worker_socketio,
 				app_obj=min_app
 			)
 			return
+
+
+		if (
+			(lead.hidden) or \
+			(lead.query_obj and (lead.query_obj.hidden or lead.query_obj.over_budget))
+		):
+			lead._finished(
+				checked=False,
+				socketio_obj=worker_socketio,
+				app_obj=min_app
+			)
+			return
+
+		if not lead.checking:
+			lead.checking = True
+			worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
+
+		if lead.query_id:
+			query_job_obj = Job.query.filter_by(query_id=lead.query_id).first()
+		else:
+			query_job_obj = None
+
 
 		total_tokens_used_usd = 0
 
@@ -223,4 +247,28 @@ def check_lead_task(lead_id):
 				app_obj=min_app
 			)
 
+		if query_job_obj:
+			query_job_obj.total_cost_credits = total_tokens_used_usd * -1000 * mult
+			query_job_obj.save()
+			if query_job_obj.total_cost_credits > lead.query_obj.budget:
+				lead.query_obj.over_budget = True
+				lead.query_obj.save()
+
+
 		worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
+
+		if lead.example_lead:
+			### Check if the request has more example leads
+			parent_query = lead.query_obj
+			if parent_query:
+				### Get all example leads for the query
+				example_leads = parent_query.leads.filter_by(example_lead=True).all()
+
+				if all([l.checked for l in example_leads]):
+					min_app.config['high_priority_queue'].enqueue(search_request_task, lead.query_obj.id)
+
+					new_job = Job(
+						query_id=lead.query_obj.id,
+						_type=JobTypes.QUERY_CHECK,
+					)
+					new_job.save()

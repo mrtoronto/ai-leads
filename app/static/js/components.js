@@ -55,11 +55,30 @@ export function createSourceDetailsComponent(source) {
 
 export function createQueryDetailsComponent(query) {
     return createCardComponent("Query Details", `
-        <div class="card-text card-text-name">${query.user_query}</div>
-        ${query.reformatted_query ? `<div class="card-text">Reformatted: ${query.reformatted_query}</div>` : ''}
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div class="card-text card-text-name">${query.user_query}</div>
+            ${query.finished ?
+                '<i class="fas fa-check" style="font-size: 1.5em;"></i>' :
+                '<div class="spinner-border" role="status"  style="height: 1.5em; width: 1.5em;"><span class="visually-hidden">Loading...</span></div>'
+            }
+        </div>
+        ${query.reformatted_query ? `<div class="card-text">Rephrased to -> <i>${query.reformatted_query}</i></div>` : ''}
         <hr>
-        <div class="card-text">Finished: ${query.finished ? 'Yes' : 'No'}</div>
-        ${query.hidden ? '<div class="card-text">[[ HIDDEN ]]</div>' : ''}
+        <div class="card-text"><b>Search Progress</b>: ${query.n_results_retrieved && query.n_results_requested ? Math.round((query.n_results_retrieved / query.n_results_requested) * 100) : 0}%</div>
+        ${query.n_results_retrieved ? `<div class="card-text"><b>Search Results Checked</b>: ${query.n_results_retrieved}</div>` : ''}
+        ${query.location ? `<div class="card-text"><b>Location</b>: ${query.location}</div>` : ''}
+        ${query.location_country ? `<div class="card-text"><b>Location (country)</b>: ${query.location_country}</div>` : ''}
+
+        ${query.example_leads.length > 0 ? `
+        <div class="card-text mt-2"><b>Example Leads</b>:
+            ${query.example_leads.map(lead => `
+            <a href="${lead.url}" target="_blank">
+                <div>${lead.name || lead.url}${lead.description ? `: ${lead.description}` : ''}</div>
+            </a>`).join('')}
+        </div>` : ''}
+        ${query.budget ? `<div class="card-text mt-2"><b>Budget</b>: ${query.budget.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')} credits</div>` : ''}
+        ${query.over_budget ? '<div class="card-text"><b>Budget exceeded</b></div>' : ''}
+        ${query.hidden ? '<div class="card-text mt-4"><b>HIDDEN</b></div>' : ''}
     `);
 }
 

@@ -24,7 +24,7 @@ class LeadSource(db.Model):
 	created_at = db.Column(db.DateTime, default=lambda: datetime.now(pytz.utc))
 	checked = db.Column(db.Boolean, default=False)
 	checking = db.Column(db.Boolean, default=False)
-	image_url = db.Column(db.String(255))
+	image_url = db.Column(db.String(1000))
 	quality_score = db.Column(db.Float)
 
 	hidden = db.Column(db.Boolean, default=False)
@@ -140,20 +140,31 @@ class LeadSource(db.Model):
 		)
 		try:
 			new_source.save()
+
+			if new_source.query_id and new_source.query_obj.auto_hide_invalid and new_source.checked and not new_source.valid:
+				new_source._hide()
+
 			return new_source
 		except Exception as e:
 			print(f'Failed to save source {url} - {e}')
 			db.session.rollback()
 			return None
 
-	def _finished(self, socketio_obj=None, app_obj=None):
+	def _finished(self, checked=True, socketio_obj=None, app_obj=None):
 		self.checking = False
-		self.checked = True
+		self.checked = checked
 		self.save()
 
 		### Finish all jobs
 		for job in self.jobs.filter_by(finished=False, started=True).all():
 			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
+
+		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
+			self._hide()
+
+		if app_obj and socketio_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f'user_{self.user_id}')
 
 	def _hide(self):
 		self.hidden = True
@@ -166,6 +177,10 @@ class LeadSource(db.Model):
 				hidden_leads.append(lead)
 
 		db.session.commit()
+
+		for job in self.jobs.filter_by(finished=False).all():
+			job._finished()
+
 		return hidden_leads
 
 	def _unhide(self):

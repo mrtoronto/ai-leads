@@ -29,6 +29,9 @@ class Job(db.Model):
 
 	redis_job_id = db.Column(db.String(255))
 
+	total_cost_credits = db.Column(db.Float, default=0)
+	unique_cost_credits = db.Column(db.Float, default=0)
+
 	def save(self):
 		if not self.id:
 			db.session.add(self)
@@ -68,7 +71,7 @@ class Job(db.Model):
 					user_sources = [s for s in sources_updated if s['user_id'] == user_id]
 					user_leads = [l for l in leads_updated if l['user_id'] == user_id]
 					if user_queries:
-						socketio_obj.emit('requests_updated', {'queries': user_queries}, to=f'user_{user_id}')
+						socketio_obj.emit('queries_updated', {'queries': user_queries}, to=f'user_{user_id}')
 					if user_sources:
 						socketio_obj.emit('sources_updated', {'sources': user_sources}, to=f'user_{user_id}')
 					if user_leads:

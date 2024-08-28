@@ -21,6 +21,19 @@ user_agents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59'
 ]
 
+def _get_default_input_data(user, user_input, query, **kwargs):
+	data = {
+		'user_description': user.user_description or "This user has not provided an ideal customer description. Assume they are looking for organizations like their query describes.",
+		'user_industry': user.industry or "This user has not provided an industry description. Assume they are looking for organizations like their query describes.",
+		'query_text': query.reformatted_query or query.user_query,
+		'user_input': user_input,
+		'query_location': query.location or "This user has not provided a location. Assume they are looking for organizations like their query describes.",
+		'query_location_country': query.location_country or "This user has not provided a location. Assume they are looking for organizations like their query describes.",
+		**kwargs
+	}
+
+	return data
+
 class RewrittenQuery(BaseModel):
 	original_query: str = Field("", description="The original query that the user entered")
 	rewritten_query: str = Field("", description="The rewritten query that the model generated")
@@ -95,17 +108,18 @@ class PromptTemplate():
 			return self.template.format(**kwargs)
 
 query_reformatting_prompt = PromptTemplate([
-	"""You are a GPT trained to rewrite user's search queries. The user will provide you with their basic search query and a description of what they're looking for. Your job is to rewrite the query in a way that is more likely to return relevant results.""",
-	"""This is the output format. Do not deviate from it. Do not include any text outside of this output format.
-{format_instruction}
-"""
+	"""You are a GPT trained to rewrite user's search queries. The user will provide you with their basic search query and we will provide a description of what they're looking for. The user may also provide examples of good leads. Your job is to rewrite the query in a way that is more likely to return relevant results.""",
+	"""The user has provided the following query: {query_text}""",
+	"""This user describes their product as: {user_industry}""",
+	"""The user describes their ideal customer as: {user_description}.""",
+	"""The user has provided the following examples of good leads. Its very important that you rewrite their query to find more leads like these: \n{example_leads_text}""",
+	"""This is the output format. Do not deviate from it. Do not include any text outside of this output format. \n\n {format_instruction}"""
 ])
 
 source_lead_collection_prompt = PromptTemplate([
 	"""You are a GPT trained to collect leads from a source of leads. The user provided the contents of a page potentially containing leads.""",
 	"""Filter the content and return the metadata relevant to the user.""",
-	"""
-## Description of Leads and Lead Sources
+	"""## Description of Leads and Lead Sources
 
 Metadata includes page content and URLs. Relevant links include leads and lead sources.
 	- A lead is a company or organization that may be interested in the user's services.
@@ -151,7 +165,7 @@ Previously the user has liked leads like the following:
 lead_validation_prompt = PromptTemplate([
 	"""You are a GPT trained to extract contact info from websites. The user will provide you with the text render on a website and your job is to help them find the contact information for the organization.""",
 	"""This user describes their product as "{user_industry}".
-The query they searched in this particular instance is "{user_query}".
+The query they searched in this particular instance is "{query_text}".
 
 The user describes their ideal customer as:
 {user_description}""",
@@ -183,32 +197,14 @@ MODEL_PRICING = {
 }
 
 
-def _llm(user_input, template, parser, parse_output=True, user=None, query=None, previous_leads=[], model_name='gpt-4o-mini'):
+def _llm(data, template, parser, parse_output=True, previous_leads=[], model_name='gpt-4o-mini'):
 
 	if not model_name:
 		model_name='gpt-4o-mini'
 
-	if user:
-		description = user.user_description
-		industry = user.industry
-	else:
-		description = "This user has not provided a description. Assume they are looking for organizations like their query describes."
-		industry = "General"
-
-	if not previous_leads:
-		previous_leads = "No leads have been liked yet."
-
-	if query:
-		user_query = query.reformatted_query
-	else:
-		user_query = "No query provided."
-
 	system_prompt = template.render(
 		format_instruction=parser.get_format_instructions(),
-		user_description=description,
-		user_industry=industry,
-		user_query=user_query,
-		previous_leads=previous_leads
+		**data
 	)
 
 	headers = {
@@ -225,7 +221,6 @@ def _llm(user_input, template, parser, parse_output=True, user=None, query=None,
 		input_model_name = model_name
 
 	if isinstance(system_prompt, str):
-
 		messages = [{
 			"role": "system",
 			"content": system_prompt
@@ -242,7 +237,7 @@ def _llm(user_input, template, parser, parse_output=True, user=None, query=None,
 
 	messages += [{
 		"role": "user",
-		"content": user_input
+		"content": data.get('user_input', 'Please perform this task for me.')
 	}]
 
 	data = {
@@ -390,99 +385,6 @@ def get_visible_text_and_links(link):
 	return rendered_text, og_image_url
 
 
-def search_serpapi(query):
-	params = {
-		'q': query,
-		'hl': 'en',
-		'gl': 'us',
-		'google_domain': 'google.com',
-		'api_key': SERP_API_KEY
-	}
-	response = requests.get('https://serpapi.com/search', params=params)
-	if response.status_code == 200:
-		return response.json()
-	else:
-		return None
-
-def search_and_validate_leads(new_query, previous_leads, app_obj=None, socketio_obj=None, search_mult=10):
-	"""
-	Runs a search query and checks each source found in the query for leads and other lead sources
-	"""
-
-	if new_query.user.credits < 1:
-		return [], "Insufficient credits", 0
-	search_results = search_serpapi(new_query.reformatted_query)
-
-	# print(search_results)
-	if not search_results:
-		return [], "Failed to search SERP API", 0
-
-	leads = []
-	total_tokens_used = 0
-	for result in search_results.get('organic_results', []):
-		url = result.get('link')
-
-		collected_leads, image_url, tokens_used_usd = collect_leads_from_url(
-			url=url,
-			user=new_query.user,
-			previous_leads=previous_leads,
-			app_obj=app_obj,
-			socketio_obj=socketio_obj
-		)
-
-		logger.info(collected_leads)
-
-		total_tokens_used += tokens_used_usd
-
-		if collected_leads and collected_leads.not_enough_credits:
-			return [], "Insufficient credits", total_tokens_used
-
-		if not collected_leads or (not collected_leads.leads and not collected_leads.lead_sources):
-			continue
-
-		new_source_obj = LeadSource.check_and_add(
-			url,
-			new_query.user_id,
-			new_query.id,
-			image_url=image_url,
-			checked=True,
-			name=collected_leads.name,
-			description=collected_leads.description,
-			valid=(True if collected_leads.name else False)
-		)
-		if new_source_obj and socketio_obj and app_obj:
-			with app_obj.app_context():
-				socketio_obj.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{new_query.user_id}')
-
-		if collected_leads.leads:
-			for lead in collected_leads.leads:
-				new_lead_obj = Lead.check_and_add(
-					url=lead.url,
-					user_id=new_query.user_id,
-					query_id=new_query.id,
-					source_id=None,
-				)
-				if new_lead_obj and socketio_obj and app_obj:
-					with app_obj.app_context():
-						socketio_obj.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{new_query.user_id}')
-
-		if collected_leads.lead_sources:
-			for lead_source in collected_leads.lead_sources:
-				new_source_obj = LeadSource.check_and_add(
-					url=lead_source.url,
-					user_id=new_query.user_id,
-					query_id=new_query.id
-				)
-				if new_source_obj and socketio_obj and app_obj:
-					with app_obj.app_context():
-						socketio_obj.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{new_query.user_id}')
-
-	return True, "", total_tokens_used
-
-
-
-
-
 def _llm_validate_lead(link, user, query):
 	"""
 	Checks if a lead is valid and relevant
@@ -497,12 +399,11 @@ def _llm_validate_lead(link, user, query):
 	visible_text, opengraph_img_url = get_visible_text_and_links(link)
 	opengraph_img_url = _tidy_url(link, opengraph_img_url)
 	if visible_text:
+		data = _get_default_input_data(user, visible_text, query)
 		output, tokens_used_usd = _llm(
-			visible_text,
+			data,
 			lead_validation_prompt,
 			validation_parser,
-			user,
-			query=query,
 			model_name=(user.model_preference or 'gpt-4o-mini')
 		)
 		if not output:
@@ -515,7 +416,7 @@ def _llm_validate_lead(link, user, query):
 			invalid_link=True
 		), opengraph_img_url, 0
 
-def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app_obj=None, socketio_obj=None):
+def collect_leads_from_url(url, query, user, previous_leads, url_collection_mult=3, app_obj=None, socketio_obj=None):
 	print(f'Collecting leads from URL: {url}')
 	if user.credits < 1:
 		return CollectionOutput(
@@ -524,12 +425,12 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 
 	visible_text, opengraph_img_url = get_visible_links(url)
 	if visible_text:
+		data = _get_default_input_data(user, visible_text, query)
+		data['previous_leads'] = previous_leads
 		output, tokens_used_usd = _llm(
-			user_input=visible_text,
+			data=data,
 			template=source_lead_collection_prompt,
 			parser=collection_parser,
-			user=user,
-			previous_leads=previous_leads,
 			model_name=(user.model_preference or 'gpt-4o-mini')
 		)
 		return output, opengraph_img_url, tokens_used_usd
@@ -538,13 +439,28 @@ def collect_leads_from_url(url, user, previous_leads, url_collection_mult=3, app
 			invalid_link=True
 		), opengraph_img_url, 0
 
-def rewrite_query(user_query, user, rewrite_query_mult=10, socketio_obj=None):
-	print(f'Rewriting query: {user_query}')
+def rewrite_query(request, socketio_obj=None):
+	query_text = request.user_query
+	user = request.user
+	print(f'Rewriting query: {query_text}')
 	if user.credits < 1:
 		return None
-	output, tokens_used_usd = _llm(user_query, query_reformatting_prompt, rewriting_parser, user)
+
+	if request.leads.filter_by(example_lead=True).count() > 0:
+		example_leads = request.leads.filter_by(example_lead=True).all()
+		example_leads_text = '\n'.join([f"{lead.name}: {lead.description}" for lead in example_leads])
+	else:
+		example_leads_text = ''
+
+	data = _get_default_input_data(user, query_text, request)
+
+	data.update({
+		'example_leads_text': example_leads_text,
+	})
+
+	output, tokens_used_usd = _llm(data, query_reformatting_prompt, rewriting_parser, model_name=(user.model_preference or 'gpt-4o-mini'))
 	user.move_credits(
-		amount=tokens_used_usd * -1000 * rewrite_query_mult,
+		amount=tokens_used_usd * -1000,
 		cost_usd=tokens_used_usd,
 		trxn_type=CreditLedgerType.CHECK_QUERY,
 		socketio_obj=socketio_obj

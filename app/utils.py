@@ -81,6 +81,8 @@ def _real_url_check(url):
 		return False
 	if url == 'https://www.www':
 		return False
+	if url == 'https://www.https':
+		return False
 	else:
 		return True
 

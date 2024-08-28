@@ -221,7 +221,7 @@ class User(UserMixin, db.Model):
 			'leads': [l.to_dict() for l in leads],
 			'n_liked': len(liked_leads),
 			'n_hidden': len(hidden_leads),
-			'query': request.to_dict() if request else None,
+			'query': request.to_dict(example_leads=True) if request and query_id else (request.to_dict() if request else None),
 			'source': source.to_dict() if source else None,
 			'lead': lead.to_dict() if lead else None
 		}

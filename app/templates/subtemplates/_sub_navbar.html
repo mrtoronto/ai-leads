@@ -69,14 +69,7 @@
 </div>
 {% if request.path != '/' %}
 <div class="subnav-section" style="margin: auto; margin-top: 1em;">
-	<form autocomplete="off" id="lead-form" class="text-center" style="width: 80%; margin: auto;">
-		<div class="form-group mb-0">
-			<input placeholder="What are you looking for?" type="text" class="form-control" id="query" name="query" size="32" style="border-bottom-left-radius: 0px;border-bottom-right-radius: 0px; border: 2px solid #3E8CFF; background-color: #E6F6FF; ">
-		</div>
-		<button type="submit" class="btn-primary-fill-dark submit-request-btn w-100"  style="border-top-right-radius: 0px;border-top-left-radius: 0px; border-bottom-left-radius: 2000em; border-bottom-right-radius: 2000em; border: 6px solid #3E8CFF;">
-			<i class="fa-solid fa-wand-magic-sparkles"></i>
-		</button>
-	</form>
+	{% include "subtemplates/_submit_query_form.html" %}
 	<hr>
 </div>
 

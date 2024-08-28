@@ -646,3 +646,77 @@ small {
 	font-size: 8px;
 	color: black;
 }
+
+
+.form-check-input {
+    background-color: rgba(31, 79, 148, 0.2);
+    border-color: rgba(31, 79, 148, 0.2);
+}
+
+.form-check-input:checked {
+    background-color: #1F4F94;
+    border-color: #1F4F94;
+}
+
+
+.submit-request-form-query-input {
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+	border: 2px solid #ACB1CF;
+	background-color: #E6F6FF;
+}
+
+
+#advancedOptionsContainer {
+	display: none;
+	padding-left: 2em;
+	padding-right: 2em;
+	border: 6px solid transparent;
+	border-image: linear-gradient(to bottom, #ACB1CF, #3E8CFF) 1;
+	border-top: none;
+	padding-top: 2em;
+	color: #3B3141;
+}
+
+
+
+.submit-query-form-group, .submit-query-form-check {
+	text-align: left;
+}
+
+.advancedSettingsCheckContainer {
+	display: flex;
+	justify-content: space-around;
+}
+
+.form-range::-webkit-slider-runnable-track {
+    background-color: rgba(62, 140, 255, 0.2);
+}
+
+.form-range::-moz-range-track {
+    background-color: rgba(62, 140, 255, 0.2);
+}
+
+.form-range::-ms-track {
+    background-color: rgba(62, 140, 255, 0.2);
+}
+
+.navbar-expand-lg .navbar-collapse {
+	justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+	#advancedOptionsContainer {
+		padding: 10px;
+		padding-left: 1em;
+		padding-right: 1em;
+	}
+
+	.advancedSettingsCheckContainer {
+		flex-direction: column;
+	}
+
+	.navbar-expand-lg .navbar-collapse {
+		justify-content: flex-start;
+	}
+}

@@ -245,13 +245,33 @@ def submit_request():
 
 	new_request = Query(
 		user_id=current_user.id,
-		user_query=query
+		user_query=query,
+		auto_check=data.get('autoCheck', False),
+		auto_hide_invalid=data.get('autoHide', False),
+		budget=float(data.get('budget', 0)) if data.get('budget') else None,
+		location=data.get('location'),
+		n_results_requested=data.get('nResults')
 	)
 	new_request.save()
 
-	queue_search_request(new_request.id)
+	# Handle example leads
+	example_leads = data.get('exampleLeads')
+	if example_leads:
+		for url in example_leads.split(','):
+			if url and url.strip():
+				url = url.strip()
+				new_lead_obj = Lead._add(
+					url=url,
+					user_id=current_user.id,
+					query_id=new_request.id,
+					source_id=None,
+					example_lead=True
+				)
+				if new_lead_obj:
+					queue_check_lead_task(new_lead_obj.id)
+	else:
+		queue_search_request(new_request.id)
 	return jsonify({"message": "Search queued!", "guid": new_request.guid}), 200
-
 
 @bp.route('/query/<guid>')
 @login_required
