@@ -714,3 +714,8 @@ def admin_clear_jobs():
 		job._finished()
 
 	return redirect(url_for('main.admin_panel'))
+
+
+@bp.route('/startupranking1333709717628510.html')
+def serve_static_file():
+	return current_app.send_static_file('startupranking1333709717628510.html')

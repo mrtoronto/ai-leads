@@ -170,7 +170,6 @@ lead_validation_prompt = PromptTemplate([
 	"""This user describes their product as "{user_industry}".""",
 	"""The query they searched in this particular instance is "{query_text}".""",
 	"""The user describes their ideal customer as: {user_description}""",
-	"""The query made by the user is: {query_text}""",
 	"""The user has requested results in the following location: {query_location}""",
 	"""If you see an email address visible, output the email address in the "email_address" field.""",
 	"""If you see a contact page that might have an email address, output the link to the contact page in the "contact_page" field.""",
