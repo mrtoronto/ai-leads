@@ -674,7 +674,7 @@ small {
 	border: 6px solid transparent;
 	border-image: linear-gradient(to bottom, #ACB1CF, #3E8CFF) 1;
 	border-top: none;
-	padding-top: 2em;
+	padding-top: 0em;
 	color: #3B3141;
 }
 
@@ -719,4 +719,10 @@ small {
 	.navbar-expand-lg .navbar-collapse {
 		justify-content: flex-start;
 	}
+}
+
+
+.submit-query-tooltip-icon {
+	margin-top: auto;
+	margin-bottom: auto;
 }

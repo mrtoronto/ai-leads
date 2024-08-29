@@ -6,6 +6,7 @@ from app.models import LeadSource, Lead, Query, User
 from flask_socketio import join_room, emit
 import logging
 import time
+from app.llm._rewrite import rewrite_query
 from functools import wraps
 
 logger = logging.getLogger('BDB-2EB')
@@ -105,11 +106,7 @@ def handle_hide_request(data):
 	query_id = data['query_id']
 	request = Query.get_by_id(query_id)
 	if request:
-		hidden_sources, hidden_leads = request._hide(app_obj=current_app, socketio_obj=socketio)
-
-		socketio.emit('queries_updated', {'queries': [request.to_dict()]}, to=f"user_{request.user_id}")
-		socketio.emit('leads_updated', {'leads': [lead.to_dict() for lead in hidden_leads]}, to=f"user_{request.user_id}")
-		socketio.emit('sources_updated', {'sources': [source.to_dict() for source in hidden_sources]}, to=f"user_{request.user_id}")
+		request._hide(app_obj=current_app, socketio_obj=socketio)
 	else:
 		socketio.emit('error', {'message': 'Query not found'}, to=f"user_{current_user.id}")
 
@@ -121,11 +118,7 @@ def handle_unhide_request(data):
 	query_id = data['query_id']
 	request = Query.get_by_id(query_id)
 	if request:
-		unhidden_sources, unhidden_leads = request._unhide()
-
-		socketio.emit('queries_updated', {'queries': [request.to_dict()]}, to=f"user_{request.user_id}")
-		socketio.emit('leads_updated', {'leads': [lead.to_dict() for lead in unhidden_leads]}, to=f"user_{request.user_id}")
-		socketio.emit('sources_updated', {'sources': [source.to_dict() for source in unhidden_sources]}, to=f"user_{request.user_id}")
+		request._unhide(app_obj=current_app, socketio_obj=socketio)
 	else:
 		socketio.emit('error', {'message': 'Query not found'}, to=f"user_{current_user.id}")
 
@@ -138,10 +131,7 @@ def handle_hide_source(data):
 	lead_source = LeadSource.get_by_id(source_id)
 	if lead_source:
 		print(f'Hiding source {source_id}')
-		hidden_leads = lead_source._hide(app_obj=current_app, socketio_obj=socketio)
-
-		socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f"user_{lead_source.user_id}")
-		socketio.emit('leads_updated', {'leads': [l.to_dict() for l in hidden_leads]}, to=f"user_{lead_source.user_id}")
+		lead_source._hide(app_obj=current_app, socketio_obj=socketio)
 	else:
 		socketio.emit('error', {'message': 'Lead source not found'}, to=f"user_{current_user.id}")
 
@@ -155,8 +145,6 @@ def handle_hide_lead(data):
 	lead = Lead().get_by_id(lead_id)
 	if lead:
 		lead._hide(app_obj=current_app, socketio_obj=socketio)
-		lead.save()
-		socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f"user_{lead.user_id}")
 	else:
 		socketio.emit('error', {'message': 'Lead not found'}, to=f"user_{current_user.id}")
 
@@ -180,7 +168,7 @@ def handle_unhide_source(data):
 	source_id = data['source_id']
 	lead_source = LeadSource.get_by_id(source_id)
 	if lead_source:
-		unhidden_leads = lead_source._unhide()
+		lead_source._unhide(app_obj=current_app, socketio_obj=socketio)
 
 		socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f"user_{lead_source.user_id}")
 		socketio.emit('leads_updated', {'leads': [l.to_dict() for l in unhidden_leads]}, to=f"user_{lead_source.user_id}")
@@ -324,3 +312,24 @@ def handle_check_email_availability(data):
 
 	is_available = is_valid and User.get_by_email(email) is None
 	emit('email_check_response', {'available': is_available, 'valid': is_valid}, to=f"user_{current_user.id}")
+
+
+@socketio.on('rewrite_query')
+@login_required
+def handle_rewrite_query(data):
+    user = current_user
+    query_text = data['query']
+    example_leads = data['exampleLeads']
+    location = data.get('location', None)
+
+
+    query_data = {
+        'user_query': query_text,
+        'user': user,
+        'example_leads': example_leads,
+        'location': location
+    }
+
+    new_query = rewrite_query(query_data, socketio_obj=socketio, app_obj=current_app)
+
+    socketio.emit('new_rewritten_query', {'new_query': new_query}, to=f"user_{user.id}")

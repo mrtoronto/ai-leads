@@ -151,6 +151,11 @@ class LeadSource(db.Model):
 			return None
 
 	def _finished(self, checked=True, socketio_obj=None, app_obj=None):
+		if self.checking or self.checked != checked:
+			updated_source = True
+		else:
+			updated_source = False
+
 		self.checking = False
 		self.checked = checked
 		self.save()
@@ -162,7 +167,7 @@ class LeadSource(db.Model):
 		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
 			self._hide(app_obj=app_obj, socketio_obj=socketio_obj)
 
-		if app_obj and socketio_obj:
+		if app_obj and socketio_obj and updated_source:
 			with app_obj.app_context():
 				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f'user_{self.user_id}')
 
@@ -172,39 +177,47 @@ class LeadSource(db.Model):
 		self.hidden_at = datetime.now(pytz.utc)
 		db.session.commit()
 
-		if app_obj and socketio_obj:
+		if socketio_obj and app_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f'user_{self.user_id}')
+				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f"user_{self.user_id}")
 
 		hidden_leads = []
 		for lead in self.get_leads():
 			if not lead.hidden:
-				lead.hidden = True
-				lead.auto_hidden = True
-				lead.hidden_at = datetime.now(pytz.utc)
+				lead._hide(app_obj=app_obj, socketio_obj=socketio_obj)
 				hidden_leads.append(lead)
 
-			lead._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
-
+			lead._finished(checked=lead.checked, socketio_obj=socketio_obj, app_obj=app_obj)
 		db.session.commit()
+
+		if app_obj and socketio_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('leads_updated', {'leads': [l.to_dict() for l in hidden_leads]}, to=f"user_{self.user_id}")
 
 		for job in self.jobs.filter_by(finished=False).all():
 			job._finished(app_obj=app_obj, socketio_obj=socketio_obj)
 
 		return hidden_leads
 
-	def _unhide(self):
+	def _unhide(self, app_obj=None, socketio_obj=None):
 		self.hidden = False
+		db.session.commit()
+
+		if socketio_obj and app_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f"user_{self.user_id}")
+
 		hidden_leads = []
 		for lead in self.get_leads():
 			if lead.auto_hidden:
-				lead.hidden = False
-				lead.auto_hidden = False
-				lead.hidden_at = None
+				lead._unhide(app_obj=app_obj, socketio_obj=socketio_obj)
 				hidden_leads.append(lead)
 
 		db.session.commit()
-		return hidden_leads
+
+		if app_obj and socketio_obj and hidden_leads:
+			with app_obj.app_context():
+				socketio_obj.emit('leads_updated', {'leads': [l.to_dict() for l in hidden_leads]}, to=f"user_{self.user_id}")
 
 	def get_leads(self):
 		return Lead.query.filter_by(source_id=self.id).all()

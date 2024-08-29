@@ -14,29 +14,41 @@ import logging
 logger = logging.getLogger('BDB-2EB')
 
 user_agents = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59'
+	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+	'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+	'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+	'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
+	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59'
 ]
 
 def _get_default_input_data(user, user_input, query, **kwargs):
+
+	if query:
+		query_text = query.user_query
+		location = query.location
+	else:
+		if kwargs.get('query_text'):
+			query_text = kwargs['query_text']
+		else:
+			query_text = "This user has not provided a query. Assume they are looking for organizations like their query describes."
+
+		if kwargs.get('location'):
+			location = kwargs['location']
+		else:
+			location = "This user has not provided a location. Assume they are looking for organizations like their query describes."
+
+
 	data = {
 		'user_description': user.user_description or "This user has not provided an ideal customer description. Assume they are looking for organizations like their query describes.",
 		'user_industry': user.industry or "This user has not provided an industry description. Assume they are looking for organizations like their query describes.",
-		'query_text': query.reformatted_query or query.user_query,
+		'query_text': query_text,
 		'user_input': user_input,
-		'query_location': query.location or "This user has not provided a location. Assume they are looking for organizations like their query describes.",
-		'query_location_country': query.location_country or "This user has not provided a location. Assume they are looking for organizations like their query describes.",
+		'query_location': location,
 		**kwargs
 	}
 
 	return data
 
-class RewrittenQuery(BaseModel):
-	original_query: str = Field("", description="The original query that the user entered")
-	rewritten_query: str = Field("", description="The rewritten query that the model generated")
 
 class Url(BaseModel):
 	url: str = Field("", description="A relevant URL")
@@ -93,7 +105,7 @@ class ValidationOutput(BaseModel):
 	)
 
 
-rewriting_parser = PydanticOutputParser(pydantic_object=RewrittenQuery)
+
 collection_parser = PydanticOutputParser(pydantic_object=CollectionOutput)
 validation_parser = PydanticOutputParser(pydantic_object=ValidationOutput)
 
@@ -107,17 +119,7 @@ class PromptTemplate():
 		else:
 			return self.template.format(**kwargs)
 
-query_reformatting_prompt = PromptTemplate([
-	"""You are a GPT trained to rewrite user's B2B lead generation search queries. The user will provide you with their basic search query and a description of what they're looking for. The user may also provide examples of good leads. Your job is to rewrite the query in a way that is more likely to return relevant results.""",
-	"""These queries are for B2B lead generation. The user is a business owner or sales representitive looking to sell a product. We are using the query you return to search the internet and find potential leads for this customer. """
-	"""Below, the user has provided a query, a description of their product and a description of their ideal customer. Your job is to update their query to return more links like their ideal customer. The search should return businesses that might be interested in purchasing the product the user's business is selling."""
-	"""The user has provided the following query: {query_text}""",
-	"""This user describes their product as: {user_industry}""",
-	"""The user describes their ideal customer as: {user_description}.""",
-	"""The user has provided the following examples of good leads. Its very important that you rewrite their query to find more leads like these: \n{example_leads_text}""",
-	"""It is very important that you write a query that will return customers that may be interested in the users product. You are not looking for similar products. You are looking for customers that will want to buy the users product.""",
-	"""This is the output format. Do not deviate from it. Do not include any text outside of this output format. \n\n {format_instruction}"""
-])
+
 
 source_lead_collection_prompt = PromptTemplate([
 	"""You are a GPT trained to collect leads from a source of leads. The user provided the contents of a page potentially containing leads.""",
@@ -136,13 +138,11 @@ Only URLs are relevant. The following are not relevant:
 	- Maps or directions
 
 Internal links within a site are valid. We will handle transforming them into a full URL.""",
-	"""This user describes their product as "{user_industry}".
-
-The user describes their ideal customer as:
-{user_description}
-
-Previously the user has liked leads like the following:
-{previous_leads}""",
+	"""This user describes their product as "{user_industry}".""",
+	"""The user describes their ideal customer as: {user_description}""",
+	"""The query made by the user is: {query_text}""",
+	"""The user has requested results in the following location: {query_location}""",
+	"""Previously the user has liked leads like the following:\n{previous_leads}""",
 	"""You need to provide:
 - Name: The name of the source company or organization
 - Description: A brief description of the source material
@@ -167,16 +167,15 @@ Previously the user has liked leads like the following:
 
 lead_validation_prompt = PromptTemplate([
 	"""You are a GPT trained to extract contact info from websites. The user will provide you with the text render on a website and your job is to help them find the contact information for the organization.""",
-	"""This user describes their product as "{user_industry}".
-The query they searched in this particular instance is "{query_text}".
-
-The user describes their ideal customer as:
-{user_description}""",
-	"""If you see an email address visible, output the email address in the "email_address" field.
-If you see a contact page that might have an email address, output the link to the contact page in the "contact_page" field.
-If you do not see anything relevant, use the "no_email_found" field.
-If the link provided does not work, use the "invalid_link" field.""",
-
+	"""This user describes their product as "{user_industry}".""",
+	"""The query they searched in this particular instance is "{query_text}".""",
+	"""The user describes their ideal customer as: {user_description}""",
+	"""The query made by the user is: {query_text}""",
+	"""The user has requested results in the following location: {query_location}""",
+	"""If you see an email address visible, output the email address in the "email_address" field.""",
+	"""If you see a contact page that might have an email address, output the link to the contact page in the "contact_page" field.""",
+	"""If you do not see anything relevant, use the "no_email_found" field.""",
+	"""If the link provided does not work, use the "invalid_link" field.""",
 	"""This is the output format. Do not deviate from it. Do not include any text outside of this output format.
 {format_instruction}
 """])
@@ -242,6 +241,9 @@ def _llm(data, template, parser, parse_output=True, previous_leads=[], model_nam
 		"role": "user",
 		"content": data.get('user_input', 'Please perform this task for me.')
 	}]
+
+	logger.info(f'System prompt: {system_prompt}')
+	logger.info(f'User prompt: {data.get("user_input", "Please perform this task for me.")}')
 
 	data = {
 		'model': input_model_name,
@@ -441,31 +443,3 @@ def collect_leads_from_url(url, query, user, previous_leads, url_collection_mult
 		return CollectionOutput(
 			invalid_link=True
 		), opengraph_img_url, 0
-
-def rewrite_query(request, socketio_obj=None):
-	query_text = request.user_query
-	user = request.user
-	print(f'Rewriting query: {query_text}')
-	if user.credits < 1:
-		return None
-
-	if request.leads.filter_by(example_lead=True).count() > 0:
-		example_leads = request.leads.filter_by(example_lead=True).all()
-		example_leads_text = '\n'.join([f"{lead.name}: {lead.description}" for lead in example_leads])
-	else:
-		example_leads_text = ''
-
-	data = _get_default_input_data(user, query_text, request)
-
-	data.update({
-		'example_leads_text': example_leads_text,
-	})
-
-	output, tokens_used_usd = _llm(data, query_reformatting_prompt, rewriting_parser, model_name='gpt-4o')
-	user.move_credits(
-		amount=tokens_used_usd * -1000 * 2,
-		cost_usd=tokens_used_usd,
-		trxn_type=CreditLedgerType.CHECK_QUERY,
-		socketio_obj=socketio_obj
-	)
-	return output

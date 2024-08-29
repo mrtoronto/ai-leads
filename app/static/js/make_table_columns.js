@@ -108,8 +108,7 @@ const mobileLeadNameFormatter = (cell, row) => {
 
 getQueryTableColumns = () => [
     { id: 'id', name: 'ID', field: 'id', hidden: true },
-    { id: 'user_query', textAlign: "left", width: '200px', name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
-    { id: 'reformatted_query', textAlign: "left", width: '200px', name: 'Reformatted Query', field: 'reformatted_query' },
+    { id: 'user_query', textAlign: 'left', justifyContent: 'flex-start', width: '400px', name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
     { id: 'n_leads', name: '# of Leads', width: '90px', field: 'n_leads' },
     { id: 'n_sources', name: '# of Sources', width: '90px', field: 'n_sources' },
     { id: 'hidden', name: 'Hide', width: '90px', field: 'hidden', formatter: (_, row) => {
@@ -286,7 +285,6 @@ if (window.is_mobile) {
 	getQueryTableColumns = () => [
 		{ id: 'id', name: 'ID', field: 'id', hidden: true },
 		{ id: 'user_query', textAlign: "left", name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
-		{ id: 'reformatted_query',textAlign: "left", name: 'Reformatted Query', field: 'reformatted_query' },
 		{
 			id: 'totals',
 			name: 'Totals',

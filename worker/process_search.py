@@ -1,7 +1,8 @@
 from app import worker_socketio, create_minimal_app, db
 from app.models import LeadSource, Lead, Query, User, CreditLedgerType,Journey, Job, JobTypes
 from rq import get_current_job
-from app.llm import rewrite_query, collect_leads_from_url
+from app.llm import collect_leads_from_url
+from app.llm._rewrite import rewrite_query
 from flask_socketio import emit
 from worker import _make_min_app
 from local_settings import SERP_API_KEY
@@ -12,11 +13,11 @@ logger = logging.getLogger('BDB-2EB')
 
 
 def search_serpapi(query):
-	q = query.reformatted_query
+	q = query.user_query
 	num_requested = max(1, query.n_results_requested - query.n_results_retrieved)
 	start = query.n_results_retrieved
 	params = {
-		'q': query.reformatted_query,
+		'q': query.user_query,
 		'hl': 'en',
 		'gl': 'us',
 		'google_domain': 'google.com',
@@ -175,7 +176,7 @@ def search_and_validate_leads(new_query, previous_leads, app_obj, socketio_obj, 
 			app_obj=app_obj
 		)
 
-		if job_obj.total_cost_credits > new_query.budget:
+		if new_query.budget and job_obj.total_cost_credits > new_query.budget:
 			new_query.over_budget = True
 			new_query.save()
 			break
@@ -235,18 +236,19 @@ def search_request_task(query_id):
 
 		if request:
 			logger.info(f'Searching for leads for query: {request.user_query}')
-			rephrased_query = rewrite_query(request, socketio_obj=worker_socketio)
-			if rephrased_query:
-				logger.info(f'Rephrased query: {rephrased_query.rewritten_query}')
-				request.reformatted_query = rephrased_query.rewritten_query
-				request.save()
-			else:
-				logger.error(f'Failed to rephrase query: {request.user_query}')
-				request.reformatted_query = request.user_query
-				request.save()
+			# rephrased_query = rewrite_query(request, socketio_obj=worker_socketio)
+			# if rephrased_query:
+			# 	logger.info(f'Rephrased query: {rephrased_query.rewritten_query}')
+			# 	request.reformatted_query = rephrased_query.rewritten_query
+			# 	request.save()
+			# else:
+			# 	logger.error(f'Failed to rephrase query: {request.user_query}')
+
+			# request.reformatted_query = request.user_query
+			# request.save()
 
 
-			worker_socketio.emit('queries_updated', {'queries': [request.to_dict(example_leads=True)]}, to=f'user_{request.user_id}')
+			# worker_socketio.emit('queries_updated', {'queries': [request.to_dict(example_leads=True)]}, to=f'user_{request.user_id}')
 
 			with min_app.app_context():
 

@@ -214,6 +214,9 @@ class Lead(db.Model):
 		self.hidden_at = datetime.now(pytz.utc)
 		self.save()
 
+		if app_obj and socketio_obj:
+			socketio_obj.emit('leads_updated', {'leads': [self.to_dict()]}, to=f'user_{self.user_id}')
+
 		for job in self.jobs.filter_by(finished=False).all():
 			job._finished(app_obj=app_obj, socketio_obj=socketio_obj)
 
@@ -223,6 +226,10 @@ class Lead(db.Model):
 		self.save()
 
 	def _finished(self, checked=True, socketio_obj=None, app_obj=None):
+		if checked != self.checked or self.checking:
+			lead_updated = True
+		else:
+			lead_updated = False
 		self.checked = checked
 		self.checking = False
 		self.save()
@@ -235,7 +242,7 @@ class Lead(db.Model):
 		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
 			self._hide(app_obj=app_obj, socketio_obj=socketio_obj)
 
-		if app_obj and socketio_obj:
+		if app_obj and socketio_obj and lead_updated:
 			with app_obj.app_context():
 				socketio_obj.emit('leads_updated', {'leads': [self.to_dict()]}, to=f'user_{self.user_id}')
 

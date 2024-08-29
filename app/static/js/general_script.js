@@ -81,6 +81,50 @@ const getTableColumnsById = (tableId) => {
     }
 };
 
+const classifyContentByTableId = (tableId) => {
+	switch(tableId) {
+		case 'requests-table':
+			return 'queries';
+		case 'sources-table':
+			return 'sources';
+		case 'checking-lead-sources-table':
+			return 'sources';
+		case 'leads-table':
+			return 'leads';
+		case 'liked-leads-table':
+			return 'leads';
+		case 'checking-leads-table':
+			return 'leads';
+		case 'checked-leads-table':
+			return 'leads';
+		case 'unchecked-leads-table':
+			return 'leads';
+		case 'all-leads-table':
+			return 'leads';
+		case 'hidden-leads-table':
+			return 'leads';
+		case 'hidden-queries-table':
+			return 'queries';
+		case 'running-queries-table':
+			return 'queries';
+		case 'all-queries-table':
+			return 'queries';
+		case 'query-leads-table':
+			return 'leads';
+		case 'query-sources-table':
+			return 'sources';
+		default:
+			if (tableId.includes('queries')) {
+			    return 'queries';
+			} else if (tableId.includes('sources')) {
+			    return 'sources';
+			} else if (tableId.includes('leads')) {
+			    return 'leads';
+			}
+			return '';
+	}
+}
+
 // Helper functions
 function updateCounts() {
 		const tables = [
@@ -121,13 +165,11 @@ function searchTable(tableId, searchTerm) {
         const nameCell = row.querySelector('.table-cell[data-field="name"]');
         const urlCell = row.querySelector('.table-cell[data-field="name"] a');
         const queryCell = row.querySelector('.table-cell[data-field="user_query"]');
-        const reformattedCell = row.querySelector('.table-cell[data-field="reformatted_query"]');
         const name = nameCell ? nameCell.textContent.toLowerCase() : '';
         const url = urlCell ? urlCell.href.toLowerCase() : '';
         const query = queryCell ? queryCell.textContent.toLowerCase() : '';
-        const reformatted = reformattedCell ? reformattedCell.textContent.toLowerCase() : '';
 
-        if (name.includes(searchTerm.toLowerCase()) || url.includes(searchTerm.toLowerCase()) || query.includes(searchTerm.toLowerCase()) || reformatted.includes(searchTerm.toLowerCase)) {
+        if (name.includes(searchTerm.toLowerCase()) || url.includes(searchTerm.toLowerCase()) || query.includes(searchTerm.toLowerCase())) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
@@ -227,6 +269,13 @@ const createTable = (tableId, columns, data, show_hidden=false) => {
 	            if (column.whiteSpace) {
 										headerCell.style.whiteSpace = column.whiteSpace;
 	            }
+	            if (column.justifyContent) {
+										headerCell.style.justifyContent = column.justifyContent;
+										if (column.justifyContent === 'flex-start') {
+											headerCell.style.paddingLeft = '1em';
+										}
+
+	            }
 	            headerRow.appendChild(headerCell);
 	            visibleColumnIndex++;
 	        }
@@ -267,6 +316,9 @@ const createTable = (tableId, columns, data, show_hidden=false) => {
                     }
                     if (column.marginLeft) {
 		                cell.style.marginLeft = column.marginLeft;
+                    }
+                    if (column.justifyContent) {
+                    	cell.style.justifyContent = column.justifyContent;
                     }
                     if (column.textAlign) {
                         cell.style.textAlign = column.textAlign;
@@ -396,6 +448,10 @@ const addRow = (tableId, newData) => {
                 cell.style.textAlign = column.textAlign;
             } else {
                 cell.style.textAlign = 'center';
+            }
+
+            if (column.justifyContent) {
+									cell.style.justifyContent = column.justifyContent;
             }
             if (column.whiteSpace) {
                 cell.style.whiteSpace = column.whiteSpace;
@@ -751,7 +807,7 @@ function initializeHovers() {
             setTimeout(() => {
                 if (target.matches(':hover')) {
                     resetAllButtons();
-                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">30-100</span></div>';
+                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">10-50</span></div>';
                     target.style.paddingTop = '0.25em';
                     target.style.paddingBottom = '0.25em';
                 }
@@ -768,7 +824,7 @@ function initializeHovers() {
             setTimeout(() => {
                 if (target.matches(':hover')) {
                     resetAllButtons();
-                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">50-100</span></div>';
+                    target.innerHTML = '<div style="pointer-events: none;"><span style="font-size: 8px;">Estimate:</span><br><span style="font-size: 10px;">30-80</span></div>';
                     target.style.paddingTop = '0.25em';
                     target.style.paddingBottom = '0.25em';
                 }
@@ -938,16 +994,19 @@ function hideAllSelected(tableId) {
 																			.filter(row => row.style.display !== 'none');
     const idsToHide = [];
     let emitCount = 0;
+
+    let contentType = classifyContentByTableId(tableId);
+
     rows.forEach(row => {
         const id = row.getAttribute('data-id');
         idsToHide.push(id);
-        if (tableId === 'leads' || tableId === 'liked-leads') {
+        if (contentType == 'leads') {
             socket.emit('hide_lead', { lead_id: id });
             emitCount++;
-        } else if (tableId === 'sources') {
+        } else if (contentType == 'sources') {
             socket.emit('hide_source', { source_id: id });
             emitCount++;
-        } else if (tableId === 'requests') {
+        } else if (contentType === 'queries') {
             socket.emit('hide_request', { query_id: id });
             emitCount++;
         }
@@ -958,14 +1017,14 @@ function hideAllSelected(tableId) {
     if (emitCount > 0) {
         iziToast.info({
             title: 'Hidden',
-            message: `${emitCount} ${emitCount === 1 ? 'item' : 'items'} hidden`,
+            message: `${emitCount} ${contentType} hidden`,
             position: 'topRight',
             timeout: 5000
         });
     } else {
 			iziToast.info({
-				title: 'No Items Hidden',
-				message: `0 items hidden`,
+				title: `No ${contentType} Hidden`,
+				message: `0 ${contentType} hidden`,
 				position: 'topRight',
 				timeout: 5000
 			});
@@ -1054,26 +1113,35 @@ function unhideAllSelected(tableId) {
                             .filter(row => row.style.display !== 'none');
     const idsToUnhide = [];
     let emitCount = 0;
+
+    let contentType = classifyContentByTableId(tableId);
+
     rows.forEach(row => {
         const id = row.getAttribute('data-id');
         idsToUnhide.push(id);
-        if (tableId === 'requests') {
+        if (contentType == 'queries') {
             socket.emit('unhide_request', { query_id: id });
             emitCount++;
-        }
+        } else if (contentType == 'leads') {
+						socket.emit('unhide_lead', { lead_id: id });
+						emitCount++;
+				} else if (contentType == 'sources') {
+						socket.emit('unhide_source', { source_id: id });
+						emitCount++;
+				}
     });
 
     if (emitCount > 0) {
         iziToast.info({
             title: 'Unhidden',
-            message: `${emitCount} ${emitCount === 1 ? 'request' : 'requests'} unhidden`,
+            message: `${emitCount} ${contentType} unhidden`,
             position: 'topRight',
             timeout: 5000
         });
     } else {
         iziToast.info({
-            title: 'No Requests Unhidden',
-            message: `0 requests unhidden`,
+            title: `No ${contentType} unhidden`,
+            message: `0 ${contentType} unhidden`,
             position: 'topRight',
             timeout: 5000
         });

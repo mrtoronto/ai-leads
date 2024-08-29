@@ -62,7 +62,6 @@ export function createQueryDetailsComponent(query) {
                 '<div class="spinner-border" role="status"  style="height: 1.5em; width: 1.5em;"><span class="visually-hidden">Loading...</span></div>'
             }
         </div>
-        ${query.reformatted_query ? `<div class="card-text">Rephrased to -> <i>${query.reformatted_query}</i></div>` : ''}
         <hr>
         <div class="card-text"><b>Search Progress</b>: ${query.n_results_retrieved && query.n_results_requested ? Math.round((query.n_results_retrieved / query.n_results_requested) * 100) : 0}%</div>
         ${query.n_results_retrieved ? `<div class="card-text"><b>Search Results Checked</b>: ${query.n_results_retrieved}</div>` : ''}
