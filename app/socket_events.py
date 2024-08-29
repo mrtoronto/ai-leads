@@ -34,8 +34,8 @@ def time_socket_event(func):
 from .tasks import (
 	queue_check_lead_source_task,
 	queue_check_lead_task,
-	queue_retrain_models_task,
-	queue_update_qualities_task
+	# queue_retrain_models_task,
+	# queue_update_qualities_task
 )
 
 @socketio.on('get_initial_data')
@@ -241,16 +241,16 @@ def handle_update_user_settings(data):
 	else:
 		emit('update_user_settings_response', {'success': False}, to=f"user_{current_user.id}")
 
-@socketio.on('retrain_model')
-@time_socket_event
-def handle_retrain_model():
-	if not current_user.is_authenticated:
-		return
+# @socketio.on('retrain_model')
+# @time_socket_event
+# def handle_retrain_model():
+# 	if not current_user.is_authenticated:
+# 		return
 
-	user_id = current_user.id
-	print(f'Retraining model for {user_id}')
-	queue_retrain_models_task(user_id)
-	queue_update_qualities_task(user_id)
+# 	user_id = current_user.id
+# 	print(f'Retraining model for {user_id}')
+# 	queue_retrain_models_task(user_id)
+# 	queue_update_qualities_task(user_id)
 
 
 @socketio.on('get_query_data')

@@ -165,9 +165,16 @@ class Lead(db.Model):
 		url = get_standard_url(url)
 		base_url = get_base_url(url)
 
-		existing_lead = cls.query.filter_by(base_url=base_url, hidden=False).first()
-		if existing_lead or not _useful_url_check(url):
+		if not _useful_url_check(url):
 			return None
+
+		existing_lead = cls.query.filter_by(base_url=base_url, hidden=False).first()
+		if existing_lead:
+			return None
+		existing_hidden_query_lead = cls.query.filter_by(base_url=base_url, query_id=query_id, hidden=True).first()
+		if existing_hidden_query_lead:
+			return None
+
 		new_lead = cls(
 			url=url,
 			base_url=base_url,
@@ -208,22 +215,31 @@ class Lead(db.Model):
 			db.session.rollback()
 			return None
 
-	def _hide(self, app_obj=None, socketio_obj=None):
+	def _hide(self, auto_hidden=False, app_obj=None, socketio_obj=None):
 		self.hidden = True
 		self.checking = False
+		self.auto_hidden = auto_hidden
 		self.hidden_at = datetime.now(pytz.utc)
 		self.save()
 
-		if app_obj and socketio_obj:
-			socketio_obj.emit('leads_updated', {'leads': [self.to_dict()]}, to=f'user_{self.user_id}')
 
 		for job in self.jobs.filter_by(finished=False).all():
 			job._finished(app_obj=app_obj, socketio_obj=socketio_obj)
 
-	def _unhide(self):
+		if app_obj and socketio_obj:
+			socketio_obj.emit('leads_updated', {'leads': [self.to_dict()]}, to=f'user_{self.user_id}')
+
+	def _unhide(self, app_obj=None, socketio_obj=None):
 		self.hidden = False
 		self.hidden_at = None
+		self.auto_hidden = False
 		self.save()
+
+		if app_obj and socketio_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('leads_updated', {'leads': [self.to_dict()]}, to=f"user_{self.user_id}")
+
+		return self
 
 	def _finished(self, checked=True, socketio_obj=None, app_obj=None):
 		if checked != self.checked or self.checking:

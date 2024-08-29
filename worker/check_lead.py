@@ -4,7 +4,6 @@ from rq import get_current_job
 from app.llm import _llm_validate_lead, collect_leads_from_url
 from app.utils import _tidy_url, _useful_url_check
 from flask_socketio import emit
-from worker.fasttext import FastTextModel
 from app import db
 from worker import _make_min_app
 from worker.process_search import search_request_task
@@ -226,8 +225,6 @@ def check_lead_task(lead_id):
 					if new_lead_obj:
 						worker_socketio.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{lead.user_id}')
 
-		model = FastTextModel(lead.user_id, ModelTypes.LEAD)
-		lead.quality_score = model.predict_lead(lead_user, lead)
 		lead._finished(
 			socketio_obj=worker_socketio,
 			app_obj=min_app

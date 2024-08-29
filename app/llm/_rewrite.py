@@ -57,7 +57,7 @@ def rewrite_query(data, socketio_obj=None, app_obj=None):
 	})
 
 	output, tokens_used_usd = _llm(data, query_reformatting_prompt, rewriting_parser, model_name='gpt-4o')
-	if output:
+	if output and output.rewritten_query and output.rewritten_query.strip():
 		user.move_credits(
 			amount=tokens_used_usd * -1000 * 5,
 			cost_usd=tokens_used_usd,

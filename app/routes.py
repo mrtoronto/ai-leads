@@ -257,7 +257,7 @@ def submit_request():
 	# Handle example leads
 	example_leads = data.get('exampleLeads')
 	if example_leads:
-		for url in example_leads.split(','):
+		for url in example_leads:
 			if url and url.strip():
 				url = url.strip()
 				new_lead_obj = Lead._add(

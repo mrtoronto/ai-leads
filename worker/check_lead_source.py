@@ -5,7 +5,6 @@ from app.llm import collect_leads_from_url
 from app.utils import _tidy_url, _useful_url_check
 from flask_socketio import emit
 from worker import _make_min_app
-from worker.fasttext import FastTextModel
 import logging
 
 logger = logging.getLogger('BDB-2EB')

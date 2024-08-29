@@ -17,7 +17,7 @@ $(document).ready(function () {
 
         const query = $('#query').val();
         const location = $('#location').val();
-        const exampleLeads = $('#exampleLeads').val().split(',');
+        // const exampleLeads = $('#exampleLeads').val().split(',');
         const autoCheck = $('#autoCheck').is(':checked');
         const autoHide = $('#autoHide').is(':checked');
         const budget = $('#budget').val();
@@ -27,6 +27,14 @@ $(document).ready(function () {
         const icon = button.find('i');
         icon.removeClass('fa-lightbulb').addClass('fa-spinner fa-spin');
         button.prop('disabled', true);
+
+        const exampleLeads = [];
+        $('.example-lead-input').each(function() {
+            const value = $(this).val().trim();
+            if (value) {
+                exampleLeads.push(value);
+            }
+        });
 
         socket.emit('rewrite_query', {
             query: query,
@@ -60,6 +68,24 @@ $(document).ready(function () {
     const budgetValue = $('#budget');
     const budgetOutput = $('#budgetOutput');
     const estimateValue = $('#priceEstimate');
+
+    const exampleLeadsContainer = $('#exampleLeadsContainer');
+    const addExampleLeadBtn = $('.add-example-lead');
+
+    function addExampleLeadInput() {
+        const inputGroup = $('<div class="input-group mb-2"></div>');
+        const input = $('<input type="text" class="form-control example-lead-input" placeholder="Enter URL">');
+        const removeBtn = $('<button class="btn btn-outline-secondary remove-example-lead" type="button"><i class="fa-solid fa-trash"></i></button>');
+
+        removeBtn.on('click', function() {
+            inputGroup.remove();
+        });
+
+        inputGroup.append(input, removeBtn);
+        exampleLeadsContainer.append(inputGroup);
+    }
+
+    addExampleLeadBtn.on('click', addExampleLeadInput);
 
     showAdvancedOptionsBtn.on('click', function() {
         advancedOptionsContainer.toggle();
@@ -96,12 +122,20 @@ $(document).ready(function () {
             event.preventDefault();
             const query = document.querySelector('#query').value;
             const nResults = document.querySelector('#n_results').value;
-            const exampleLeads = document.querySelector('#exampleLeads').value;
+            // const exampleLeads = document.querySelector('#exampleLeads').value;
             const autoCheck = document.querySelector('#autoCheck').checked;
             const autoHide = document.querySelector('#autoHide').checked;
             const budget = document.querySelector('#budget').value;
             const location = document.querySelector('#location').value;
             const priceEstimate = document.querySelector('#priceEstimate').value;
+
+            const exampleLeads = [];
+            $('.example-lead-input').each(function() {
+                const value = $(this).val().trim();
+                if (value) {
+                    exampleLeads.push(value);
+                }
+            });
 
             if (!window.is_auth) {
                 Swal.fire({
