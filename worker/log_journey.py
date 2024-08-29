@@ -26,6 +26,7 @@ def log_journey_task(data):
 	endpoint = data.get('endpoint', '')
 	location = data.get('location', '')
 	timestamp = data.get('timestamp')
+	status_code = data.get('status_code', None)
 
 	logger.info(data)
 
@@ -41,6 +42,7 @@ def log_journey_task(data):
 			user_agent=user_agent,
 			referrer=referrer,
 			endpoint=endpoint,
+			status_code=status_code,
 			location=location,
 			created_at=timestamp
 		)

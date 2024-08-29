@@ -112,11 +112,3 @@ def queue_search_request(query_id):
 		_type=JobTypes.QUERY_CHECK,
 	)
 	new_job.save()
-
-
-def queue_log_journey(user_id, user_hash, journey_type):
-	min_app = _make_min_app()
-	if not min_app:
-		logger.error('Failed to create minimal app')
-		return
-	min_app.config['low_priority_queue'].enqueue(log_journey_task, user_id, user_hash, journey_type)

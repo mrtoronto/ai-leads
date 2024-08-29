@@ -1,39 +1,27 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Journey List</h1>
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>GUID</th>
-            <th>Type</th>
-            <th>Created At</th>
-            <th>User ID</th>
-            <th>User Hash</th>
-            <th>Location</th>
-            <th>Endpoint</th>
-            <th>Referrer</th>
-            <th>User Agent</th>
-            <th>Last Active</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for journey in journeys %}
-        <tr>
-            <td>{{ journey.id }}</td>
-            <td>{{ journey.guid }}</td>
-            <td>{{ journey._type }}</td>
-            <td>{{ journey.created_at }}</td>
-            <td>{{ journey.user_id }}</td>
-            <td>{{ journey.user_hash }}</td>
-            <td>{{ journey.location }}</td>
-            <td>{{ journey.endpoint }}</td>
-            <td>{{ journey.referrer }}</td>
-            <td>{{ journey.user_agent }}</td>
-            <td>{{ journey.last_active }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<h1>Journey List{% if logged_in_only %} (Logged-in Users){% endif %}</h1>
+<div style="margin: 2em;">
+    <a href="{{ url_for('main.admin_panel') }}">Back to admin panel</a>
+</div>
+
+<div class="table-responsive" style="padding: 2em; border-radius: 2em; background-color: var(--theme_container_color); color: var(--theme_text_color)">
+    <!-- Search Bar -->
+    <input type="text" id="search-bar" placeholder="Search..." style="margin-bottom: 1em; padding: 0.5em; width: 100%; border-radius: 0.5em; border: 1px solid #ccc;">
+
+    <!-- Duration Filter -->
+    <label for="duration-filter">Filter by Duration (seconds):</label>
+    <input type="number" id="duration-filter" placeholder="Enter duration" style="margin-bottom: 1em; padding: 0.5em; width: 100%; border-radius: 0.5em; border: 1px solid #ccc;">
+
+    <table id="journey_table" class="table" style="color: var(--theme_text_color);">
+        <tbody id="journey_table_body"></tbody>
+    </table>
+    <button id="load_more" style="margin-top: 1em;">Load More</button>
+</div>
+
+<script type="module">
+    import { initJourneyScript } from "{{ url_for('static', filename='js/journey_script.js') }}";
+    initJourneyScript({{ logged_in_only|tojson }});
+</script>
 {% endblock %}

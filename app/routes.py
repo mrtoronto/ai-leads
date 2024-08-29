@@ -344,29 +344,19 @@ def admin_users():
 @bp.route('/admin/journeys')
 @login_required
 def admin_journeys():
-	if not current_user.is_admin:
-		flash('You do not have permission to access this page.')
-		return redirect(url_for('main.index'))
-	journeys = Journey.query.order_by(Journey.created_at.desc()).all()
-	return render_template('admin_journeys.html', journeys=journeys)
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    return render_template('admin_journeys.html', logged_in_only=False)
 
 @bp.route('/admin/logged_in_journeys')
 @login_required
 def admin_logged_in_journeys():
-	if not current_user.is_admin:
-		flash('You do not have permission to access this page.')
-		return redirect(url_for('main.index'))
-	journeys = Journey.query.filter(Journey.user_id != None).order_by(Journey.created_at.desc()).all()
-	return render_template('admin_journeys.html', journeys=journeys)
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    return render_template('admin_journeys.html', logged_in_only=True)
 
-@bp.route('/admin/journeys/<user_hash>')
-@login_required
-def admin_user_journeys(user_hash):
-	if not current_user.is_admin:
-		flash('You do not have permission to access this page.')
-		return redirect(url_for('main.index'))
-	journeys = Journey.query.filter_by(user_hash=user_hash).order_by(Journey.created_at.desc()).all()
-	return render_template('admin_journeys.html', journeys=journeys)
 
 
 @bp.route('/admin/user/<int:user_id>', methods=['GET', 'POST'])

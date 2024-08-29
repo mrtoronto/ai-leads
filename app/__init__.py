@@ -89,11 +89,16 @@ def log_journey_middleware(app):
 
 	@app.before_request
 	def log_journey():
+		if request.endpoint and ('/static/' in request.url):
+			return
 
-		if request.endpoint and ('static' in request.endpoint):
+		if request.endpoint and ('favicon' in request.endpoint):
 			return
 
 		if request.url and ('serviceWorker' in request.url):
+			return
+
+		if request.url and ('og-image.png' in request.url):
 			return
 
 		user_agent = request.headers.get('User-Agent', '').lower()
@@ -122,17 +127,23 @@ def log_journey_middleware(app):
 				response.set_cookie('_twclid', twclid, max_age=60 * 60 * 24 * 30)  # 1 month expiration
 				return response
 
-		user_id = current_user.id if current_user.is_authenticated else None
-		data = {
-			'user_id': user_id,
-			'user_hash': g.user_hash,
-			'endpoint': request.endpoint,
-			'referrer': request.referrer or 'direct',
-			'timestamp': time.time(),
-			'location': request.url,
-			'_type': 'before_request'
-		}
-		app.config['low_priority_queue'].enqueue(log_journey_task, data)
+		@after_this_request
+		def log_journey_after(response):
+			if response.status_code != 404:
+				user_id = current_user.id if current_user.is_authenticated else None
+				data = {
+					'user_id': user_id,
+					'user_hash': g.get('user_hash'),
+					'endpoint': request.endpoint,
+					'referrer': request.referrer or 'direct',
+					'user_agent': request.headers.get('User-Agent', '').lower(),
+					'timestamp': time.time(),
+					'location': request.url,
+					'_type': 'after_request',
+					'status_code': response.status_code
+				}
+				app.config['low_priority_queue'].enqueue(log_journey_task, data)
+			return response
 
 
 def create_app(config_class=Config):

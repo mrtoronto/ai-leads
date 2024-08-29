@@ -2,7 +2,7 @@ import re
 from app import socketio, db
 from flask import current_app
 from flask_login import login_required, current_user
-from app.models import LeadSource, Lead, Query, User
+from app.models import LeadSource, Lead, Query, User, Journey
 from flask_socketio import join_room, emit
 import logging
 import time
@@ -333,3 +333,20 @@ def handle_rewrite_query(data):
     new_query = rewrite_query(query_data, socketio_obj=socketio, app_obj=current_app)
 
     socketio.emit('new_rewritten_query', {'new_query': new_query}, to=f"user_{user.id}")
+
+@socketio.on('get_all_journeys')
+@time_socket_event
+def handle_get_all_journeys(data):
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return
+
+    logged_in_only = data.get('logged_in_only', False)
+
+    query = Journey.query.order_by(Journey.created_at.desc())
+
+    if logged_in_only:
+        query = query.filter(Journey.user_id.isnot(None))
+
+    journeys = query.all()
+    journey_data = [journey.to_dict() for journey in journeys]
+    socketio.emit('all_journeys_response', {'status': 'success', 'records': journey_data}, to=f"user_{current_user.id}")
