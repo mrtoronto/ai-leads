@@ -207,12 +207,32 @@
     border-radius: 2em;
 }
 
+.badgeBox {
+	margin:auto;
+	width: fit-content;
+	display: flex;
+	gap: 2em;
+	margin-top: 4em;
+	flex-direction: column;
+}
+
+.badgeBox a {
+	margin: auto;
+   	width: fit-content;
+}
+
+
 @media (min-width: 768px) {
     .video-wrapper iframe {
         width: 500px;
         max-width: 60%;
         height: 300px;
     }
+
+    .badgeBox {
+    	flex-direction: row;
+     	justify-content: center;
+	}
 }
 
 
