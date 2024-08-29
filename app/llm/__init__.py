@@ -89,7 +89,7 @@ class ValidationOutput(BaseModel):
 	next_link: Optional[str] = Field(None, description="A link to a page that might have an email address (e.g. a contact page)")
 	contact_page: Optional[str] = Field(None, description="A link to a contact page with a contact form")
 	no_email_found: Optional[bool] = Field(None, description="No relevant email address found")
-	relevant_to_user: Optional[bool] = Field(None, description="Mark this value as true if this lead is relevant to the user's query")
+	relevant_to_user: bool = Field(None, description="Mark this value as true if this lead is relevant to this specific query. If the lead is irrelevant, mark this value as false.")
 	invalid_link: Optional[bool] = Field(None, description="The link provided by the user is invalid. Do not use this value, it will be set by the system if necessary.")
 	not_enough_credits: Optional[bool] = Field(
 		None,
