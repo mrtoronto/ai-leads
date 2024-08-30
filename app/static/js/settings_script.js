@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         emailSuccess.classList.add('d-none');
         emailError.classList.add('d-none');
         emailSubmitBtn.disabled = true; // Disable the save button initially
+        emailSubmitBtn.style.opacity = 0.5;
 
         if (emailInput.value.includes('@')) {
             emailTimeout = setTimeout(() => {
@@ -52,11 +53,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (response.available) {
                         emailSuccess.classList.remove('d-none');
                         emailSubmitBtn.disabled = false; // Enable the save button if email is available
+                        emailSubmitBtn.style.opacity = 1;
                         emailSubmitBtn.classList.add('btn-primary-fill-light');
                         emailSubmitBtn.classList.remove('btn-primary-outline-light');
                     } else {
                         emailError.classList.remove('d-none');
                         emailSubmitBtn.disabled = true; // Disable the save button if email is not available
+                        emailSubmitBtn.style.opacity = 0.5;
                         emailSubmitBtn.classList.add('btn-primary-outline-light');
                         emailSubmitBtn.classList.remove('btn-primary-fill-light');
                     }
@@ -65,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             emailSpinner.classList.add('d-none');
             emailSubmitBtn.disabled = true; // Disable the save button if email is invalid
+            emailSubmitBtn.style.opacity = 0.5;
         }
     });
 
@@ -128,9 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon: 'success',
                     title: 'Success',
                     text: 'Settings updated successfully!',
-                }).then(() => {
-									location.reload();
-								});
+                });
             } else {
                 Swal.fire({
                     icon: 'error',

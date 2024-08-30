@@ -42,9 +42,9 @@ window.current_user_email = "{{ current_user.email }}";
 <div class="container mt-5">
     {% if not current_user.email_verified %}
     <div class="alert alert-warning" role="alert">
-		Your email address has not been verified. Please check your email for a verification link.
+		Your email address has not been verified. Please check your email for a verification link{% if not current_user.claimed_verification_bonus %} and get <b>500 free credits</b> for verifying!{% else %}.{% endif %}
     </div>
-    <button id="resend-verification-email" class="btn btn-tertiary" style="width: 100%; margin-bottom: 3em;">Resend Verification Email</button>
+    <button id="resend-verification-email" class="btn btn-tertiary" style="width: 100%; margin-bottom: 3em;">Send Verification</button>
     {% endif %}
     <h2>Settings</h2>
     <form id="settings-email-form" style="margin-top: 2em;">
@@ -56,7 +56,7 @@ window.current_user_email = "{{ current_user.email }}";
 		            <input class="form-control" id="email" name="email" value="{{ current_user.email }}">
 		        </div>
 		        <div>
-		            <button type="submit" id="email-submit" class="btn-primary-outline-light" disabled>Save</button>
+		            <button type="submit" id="email-submit" class="btn-primary-outline-light" style="opacity: 0.5;" disabled>Save</button>
 		        </div>
 		        <div id="email-feedback" style="font-size: 24px; width: 30px; margin-left: 1em;">
 		            <span id="email-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>

@@ -69,7 +69,8 @@ class User(UserMixin, db.Model):
 			'last_trained_source_model_at': self.last_trained_source_model_at,
 			'credits': self.credits,
 			'model_preference': (self.model_preference or 'gpt-4o-mini'),
-			'is_admin': self.is_admin
+			'is_admin': self.is_admin,
+			'claimed_verification_bonus': self.claimed_verification_bonus,
 		}
 
 	@classmethod
