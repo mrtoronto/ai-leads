@@ -48,7 +48,7 @@ class Query(db.Model):
 					return job.place_in_queue()
 		return None
 
-	def to_dict(self, example_leads=False):
+	def to_dict(self, example_leads=False, cost=False):
 		return {
 			'id': self.id,
 			'guid': self.guid,
@@ -72,7 +72,8 @@ class Query(db.Model):
 			'n_results_requested': self.n_results_requested,
 			'over_budget': self.over_budget,
 			'auto_check': self.auto_check,
-			'auto_hide_invalid': self.auto_hide_invalid
+			'auto_hide_invalid': self.auto_hide_invalid,
+			'cost': self.jobs.order_by(Job.id.desc()).first().total_cost_credits if cost else None
 
 		}
 
@@ -162,7 +163,6 @@ class Query(db.Model):
 		for lead_source in self.get_sources():
 			if lead_source.auto_hidden:
 				lead_source._unhide(app_obj=app_obj, socketio_obj=socketio_obj)
-				unhidden_sources.append(lead_source)
 
 		for lead in self.get_leads():
 			if lead.auto_hidden:

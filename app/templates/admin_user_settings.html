@@ -16,6 +16,9 @@
     <label for="user_description">Ideal Customer: </label>
     <input class="form-control" type="text" id="user_description" name="user_description" value="{{ user.user_description }}"><br>
 
+    <label for="is_admin">claimed_verification_bonus:</label>
+    <input type="checkbox" id="claimed_verification_bonus" name="claimed_verification_bonus" {% if user.claimed_verification_bonus %}checked{% endif %}><br>
+
     <label for="is_admin">Is Admin:</label>
     <input type="checkbox" id="is_admin" name="is_admin" {% if user.is_admin %}checked{% endif %}><br>
 

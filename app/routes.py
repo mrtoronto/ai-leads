@@ -372,6 +372,7 @@ def admin_user_settings(user_id):
 		user.email = request.form['email']
 		user.credits = int(request.form['credits'])
 		user.is_admin = 'is_admin' in request.form
+		user.claimed_verification_bonus = 'claimed_verification_bonus' in request.form
 		user.industry = request.form['industry']
 		user.user_description = request.form['user_description']
 		db.session.commit()
@@ -468,9 +469,17 @@ def confirm_email(token):
 
 	user = User.get_by_email(email)
 	if user and not user.email_verified:
-		user.email_verified = True
-		user.save()
-		flash('Your email address has been confirmed.', 'success')
+		if not user.claimed_verification_bonus:
+			user.email_verified = True
+			user.claimed_verification_bonus = True
+			user.credits += 500
+			user.save()
+			flash("Your email address has been confirmed. Here's 500 credits as a thank you!", 'success')
+			flash("+500 credits", 'success')
+		else:
+			user.email_verified = True
+			user.save()
+			flash('Your email address has been confirmed.', 'success')
 	else:
 		flash('This email address is already confirmed.', 'info')
 	return redirect(url_for('main.index'))

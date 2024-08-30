@@ -90,9 +90,11 @@ document.addEventListener('DOMContentLoaded', function() {
 						icon: 'success',
 						title: 'Success',
 						text: 'Email updated successfully!',
+					}).then(() => {
+						location.reload();
 					});
 				} else {
-					console.log('Email updated faiuled!')
+					console.log('Email updated failed!')
 					Swal.fire({
 						icon: 'error',
 						title: 'Error',
@@ -126,7 +128,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon: 'success',
                     title: 'Success',
                     text: 'Settings updated successfully!',
-                });
+                }).then(() => {
+									location.reload();
+								});
             } else {
                 Swal.fire({
                     icon: 'error',

@@ -19,10 +19,12 @@ def check_lead_source_task(lead_source_id):
 	with min_app.app_context():
 		job = get_current_job()
 
-		job_obj = Job.query.filter_by(source_id=lead_source_id, started=False, finished=False).first()
-		if job_obj:
-			job_obj._started(job.id if job else None)
+		source_job_obj = Job.query.filter_by(source_id=lead_source_id, finished=False).order_by(Job.id.desc()).first()
+		if source_job_obj:
+			source_job_obj._started(job.id if job else None)
 		lead_source = LeadSource.get_by_id(lead_source_id)
+		query_job_obj = Job.query.filter_by(query_id=lead_source.query_id).order_by(Job.id.desc()).first()
+
 		if not lead_source:
 			return
 		if (lead_source.checked and lead_source.valid):
@@ -74,6 +76,18 @@ def check_lead_source_task(lead_source_id):
 				socketio_obj=worker_socketio,
 				app_obj=min_app
 			)
+
+			if query_job_obj:
+				query_job_obj.total_cost_credits += tokens_used * mult * 1000
+
+			if source_job_obj:
+				source_job_obj.total_cost_credits += tokens_used * mult * 1000
+				source_job_obj.unique_cost_credits += tokens_used * mult * 1000
+			else:
+				logger.error(f"Source job not found for source_id during check: {lead_source_id}")
+
+		query_job_obj.save()
+		source_job_obj.save()
 
 		if not validation_output:
 			lead_source._finished(

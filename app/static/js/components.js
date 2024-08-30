@@ -66,7 +66,7 @@ export function createQueryDetailsComponent(query) {
         <div class="card-text"><b>Search Progress</b>: ${query.n_results_retrieved && query.n_results_requested ? Math.round((query.n_results_retrieved / query.n_results_requested) * 100) : 0}%</div>
         ${query.n_results_retrieved ? `<div class="card-text"><b>Search Results Checked</b>: ${query.n_results_retrieved}</div>` : ''}
         ${query.location ? `<div class="card-text"><b>Location</b>: ${query.location}</div>` : ''}
-        ${query.location_country ? `<div class="card-text"><b>Location (country)</b>: ${query.location_country}</div>` : ''}
+        ${query.cost ? `<div class="card-text"><b>Cost</b>: ${Math.trunc(query.cost).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')} credits</div>` : ''}
 
         ${query.example_leads.length > 0 ? `
         <div class="card-text mt-2"><b>Example Leads</b>:

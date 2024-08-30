@@ -108,7 +108,12 @@ const mobileLeadNameFormatter = (cell, row) => {
 
 getQueryTableColumns = () => [
     { id: 'id', name: 'ID', field: 'id', hidden: true },
-    { id: 'user_query', textAlign: 'left', justifyContent: 'flex-start', width: '400px', name: 'User Query', field: 'user_query', formatter: (cell, row) => `<a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>` },
+    { id: 'user_query', textAlign: 'left', justifyContent: 'flex-start', width: '400px', name: 'User Query', field: 'user_query', formatter: (cell, row) => `
+        <div>
+            <a href="/query/${row.guid}" data-id="${row.id}">${cell}</a>
+            <div style="font-size: 0.8em; color: #888;">${new Date(row.created_at).toLocaleString()}</div>
+        </div>
+    ` },
     { id: 'n_leads', name: '# of Leads', width: '90px', field: 'n_leads' },
     { id: 'n_sources', name: '# of Sources', width: '90px', field: 'n_sources' },
     { id: 'hidden', name: 'Hide', width: '90px', field: 'hidden', formatter: (_, row) => {

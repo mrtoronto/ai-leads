@@ -34,6 +34,7 @@ class User(UserMixin, db.Model):
 	is_admin = db.Column(db.Boolean, default=False)
 
 	claimed_signup_bonus = db.Column(db.Boolean, default=False)
+	claimed_verification_bonus = db.Column(db.Boolean, default=False)
 
 	queries = db.relationship('Query', backref='user', lazy='dynamic')
 	leads = db.relationship('Lead', backref='user', lazy='dynamic')
@@ -221,7 +222,7 @@ class User(UserMixin, db.Model):
 			'leads': [l.to_dict() for l in leads],
 			'n_liked': len(liked_leads),
 			'n_hidden': len(hidden_leads),
-			'query': request.to_dict(example_leads=True) if request and query_id else (request.to_dict() if request else None),
+			'query': request.to_dict(example_leads=True, cost=True) if request and query_id else (request.to_dict() if request else None),
 			'source': source.to_dict() if source else None,
 			'lead': lead.to_dict() if lead else None
 		}

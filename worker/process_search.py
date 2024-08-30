@@ -49,7 +49,7 @@ def search_serpapi(query):
 	else:
 		return None
 
-def search_and_validate_leads(new_query, previous_leads, app_obj, socketio_obj, job_obj):
+def search_and_validate_leads(new_query, previous_leads, app_obj, socketio_obj, query_job_obj):
 	"""
 	Runs a search query and checks each source found in the query for leads and other lead sources
 	"""
@@ -157,16 +157,16 @@ def search_and_validate_leads(new_query, previous_leads, app_obj, socketio_obj, 
 
 		if socketio_obj and app_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True)]}, to=f'user_{new_query.user_id}')
+				socketio_obj.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True, cost=True)]}, to=f'user_{new_query.user_id}')
 
 		if 'mini' in (new_query.user.model_preference or 'gpt-4o-mini'):
 			mult = app_obj.config['PRICING_MULTIPLIERS']['check_source_mini']
 		else:
 			mult = app_obj.config['PRICING_MULTIPLIERS']['check_source']
 
-		job_obj.total_cost_credits += tokens_used_usd * mult * 1000
-		job_obj.unique_cost_credits += tokens_used_usd * mult * 1000
-		job_obj.save()
+		query_job_obj.total_cost_credits += tokens_used_usd * mult * 1000
+		query_job_obj.unique_cost_credits += tokens_used_usd * mult * 1000
+		query_job_obj.save()
 
 		new_query.user.move_credits(
 			amount=mult * -1000 * tokens_used_usd,
@@ -176,7 +176,7 @@ def search_and_validate_leads(new_query, previous_leads, app_obj, socketio_obj, 
 			app_obj=app_obj
 		)
 
-		if new_query.budget and job_obj.total_cost_credits > new_query.budget:
+		if new_query.budget and query_job_obj.total_cost_credits > new_query.budget:
 			new_query.over_budget = True
 			new_query.save()
 			break
@@ -186,7 +186,7 @@ def search_and_validate_leads(new_query, previous_leads, app_obj, socketio_obj, 
 
 	if socketio_obj and app_obj:
 		with app_obj.app_context():
-			socketio_obj.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True)]}, to=f'user_{new_query.user_id}')
+			socketio_obj.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True, cost=True)]}, to=f'user_{new_query.user_id}')
 
 	return True, ""
 
@@ -202,9 +202,9 @@ def search_request_task(query_id):
 	with min_app.app_context():
 		job = get_current_job()
 
-		job_obj = Job.query.filter_by(query_id=query_id).first()
-		if job_obj:
-			job_obj._started(job.id if job else None)
+		query_job_obj = Job.query.filter_by(query_id=query_id).first()
+		if query_job_obj:
+			query_job_obj._started(job.id if job else None)
 		else:
 			new_job = Job(
 				query_id=query_id,
@@ -212,7 +212,7 @@ def search_request_task(query_id):
 			)
 			new_job.save()
 			new_job._started(job.id if job else None)
-			job_obj = new_job
+			query_job_obj = new_job
 		request = Query.get_by_id(query_id)
 
 		if not request:
@@ -262,16 +262,16 @@ def search_request_task(query_id):
 					app_obj=min_app
 				)
 
-			job_obj.total_cost_credits += token_charge
-			job_obj.unique_cost_credits += token_charge
-			job_obj.save()
+			query_job_obj.total_cost_credits += token_charge
+			query_job_obj.unique_cost_credits += token_charge
+			query_job_obj.save()
 
 			success, error = search_and_validate_leads(
 				request,
 				previous_leads,
 				app_obj=min_app,
 				socketio_obj=worker_socketio,
-				job_obj=job_obj
+				query_job_obj=query_job_obj
 			)
 
 			if error:
@@ -280,13 +280,13 @@ def search_request_task(query_id):
 					socketio_obj=worker_socketio,
 					app_obj=min_app
 				)
-				worker_socketio.emit('queries_updated', {'queries': [request.to_dict(example_leads=True)]}, to=f'user_{request.user_id}')
+				worker_socketio.emit('queries_updated', {'queries': [request.to_dict(example_leads=True, cost=True)]}, to=f'user_{request.user_id}')
 				return
 
 			request._finished(
 				socketio_obj=worker_socketio,
 				app_obj=min_app
 			)
-			worker_socketio.emit('queries_updated', {'queries': [request.to_dict(example_leads=True)]}, to=f'user_{request.user_id}')
+			worker_socketio.emit('queries_updated', {'queries': [request.to_dict(example_leads=True, cost=True)]}, to=f'user_{request.user_id}')
 
 		return

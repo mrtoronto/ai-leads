@@ -28,17 +28,29 @@ def check_lead_task(lead_id):
 		logger.error("Failed to create app context")
 		return
 	with min_app.app_context():
-		job = get_current_job()
-
-		lead_job_obj = Job.query.filter_by(lead_id=lead_id).first()
-		if lead_job_obj:
-			lead_job_obj._started(job.id if job else None)
-
-
 		lead = Lead().get_by_id(lead_id)
 		if not lead:
 			return
 
+		job = get_current_job()
+		lead_job_obj = Job.query.filter_by(lead_id=lead_id, started=False).order_by(Job.id.desc()).first()
+		if lead_job_obj:
+			lead_job_obj._started(job.id if job else None)
+		else:
+			lead_job_obj = Job(
+				lead_id=lead_id,
+				_type=JobTypes.LEAD_CHECK
+			)
+			db.session.add(lead_job_obj)
+			db.session.commit()
+
+			lead_job_obj._started(job.id if job else None)
+
+		if lead.source_id:
+			source_job_obj = Job.query.filter_by(source_id=lead.source_id).order_by(Job.id.desc()).first()
+		else:
+			source_job_obj = None
+		query_job_obj = Job.query.filter_by(query_id=lead.query_id).order_by(Job.id.desc()).first()
 
 		if (lead.checked and lead.valid):
 			lead._finished(
@@ -62,12 +74,6 @@ def check_lead_task(lead_id):
 		if not lead.checking:
 			lead.checking = True
 			worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
-
-		if lead.query_id:
-			query_job_obj = Job.query.filter_by(query_id=lead.query_id).first()
-		else:
-			query_job_obj = None
-
 
 		total_tokens_used_usd = 0
 
@@ -236,23 +242,38 @@ def check_lead_task(lead_id):
 		else:
 			mult = min_app.config['PRICING_MULTIPLIERS']['check_lead']
 
-		with min_app.app_context():
-			lead_user.move_credits(
-				amount=total_tokens_used_usd * -1000 * mult,
-				cost_usd=total_tokens_used_usd,
-				trxn_type=CreditLedgerType.CHECK_LEAD,
-				socketio_obj=worker_socketio,
-				app_obj=min_app
-			)
 
-		if query_job_obj:
-			query_job_obj.total_cost_credits = total_tokens_used_usd * -1000 * mult
-			query_job_obj.save()
-			if query_job_obj.total_cost_credits > lead.query_obj.budget:
+		if total_tokens_used_usd:
+			with min_app.app_context():
+				lead_user.move_credits(
+					amount=total_tokens_used_usd * -1000 * mult,
+					cost_usd=total_tokens_used_usd,
+					trxn_type=CreditLedgerType.CHECK_LEAD,
+					socketio_obj=worker_socketio,
+					app_obj=min_app
+				)
+
+				if source_job_obj:
+					source_job_obj.total_cost_credits += total_tokens_used_usd * mult * 1000
+
+				query_job_obj.total_cost_credits += total_tokens_used_usd * mult * 1000
+
+				if lead_job_obj:
+					lead_job_obj.total_cost_credits += total_tokens_used_usd * mult * 1000
+					lead_job_obj.unique_cost_credits += total_tokens_used_usd * mult * 1000
+				else:
+					logger.error(f'Lead Job not found for lead during check --- {lead.id}')
+
+			if lead.query_obj.budget and query_job_obj.total_cost_credits > lead.query_obj.budget:
 				lead.query_obj.over_budget = True
-				lead.query_obj.save()
 
+			if source_job_obj:
+				source_job_obj.save()
+			query_job_obj.save()
+			lead_job_obj.save()
+			lead.query_obj.save()
 
+			worker_socketio.emit('queries_updated', {'queries': [lead.query_obj.to_dict(cost=True, example_leads=True)]}, to=f'user_{lead.query_obj.user_id}')
 		worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
 
 		if lead.example_lead:
