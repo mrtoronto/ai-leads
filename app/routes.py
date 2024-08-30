@@ -372,6 +372,7 @@ def admin_user_settings(user_id):
 		user.email = request.form['email']
 		user.credits = int(request.form['credits'])
 		user.is_admin = 'is_admin' in request.form
+		user.email_verified = 'email_verified' in request.form
 		user.claimed_verification_bonus = 'claimed_verification_bonus' in request.form
 		user.industry = request.form['industry']
 		user.user_description = request.form['user_description']
