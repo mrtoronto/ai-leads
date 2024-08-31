@@ -62,7 +62,30 @@
             </h2>
             <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
                 <div class="accordion-body">
-                    Credits are used to make queries and scan links. Credits correspond to the number of tokens used by different actions. For example, scanning a normal link may cost 10 credits and a longer link may cost 40 credits.
+                    Credits are used to make queries and scan links. Credits correspond to the number of tokens used by our LLMs to do different actions. For example, scanning a normal link may cost 10 credits and a longer link may cost 40 credits. Below are the costs/ranges of the actions on the site using GPT-4o-mini:
+                    <ul>
+                        <li>Run a query: 200 credits</li>
+                        <li>Scan a source: 3-30 credits</li>
+                        <li>Scan a lead: 10-50 credits</li>
+                    </ul>
+                    The costs displayed as ranges are estimates based on current data. In reality, they will vary based on the length of the content being scanned.
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingHowMuch">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHowMuch" aria-expanded="false" aria-controls="collapseHowMuch">
+                    How can I see how much I'm spending?
+                </button>
+            </h2>
+            <div id="collapseHowMuch" class="accordion-collapse collapse" aria-labelledby="headingHowMuch" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Each page will display the total number of credits used for that item's set of actions:
+                    <ul>
+                        <li>Query page: Shows the total of the query cost and scans done on items within the query.</li>
+                        <li>Source page: Shows the total of the source scan and the cost of the leads scanned from that source.</li>
+                        <li>Lead page: Shows the cost of scanning that specific lead.</li>
+                    </ul>
                 </div>
             </div>
         </div>

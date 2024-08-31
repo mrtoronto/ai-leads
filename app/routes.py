@@ -714,3 +714,8 @@ def admin_clear_jobs():
 		job._finished()
 
 	return redirect(url_for('main.admin_panel'))
+
+
+@bp.route('/static/assets/tradeOffer.png')
+def trade_offer_image():
+    return current_app.send_static_file('assets/tradeOffer.png')
