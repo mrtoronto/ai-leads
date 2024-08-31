@@ -198,7 +198,7 @@ MODEL_PRICING = {
 }
 
 
-def _llm(data, template, parser, parse_output=True, previous_leads=[], model_name='gpt-4o-mini'):
+def _llm(data, template, parser, parse_output=True, previous_leads=[], model_name='gpt-4o-mini', temp=0.1):
 
 	if not model_name:
 		model_name='gpt-4o-mini'
@@ -248,7 +248,7 @@ def _llm(data, template, parser, parse_output=True, previous_leads=[], model_nam
 		'model': input_model_name,
 		'messages': messages,
 		'max_tokens': 1000,
-		'temperature': 0.1
+		'temperature': temp
 	}
 
 	response = requests.post(url, headers=headers, json=data)
