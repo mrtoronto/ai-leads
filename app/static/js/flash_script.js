@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
         window.flash_messages.forEach(function(flash) {
             const category = flash[0];
             const messageText = flash[1];
-            if (category === 'warning') {
+            if ((category === 'warning') || (category === 'error') || (category === 'danger')) {
                 iziToast.warning({
                     title: 'Warning',
                     message: messageText,

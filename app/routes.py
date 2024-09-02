@@ -467,7 +467,9 @@ def confirm_email(token):
 	except:
 		flash('The confirmation link is invalid or has expired.', 'danger')
 		return redirect(url_for('main.index'))
-
+	if not email:
+		flash(f'This confirmation link has expired. Click <a style="font-weight: bold; text-decoration: underline" href="{url_for("main.send_verification_email")}">here</a> to send a new one.', 'danger')
+		return redirect(url_for('main.index'))
 	user = User.get_by_email(email)
 	if user and not user.email_verified:
 		if not user.claimed_verification_bonus:
