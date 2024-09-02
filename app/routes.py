@@ -100,29 +100,30 @@ def login():
 		email = request.form.get('email')
 		password = request.form.get('password')
 		next_url = request.form.get('next', next_url)
+		remember_me = True if request.form.get('remember_me') else False
 		print(f'Attempt to login with email: {email} and {next_url}')
 
 		if not email or not email.strip() or not password or not password.strip():
 			print('Email and password are required')
 			flash('Email and password are required')
 			if next_url:
-				return render_template('login.html', email=email, next=next_url)
+				return render_template('login.html', email=email, next=next_url, remember_me=remember_me)
 			else:
-				return render_template('login.html', email=email)
+				return render_template('login.html', email=email, remember_me=remember_me)
 
 		user = User.get_by_email(email)
 		if not user:
 			print('User not found')
 			flash('User not found')
 			if next_url:
-				return render_template('login.html', email=email, next=next_url)
+				return render_template('login.html', email=email, next=next_url, remember_me=remember_me)
 			else:
-				return render_template('login.html', email=email)
+				return render_template('login.html', email=email, remember_me=remember_me)
 		if user and user.password:
 			if check_password_hash(user.password, password):
 				print('User logged in successfully')
 				flash('Welcome!')
-				login_user(user)
+				login_user(user, remember=remember_me)
 				logger.info(f'next_url: {next_url}')
 				if next_url:
 					return redirect(next_url)
@@ -130,19 +131,19 @@ def login():
 				print('Invalid credentials')
 				flash('Invalid credentials')
 				if next_url:
-					return render_template('login.html', email=email, next=next_url)
+					return render_template('login.html', email=email, next=next_url, remember_me=remember_me)
 				else:
-					return render_template('login.html', email=email)
+					return render_template('login.html', email=email, remember_me=remember_me)
 			return redirect(url_for('main.index'))
 		print('User not found')
 		if next_url:
-			return render_template('login.html', email=email, next=next_url)
+			return render_template('login.html', email=email, next=next_url, remember_me=remember_me)
 		else:
-			return render_template('login.html', email=email)
+			return render_template('login.html', email=email, remember_me=remember_me)
 	if next_url:
-		return render_template('login.html', title='Login', next=next_url)
+		return render_template('login.html', title='Login', next=next_url, remember_me=True)
 	else:
-		return render_template('login.html', title='Login')
+		return render_template('login.html', title='Login', remember_me=True)
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -187,7 +188,7 @@ def register():
 		new_user = User(email=email, password=hashed_password)
 		new_user.save()
 
-		login_user(new_user)
+		login_user(new_user, remember=True)
 
 		# Send Welcome Email with Verification Link
 		token = generate_confirmation_token(new_user.email)

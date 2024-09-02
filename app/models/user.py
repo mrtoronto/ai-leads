@@ -26,9 +26,6 @@ class User(UserMixin, db.Model):
 	last_trained_lead_model_at = db.Column(db.DateTime)
 	last_trained_source_model_at = db.Column(db.DateTime)
 	credits = db.Column(db.Integer, default=0)
-	# search_model_preference = db.Column(db.String(50), default='gpt-4o')
-	# source_collection_model_preference = db.Column(db.String(50), default='gpt-4o')
-	# lead_validation_model_preference = db.Column(db.String(50), default='gpt-4o')
 	model_preference = db.Column(db.String(50), default='gpt-4o-mini')
 
 	is_admin = db.Column(db.Boolean, default=False)
