@@ -281,7 +281,7 @@ def view_query(guid):
 	if not query:
 		flash('Query not found.')
 		return redirect(url_for('main.index'))
-	elif query.user_id != current_user.id:
+	elif (query.user_id != current_user.id) and (not current_user.is_admin):
 		flash('You are not authorized to view this query.')
 		return redirect(url_for('main.index'))
 	return render_template('view_query.html', query=query, title=f'Query: {query.user_query[:50] + "..." if len(query.user_query) > 50 else query.user_query}')
@@ -339,7 +339,7 @@ def admin_users():
 	if not current_user.is_admin:
 		flash('You do not have permission to access this page.')
 		return redirect(url_for('main.index'))
-	users = User.query.all()
+	users = User.query.order_by(User.created_at.desc()).all()
 	return render_template('admin_users.html', users=users)
 
 @bp.route('/admin/journeys')
