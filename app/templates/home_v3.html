@@ -12,7 +12,7 @@
 			</b>
 	    </p>
         <h1 class="hero-title {% if current_user.is_authenticated %}auth-hero-title{% endif %}">
-        	<span style="font-family: monospace;">ai</span><b>Leads</b>
+        	<span style="font-family: monospace;">ai</span><b>LEADS</b>
          	{% if not current_user.is_authenticated %}
 			<div style="margin-bottom: 0em;">
 	        	<a href="/register" class="btn btn-primary hero-btn">Start Getting Leads</a>
@@ -28,12 +28,6 @@
 {% if current_user.is_authenticated %}
 {% include "subtemplates/_sub_navbar.html" %}
 {% endif %}
-
-<div class="badgeBox">
-	<a href="https://theresanaiforthat.com/ai/aileads/?ref=featured&v=2217848" target="_blank" rel="nofollow"><img width="300" src="https://media.theresanaiforthat.com/featured-on-taaft.png?width=600"></a>
-	<a href='https://affordhunt.com' ><img style="height: 65px;" src='https://svgshare.com/i/11o5.svg' title='Spotlight By AffordHunt' /></a>
-
-</div>
 
 <div class="sub-hero-section">
     <div class="container">
@@ -100,6 +94,11 @@
             {% endif %}
         </div>
     </div>
+</div>
+
+<div class="badgeBox">
+	<a href="https://theresanaiforthat.com/ai/aileads/?ref=featured&v=2217848" target="_blank" rel="nofollow"><img width="300" src="https://media.theresanaiforthat.com/featured-on-taaft.png?width=600"></a>
+	<a href='https://affordhunt.com' ><img style="height: 65px;" src='https://svgshare.com/i/11o5.svg' title='Spotlight By AffordHunt' /></a>
 </div>
 
 {% if current_user.is_authenticated %}

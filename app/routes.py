@@ -193,13 +193,13 @@ def register():
 		# Send Welcome Email with Verification Link
 		token = generate_confirmation_token(new_user.email)
 		confirm_url = url_for('main.confirm_email', token=token, _external=True)
-		send_email(new_user.email, 'Welcome to aiLeads!', 'welcome_email', name=new_user.username, confirm_url=confirm_url)
+		send_email(new_user.email, 'Welcome to aiLEADS!', 'welcome_email', name=new_user.username, confirm_url=confirm_url)
 
 		# Redirect to setup preferences page
 		if next_url:
-			return redirect(url_for('main.setup_preferences', next=next_url))
+			return redirect(url_for('main.tutorial', next=next_url))
 		else:
-			return redirect(url_for('main.setup_preferences'))
+			return redirect(url_for('main.tutorial'))
 	if current_user.is_authenticated:
 		flash('You are already logged in!')
 		if next_url:
@@ -599,7 +599,7 @@ def store():
 def send_email_route():
 	send_email(
 		to='matt.toronto97@gmail.com',
-		subject='Welcome to aiLeads',
+		subject='Welcome to aiLEADS',
 		template='welcome_email',
 		name="Recipient Name",  # Pass any required variables as keyword arguments
 		current_year=2024
@@ -717,3 +717,18 @@ def admin_clear_jobs():
 		job._finished()
 
 	return redirect(url_for('main.admin_panel'))
+
+
+@bp.route('/tutorial')
+def tutorial():
+	next_url = request.args.get('next', '')
+
+	if not current_user.is_authenticated or current_user.industry:
+		set_preferences_after = False
+	else:
+		set_preferences_after = True
+
+	if next_url:
+		return render_template('tutorial.html', next=next_url, set_preferences_after=set_preferences_after)
+	else:
+		return render_template('tutorial.html', set_preferences_after=set_preferences_after)

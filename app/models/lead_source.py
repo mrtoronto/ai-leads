@@ -172,6 +172,19 @@ class LeadSource(db.Model):
 		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
 			self._hide(app_obj=app_obj, socketio_obj=socketio_obj)
 
+		if self.query_obj.over_budget:
+			### If query is overbudget, finish all started leads and sources
+			for lead in self.query_obj.filter_by(checking=True).all():
+				lead._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
+			for source in self.query_obj.filter_by(checking=True).all():
+				source._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
+
+			db.session.commit()
+
+		if app_obj and socketio_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('queries_updated', {'queries': [self.query_obj.to_dict()]}, to=f'user_{self.user_id}')
+
 		if app_obj and socketio_obj and updated_source:
 			with app_obj.app_context():
 				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f'user_{self.user_id}')

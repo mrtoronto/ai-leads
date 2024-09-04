@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% if title %}{{ title }} — aiLeads {% else %}aiLeads{% endif %}{% endblock %}</title>
+    <title>{% block title %}{% if title %}{{ title }} — aiLEADS {% else %}aiLEADS{% endif %}{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.12.0/sweetalert2.min.css" integrity="sha512-uE3H1RGE5HkSD6RqI8zbKiSCevsWKVi/74GXOSiu0+IcHO3pkLG+Ouzmn1sB6Be5Y6f+3fuIkGxsieEIUrgMTA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -25,8 +25,8 @@
     <meta name="keywords" content="leads, lead generation, business, marketing, sales, ai, artificial intelligence, machine learning, on-demand, b2b, b2c, b2b2c, b2b2b, b2c2b, b2c2c, b2g, b2g2b, b2g2c, b2g2g, g2b, g2b2b, g2b2c, g2c, g2c2b, g2c2c, g2g, g2g2b, g2g2c, g2g2g">
 
     <!-- can you add an opengraph image and metadata -->
-    <meta property="og:title" content="aiLeads">
-    <meta property="og:description" content="aiLeads is a platform that helps you generate on-demand leads for your business.">
+    <meta property="og:title" content="aiLEADS">
+    <meta property="og:description" content="aiLEADS is a platform that helps you generate on-demand leads for your business.">
     <meta property="og:image" content="https://ai-leads.xyz/static/assets/og_image.png">
     <meta property="og:image:type" content="image/png" />
     <meta property="og:url" content="https://ai-leads.xyz">
@@ -36,8 +36,8 @@
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@ai__leads">
-    <meta name="twitter:title" content="aiLeads">
-    <meta name="twitter:description" content="aiLeads is a platform that helps you generate on-demand leads for your business.">
+    <meta name="twitter:title" content="aiLEADS">
+    <meta name="twitter:description" content="aiLEADS is a platform that helps you generate on-demand leads for your business.">
     <meta name="twitter:image" content="https://ai-leads.xyz/static/assets/og_image.png">
 
 
@@ -64,8 +64,8 @@
     <nav class="navbar navbar-expand-lg navbar-light sticky-top" style="background-color: #ccd8e3 !important; padding-left: 1em; padding-right: 1em;">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                <img src="/static/assets/apple-touch-icon-192x192.png" alt="aiLeads Logo" class="me-2" style="height: 30px;">
-                <span style="font-family: monospace;">ai</span><b>Leads</b>
+                <img src="/static/assets/apple-touch-icon-192x192.png" alt="aiLEADS Logo" class="me-2" style="height: 30px;">
+                <span style="font-family: monospace;">ai</span><b>LEADS</b>
             </a>
             {% if current_user.is_authenticated %}
             <div id="creditCounter" class="small">
@@ -86,6 +86,9 @@
                             <a class="nav-link" href="{{ url_for('main.admin_panel') }}">Admin</a>
                         </li>
                         {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.tutorial') }}">Help</a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('main.store') }}">Store</a>
                         </li>
@@ -124,7 +127,7 @@
 
         <div class="container text-center">
 			<div class="container text-center" style="color: #fff;">
-				<span style="color: #fff; text-decoration: none; " >aiLeads</span> |
+				<span style="color: #fff; text-decoration: none; " >aiLEADS</span> |
 		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.faqs') }}">FAQs</a> |
 		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.contact') }}">Contact Us</a> |
 		        <a style="color: #fff; text-decoration: none; font-weight: bold;" href="{{ url_for('main.privacy_policy') }}">Privacy Policy</a> |

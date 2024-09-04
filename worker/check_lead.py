@@ -114,7 +114,6 @@ def check_lead_task(lead_id):
 				)
 
 				total_tokens_used_usd += tokens_used_usd
-				# logger.info(validation_output)
 				if validation_output:
 
 					if validation_output.not_enough_credits or final_validation_output.not_enough_credits:

@@ -6,6 +6,10 @@
 	width: 50%;
 }
 
+.form-control:focus {
+	background-color: #fff;
+}
+
 @media (max-width: 768px) {
 	.loginContainer {
 		width: 80%;
@@ -28,7 +32,7 @@
             <input type="hidden" name="next" value="{{ next }}">
             <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" class="form-control" id="password" name="password">
+                <input type="password" class="form-control" id="password" name="password" autocomplete="new-password">
             </div>
             <div class="form-group form-check">
                 <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me" {% if remember_me %}checked{% endif %}>

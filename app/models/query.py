@@ -73,7 +73,7 @@ class Query(db.Model):
 			'over_budget': self.over_budget,
 			'auto_check': self.auto_check,
 			'auto_hide_invalid': self.auto_hide_invalid,
-			'cost': self.jobs.order_by(Job.id.desc()).first().total_cost_credits if cost else None
+			'cost': self.jobs.order_by(Job.id.desc()).first().total_cost_credits if cost and self.jobs.order_by(Job.id.desc()).first() else None
 
 		}
 

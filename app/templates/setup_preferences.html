@@ -1,71 +1,136 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+div:where(.swal2-container) {
+    background-color: rgba(0, 0, 0, .4) !important;
+}
+.control-icon {
+	font-size: 24px;
+}
+.swal2-actions {
+	width: 100%;
+	display: flex;
+	gap: 0.5em;
+	justify-content: center;
+}
+
+.swal2-confirm {
+	width: 40%;
+}
+
+.swal2-shown {
+	padding-right: 0px !important;
+}
+</style>
+
 <script>
-	window.next_page = "{{ next }}";
+    window.next_page = "{{ next }}";
 
-  document.addEventListener('DOMContentLoaded', function() {
-    setupPreferences();
-  });
-
-  async function setupPreferences() {
-    const { value: industry } = await Swal.fire({
-      title: 'Step 1',
-      html: 'Help the bot get to know you. ',
-      input: 'textarea',
-      inputLabel: 'What does your business sell?',
-      inputPlaceholder: 'We sell a SaaS product that makes logistics easier for office cleaning and supply companies',
-      confirmButtonText: 'Next',
-      focusConfirm: false,
-      preConfirm: (value) => {
-        return {
-          industry: value
-        }
-      }
+    document.addEventListener('DOMContentLoaded', function() {
+        setupPreferences();
     });
 
-    if (industry) {
-      const { value: description } = await Swal.fire({
-        title: 'Step 2',
-        input: 'textarea',
-        html: 'Help the bot get to know you.',
-        inputLabel: `Describe the customer you're looking for`,
-        inputPlaceholder: 'Enter description here',
-        inputAttributes: {
-          'aria-label': 'Type your description here'
-        },
-        showCancelButton: true,
-        reverseButtons: true,
-        confirmButtonText: 'Save',
-      });
+    async function setupPreferences() {
+        let step = 0;
+        let formValues = {};
 
-      if (description) {
-        const formValues = {
-          ...industry,
-          description: description
+        const steps = [
+            {
+                title: 'Step 1',
+                html: 'Help the bot get to know you.',
+                input: 'textarea',
+                inputLabel: 'What does your business sell?',
+                inputPlaceholder: 'We sell a SaaS product that makes logistics easier for office cleaning and supply companies',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to write something!';
+                    }
+                }
+            },
+            {
+                title: 'Step 2',
+                html: 'Help the bot get to know you.',
+                input: 'textarea',
+                inputLabel: 'Describe the customer you\'re looking for',
+                inputPlaceholder: 'Office cleaning, maintanance, and supply companies in the US',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to write something!';
+                    }
+                }
+            }
+        ];
+
+        const showStep = async () => {
+            const result = await Swal.fire({
+                title: steps[step].title,
+                html: steps[step].html,
+                input: steps[step].input,
+                inputLabel: steps[step].inputLabel,
+                inputPlaceholder: steps[step].inputPlaceholder,
+                inputValidator: steps[step].inputValidator,
+                confirmButtonText: step === steps.length - 1 ? '<i class="fa-solid fa-floppy-disk control-icon"></i>' : '<i class="fa-solid fa-caret-right control-icon"></i>',
+                showCancelButton: step > 0,
+                cancelButtonText: '<i class="fa-solid fa-caret-left control-icon">',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false,
+                focusConfirm: false,
+                reverseButtons: true,
+                confirmButtonColor: "#3E8CFF",
+            });
+
+            if (result.isConfirmed) {
+                formValues[step === 0 ? 'industry' : 'description'] = result.value;
+                step++;
+                if (step < steps.length) {
+                    showStep();
+                } else {
+                    await savePreferences(formValues);
+                }
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                step--;
+                showStep();
+            }
         };
+
+        showStep();
+    }
+
+    async function savePreferences(formValues) {
         const response = await fetch('/save_preferences', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(formValues)
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formValues)
         });
 
         if (response.ok) {
-          await Swal.fire('Success', 'Preferences saved successfully!', 'success');
-          if (window.next_page) {
-          	window.location.href = window.next_page;
-          } else {
-          	window.location.href = '/'; // Redirect to home or wherever
-
-          }
-
-
+            await Swal.fire({
+                title: 'Success',
+                text: 'Preferences saved successfully!',
+                icon: 'success',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false
+            });
+            if (window.next_page) {
+                window.location.href = window.next_page;
+            } else {
+                window.location.href = '/'; // Redirect to home or wherever
+            }
         } else {
-          await Swal.fire('Error', 'There was an error saving your preferences. Please try again.', 'error');
+            await Swal.fire({
+                title: 'Error',
+                text: 'There was an error saving your preferences. Please try again.',
+                icon: 'error',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false
+            });
+            setupPreferences(); // Restart the process
         }
-      }
     }
-  }
 </script>
 {% endblock %}

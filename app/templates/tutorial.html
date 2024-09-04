@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+div:where(.swal2-container) {
+    background-color: rgba(0, 0, 0, .4) !important;
+}
+
+.swal2-shown {
+	padding-right: 0px !important;
+}
+
+.swal2-actions {
+	width: 100%;
+	display: flex;
+	gap: 0.5em;
+	justify-content: center;
+	margin-top: 0px;
+}
+
+.control-icon {
+	font-size: 24px;
+}
+
+.swal2-confirm {
+	width: 40%;
+}
+
+</style>
+<script>
+	window.setup_after = {{ set_preferences_after | lower }};
+	window.next_page = "{{ next }}";
+    document.addEventListener('DOMContentLoaded', function() {
+    	$('.swal2-backdrop-show').css('background-color', 'rgba(0, 0, 0, .4) !important');
+        showTutorial();
+    });
+
+    async function showTutorial() {
+        const steps = [
+            {
+                title: 'Welcome to aiLEADS!',
+                text: `
+                    <div style="margin-top: 20px;">
+                        <img src="/static/assets/og_image.png" alt="aiLEADS Logo" style="max-width: 100%; margin-bottom: 20px; border-radius: 2em;">
+                    </div>
+                    <div>
+                        ${window.is_auth ? `Let's go through a quick tutorial to get you started.` : `Let's go through a quick tutorial to show you what we can do.`}
+                    </div>
+                `,
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon"></i>',
+            },
+            {
+                title: 'Step 1: Define Your Business',
+                text: `
+                    <div style="margin-top: 20px;">
+                        <img src="/static/assets/tutorial_image_2.png" alt="aiLEADS Logo" style="max-width: 100%; margin-bottom: 20px; border-radius: 2em;">
+                    </div>
+                    <div style="margin-bottom: 1em;">
+                        First, we\'ll ask you to describe what your business sells and who you're targeting.
+                    </div>
+                    <div>
+                    	We'll give this to the AI to help it identify leads for you.
+                    </div>
+                `,
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon"></i>',
+            },
+            {
+                title: 'Step 1a: Verify your email',
+                text: `
+                    <div style="margin-top: 20px">
+                        ${window.is_auth ?
+                            `<div style="margin-bottom: 1em;">Get 500 free credits just for verifying your email!</div>
+                            <div>We sent you a verification email (check your spam) but you can send another from the <a href="/settings" style="font-weight: bold; text-decoration: underline;">settings page</a>.</div>` :
+                            `<div style="margin-bottom: 1em;">Verify your email to get 500 free credits!</div>
+                            <div>After signing up, we'll send you a verification email. Clicking the link in it gets you 500 free credits! Just like that 🤝</div>`}
+                    </div>
+                `,
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon"></i>',
+            },
+            {
+                title: 'Step 2: Submit a query',
+                text: `
+                    <div style="margin-top: 20px;">
+                        <img src="/static/assets/tutorial_image_4.gif" alt="aiLEADS Logo" style="max-width: 100%; margin-bottom: 20px; border-radius: 2em;">
+                    </div>
+                    <div>
+                        After you\'ve set up your preferences, you can submit a search query to start searching for leads.
+                    </div>
+                `,
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon"></i>',
+            },
+            {
+                title: 'Step 2a: Advanced Options',
+                text: `
+                    <div style="margin-top: 20px;">
+                        <img src="/static/assets/tutorial_image_5.gif" alt="aiLEADS Logo" style="max-width: 100%; margin-bottom: 20px; border-radius: 2em;">
+                    </div>
+                    <div>
+                        You can also customize the size, location and budget of your query in the advanced options menu.
+                    </div>
+                `,
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon"></i>',
+            },
+            {
+                title: 'Step 3: Scan Results',
+                text: `
+                    <div style="margin-bottom: 1em;margin-top: 20px;">
+                        Your query will return <b>Leads</b> and <b>Sources</b>.
+                    </div>
+                    <div>
+                    	<b>Leads</b> are potential customers. <b>Sources</b> are the websites where we think we can find leads. Leads can also come directly from your search results.
+                    </div>
+                `,
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon">',
+            },
+            {
+                title: 'Step 4: See your Leads',
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon"></i>',
+                text: `
+                    <div style="margin-top: 20px;">
+                        <img src="/static/assets/tutorial_image_7.gif" alt="aiLEADS Logo" style="max-width: 100%; margin-bottom: 20px; border-radius: 2em;">
+                    </div>
+                    <div>
+                        Scan items one by one or all at once. Scanning items will add names and descriptions along with contact information for leads.
+                    </div>
+                `,
+            },
+            {
+                title: 'Step 4: Process your Leads',
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon"></i>',
+                text: `
+                    <div style="margin-top: 20px;">
+                        <img src="/static/assets/tutorial_image_8.gif" alt="aiLEADS Logo" style="max-width: 100%; margin-bottom: 20px; border-radius: 2em;">
+                    </div>
+                    <div>
+                        From these tables you can like and hide leads to get better results in the future, search through the leads and export leads to a CSV file for follow-up.
+                    </div>
+                `,
+            },
+            {
+                title: 'Step 5: Rinse and Repeat (and Adjust)',
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon"></i>',
+                text: `
+                    <div style="margin-bottom: 1em; margin-top: 20px;">
+                        You can submit as many queries as you like, and the AI will learn from your preferences to give you better results over time.
+                    </div>
+                    <div>
+                    	If you ever need to change your preferences, you can do that on the <a href="/settings" style="font-weight: bold; text-decoration: underline;">settings page</a>.
+                    </div>
+                `,
+            },
+            {
+                title: 'Step 6: Enjoy!',
+                confirmButtonText: '<i class="fa-solid fa-caret-right control-icon"></i><i class="fa-solid fa-caret-right control-icon"></i><i class="fa-solid fa-caret-right control-icon"></i>',
+                text: `
+                    <div style="margin-top: 20px;">
+                        <img src="https://data.textstudio.com/output/sample/animated/1/2/5/7/thank-you-10-17521.gif" alt="aiLEADS Logo" style="max-width: 100%; margin-bottom: 20px; ">
+                    </div>
+                    <div style="margin-bottom: 1em;">
+                        Thank you for signing up! We appreciate it and hope you enjoy using aiLEADS.
+                    </div>
+                    <div>
+                    	To report bugs, give us feedback or share your favorite joke, reach out to <a href="mailto:matt@ai-leads.xyz" style="font-weight: bold; text-decoration: underline;">matt@ai-leads.xyz</a>.
+                    </div>
+                `,
+            },
+        ];
+
+        let currentStep = 0;
+        const totalSteps = steps.length;
+
+        const showStep = async () => {
+            const step = steps[currentStep];
+            const result = await Swal.fire({
+                title: step.title,
+                html: `<div style="padding-bottom: 1em; border-bottom: 1px solid #C2D0D8">${step.text}</div>
+                       <div style="margin-top: 1em;">${currentStep + 1 === totalSteps ? '🎉 ' : ''}${currentStep + 1} / ${totalSteps}${currentStep + 1 === totalSteps ? ' 🎉' : ''}</div>`,
+                confirmButtonText: step.confirmButtonText,
+                showCancelButton: currentStep > 0,
+                cancelButtonText: '<i class="fa-solid fa-caret-left control-icon">',
+                showDenyButton: true,
+                confirmButtonColor: "#3E8CFF",
+                denyButtonText: '<i class="fa-solid fa-forward control-icon"></i>',
+                reverseButtons: true,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false
+            });
+
+            if (result.isConfirmed) {
+                currentStep++;
+                if (currentStep < steps.length) {
+                    showStep();
+                } else {
+                    if (window.is_auth) {
+	                    if (window.setup_after) {
+	                    	window.location.href = "{{ url_for('main.setup_preferences', next=next) }}";
+	                    } else {
+		                	if (window.next_page) {
+								window.location.href = window.next_page;
+							} else {
+		                 		window.location.href = "/settings";
+							}
+
+	                    }
+
+                    } else {
+						if (window.next_page) {
+							window.location.href = window.next_page;
+						} else {
+							window.location.href = "/";
+						}
+                    }
+                }
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                currentStep--;
+                showStep();
+            } else if (result.isDenied) {
+                if (window.is_auth) {
+	                if (window.setup_after) {
+	                 	window.location.href = "{{ url_for('main.setup_preferences', next=next) }}";
+	                } else {
+	                	if (window.next_page) {
+							window.location.href = window.next_page;
+						} else {
+	                 		window.location.href = "/settings";
+						}
+	                }
+
+                } else {
+              		if (window.next_page) {
+						window.location.href = window.next_page;
+					} else {
+						window.location.href = "/";
+                	}
+                }
+            }
+        };
+
+        showStep();
+    }
+</script>
+{% endblock %}

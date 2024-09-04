@@ -74,9 +74,14 @@ small {
 
 .socket-btn {
     cursor: pointer;
-    transition: opacity: 0.3s;
+    transition: opacity 0.3s;
     margin-top: auto;
     margin-bottom: auto;
+}
+
+.socket-btn:hover i {
+    transform: rotate(-10deg);
+    transition: transform 0.2s ease-in-out;
 }
 
 .btn-primary {
@@ -369,6 +374,10 @@ small {
 
 .table-search-input {
 	height: fit-content;
+}
+
+.table-search-input:focus {
+	background-color: #fff !important;
 }
 
 
@@ -679,6 +688,9 @@ small {
 }
 
 
+.form-control:focus {
+    background-color: #E6F6FF;
+}
 
 .submit-query-form-group, .submit-query-form-check {
 	text-align: left;
@@ -725,4 +737,9 @@ small {
 .submit-query-tooltip-icon {
 	margin-top: auto;
 	margin-bottom: auto;
+}
+
+
+.swal2-show {
+    animation: swal2-show 0.6s;
 }
