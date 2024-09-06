@@ -21,12 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const isValidEmail = emailRegex.test(emailInput.value);
 
-        emailSubmitBtn.classList.add('btn-primary-outline-light');
-
         if (isValidEmail) {
             emailSubmitBtn.disabled = false;
+            emailSubmitBtn.style.opacity = 1;
         } else {
             emailSubmitBtn.disabled = true;
+            emailSubmitBtn.style.opacity = 0.5;
         }
     });
 
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
         emailSpinner.classList.remove('d-none');
         emailSuccess.classList.add('d-none');
         emailError.classList.add('d-none');
-        emailSubmitBtn.disabled = true; // Disable the save button initially
+        emailSubmitBtn.disabled = true;
         emailSubmitBtn.style.opacity = 0.5;
 
         if (emailInput.value.includes('@')) {
@@ -52,22 +52,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     emailSpinner.classList.add('d-none');
                     if (response.available) {
                         emailSuccess.classList.remove('d-none');
-                        emailSubmitBtn.disabled = false; // Enable the save button if email is available
+                        emailSubmitBtn.disabled = false;
+                        emailSubmitBtn.style.cursor = 'pointer';
+
                         emailSubmitBtn.style.opacity = 1;
-                        emailSubmitBtn.classList.add('btn-primary-fill-light');
-                        emailSubmitBtn.classList.remove('btn-primary-outline-light');
                     } else {
                         emailError.classList.remove('d-none');
-                        emailSubmitBtn.disabled = true; // Disable the save button if email is not available
+                        emailSubmitBtn.disabled = true;
+                        emailSubmitBtn.style.cursor = 'not-allowed';
                         emailSubmitBtn.style.opacity = 0.5;
-                        emailSubmitBtn.classList.add('btn-primary-outline-light');
-                        emailSubmitBtn.classList.remove('btn-primary-fill-light');
                     }
                 });
             }, 2000); // 2 second delay
         } else {
             emailSpinner.classList.add('d-none');
-            emailSubmitBtn.disabled = true; // Disable the save button if email is invalid
+            emailSubmitBtn.disabled = true;
             emailSubmitBtn.style.opacity = 0.5;
         }
     });

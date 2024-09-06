@@ -1,20 +1,23 @@
+from flask import jsonify, current_app
+from sqlalchemy import text
+from app import db
 import traceback
-import requests
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, g
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask import request, render_template, redirect, url_for, flash, g
+from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import socketio, mail
-from app.models import User, Lead, Query, LeadSource, Job, JobTypes, CreditLedger, Journey
-from flask_socketio import emit
+from app.models import User, Lead, Query, LeadSource, Job, CreditLedger
 from app.models.credit_ledger import CreditLedgerType
-from app.tasks import queue_check_lead_source_task, queue_check_lead_task, queue_search_request
-import json
-from flask import Blueprint, current_app
-from app import db
+from app.tasks import queue_check_lead_task, queue_search_request
+from flask import Blueprint
 import redis
 import os
 from werkzeug.exceptions import Unauthorized
 import stripe
+
+import logging
+
+logger = logging.getLogger('BDB-2EB')
 
 bp = Blueprint('main', __name__, static_url_path='/static')
 
@@ -35,9 +38,7 @@ def inject_is_mobile():
 		'FLASK_ENV': current_app.config['FLASK_ENV']
 	}
 
-import logging
 
-logger = logging.getLogger('BDB-2EB')
 
 @bp.route('/favicon.ico')
 def favicon():
@@ -57,9 +58,7 @@ def redis_health():
 		return jsonify({"status": "unhealthy", "message": "Redis connection failed"}), 500
 
 
-from flask import jsonify, current_app
-from sqlalchemy import text
-from app import db
+
 
 @bp.route('/health/db')
 def db_health():
@@ -476,10 +475,10 @@ def confirm_email(token):
 		if not user.claimed_verification_bonus:
 			user.email_verified = True
 			user.claimed_verification_bonus = True
-			user.credits += 500
+			user.credits += 5000
 			user.save()
-			flash("Your email address has been confirmed. Here's 500 credits as a thank you!", 'success')
-			flash("+500 credits", 'success')
+			flash("Your email address has been confirmed. Here's 5000 credits as a thank you!", 'success')
+			flash("+5000 credits", 'success')
 		else:
 			user.email_verified = True
 			user.save()

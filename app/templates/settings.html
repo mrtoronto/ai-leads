@@ -6,99 +6,143 @@ window.current_user_email = "{{ current_user.email }}";
 </script>
 
 <style>
-
-.btn-primary-outline-light, .btn-primary-fill-light {
-	height: 100%;
+.settings-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
-.btn-primary-outline-light:hover {
-	background-color: transparent !important;
+.settings-section {
+    margin-bottom: 3rem;
 }
 
-.btn-secondary:hover {
-	color: #fff !important;
+.settings-title {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: #2A232E;
 }
 
-.btn-secondary:hover a {
-	color: #fff !important;
+.form-control:focus {
+	background-color: #fff;
 }
 
-.btn-primary-outline-light {
-	color: #67596F !important;
+.settings-subtitle {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #67596F;
 }
 
-#email-submit {
-	border-bottom-left-radius: 0;
-	border-top-left-radius: 0;
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
-#email {
-	border-top-right-radius: 0;
-	border-bottom-right-radius: 0;
+.form-label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    display: block;
 }
 
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.btn-settings {
+    background-color: #3E8CFF;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-settings:hover {
+    background-color: #3270CC;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+}
+
+#email-feedback {
+    margin-left: 1rem;
+    font-size: 1.5rem;
+}
 </style>
-{% include "subtemplates/_sub_navbar.html" %}
-<div class="container mt-5">
+
+<div class="settings-container">
+    <h1 class="settings-title">Settings</h1>
+
     {% if not current_user.email_verified %}
     <div class="alert alert-warning" role="alert">
-		Your email address has not been verified. Please check your email for a verification link{% if not current_user.claimed_verification_bonus %} and get <b>500 free credits</b> for verifying!{% else %}.{% endif %}
+        Your email address has not been verified. Please check your email for a verification link{% if not current_user.claimed_verification_bonus %} and get <b>500 free credits</b> for verifying!{% else %}.{% endif %}
     </div>
-    <button id="resend-verification-email" class="btn btn-tertiary" style="width: 100%; margin-bottom: 3em;">Send Verification</button>
+    <button id="resend-verification-email" class="btn-settings" style="width: 100%; margin-bottom: 2rem;">Send Verification</button>
     {% endif %}
-    <h2>Settings</h2>
-    <form id="settings-email-form" style="margin-top: 2em;">
-		<div class="form-group mb-3">
-		    <label for="email">Email</label>
-		    <small class="form-text text-muted">Email address associated with your account.</small>
-		    <div style="display: flex;">
-		        <div style="flex-grow: 1;">
-		            <input class="form-control" id="email" name="email" value="{{ current_user.email }}">
-		        </div>
-		        <div>
-		            <button type="submit" id="email-submit" class="btn-primary-outline-light" style="opacity: 0.5;" disabled>Save</button>
-		        </div>
-		        <div id="email-feedback" style="font-size: 24px; width: 30px; margin-left: 1em;">
-		            <span id="email-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-		            <span id="email-success" class="d-none">&#x2714;</span> <!-- Checkmark icon -->
-		            <span id="email-error" class="d-none">&#x2716;</span> <!-- Cross icon -->
-		        </div>
-		    </div>
-		</div>
-    </form>
+
+    <div class="settings-section">
+        <h2 class="settings-subtitle">Account Settings</h2>
+        <form id="settings-email-form">
+            <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                <div style="display: flex; align-items: center;">
+                    <input class="form-control" id="email" name="email" value="{{ current_user.email }}">
+                    <button type="submit" id="email-submit" class="btn-settings" style="margin-left: 1rem;cursor: not-allowed; opacity: 0.5;" disabled>Save</button>
+                    <div id="email-feedback">
+                        <span id="email-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <span id="email-success" class="d-none">&#x2714;</span>
+                        <span id="email-error" class="d-none">&#x2716;</span>
+                    </div>
+                </div>
+                <small class="form-text text-muted">Email address associated with your account.</small>
+            </div>
+        </form>
+
+        <div class="form-group">
+            <button id="resend-password-reset-email" class="btn-settings">Reset Password</button>
+        </div>
+    </div>
+
     <hr>
 
-    <h4>Account Settings</h4>
-    <div class="mt-4" style="display: flex; gap: 1em;">
-        {% if not current_user.email_verified %}
-        <button id="resend-verification-email" class="btn btn-secondary" style="width: 50%;">Resend Verification Email</button>
-        {% else %}
-        <a class="btn btn-secondary" style="text-decoration: none; width: 50%;" href="/store">Get Credits</a>
-        {% endif %}
-        <button id="resend-password-reset-email" class="btn btn-secondary" style="width: 50%;">Reset Password</button>
+    <div class="settings-section">
+        <h2 class="settings-subtitle">Run Settings</h2>
+        <form id="settings-form">
+            <div class="form-group">
+                <label for="industry" class="form-label">About your business</label>
+                <textarea class="form-control" id="industry" name="industry" rows="3" maxlength="1000">{{ current_user.industry }}</textarea>
+                <small class="form-text text-muted">What product is your business selling?</small>
+            </div>
+
+            <div class="form-group">
+                <label for="user-description" class="form-label">Customer Description</label>
+                <textarea class="form-control" id="user-description" name="user_description" rows="3" maxlength="2000">{{ current_user.user_description }}</textarea>
+                <small class="form-text text-muted">What type of customers are you looking for?</small>
+            </div>
+
+            <div class="form-group">
+                <label for="model-preference" class="form-label">Model</label>
+                <select class="form-control" id="model-preference" name="model_preference">
+                    <option value="gpt-4o" {{ 'selected' if current_user.model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
+                    <option value="gpt-4o-mini" {{ 'selected' if current_user.model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-settings" style="width: 100%;">Save Settings</button>
+        </form>
     </div>
-    <hr>
-    <form id="settings-form" style="margin-top: 2em;">
-    	<h4>Run Settings</h4>
-        <div class="form-group mb-3">
-            <label for="industry">About you</label>
-            <small class="form-text text-muted">What product is your business selling?</small>
-            <textarea class="form-control" id="industry" name="industry" rows="3" maxlength="1000">{{ current_user.industry }}</textarea>
-        </div>
-        <div class="form-group mb-3">
-            <label for="user-description">Customer Description</label>
-            <small class="form-text text-muted">What type of customers are your looking for?
-            <textarea class="form-control" id="user-description" name="user_description" rows="3" maxlength="2000">{{ current_user.user_description }}</textarea>
-        </div>
-        <div class="form-group mb-3">
-            <label for="model-preference">Model</label>
-            <select class="form-select" id="model-preference" name="model_preference">
-                <option value="gpt-4o" {{ 'selected' if current_user.model_preference == 'gpt-4o' else '' }}>gpt-4o</option>
-                <option value="gpt-4o-mini" {{ 'selected' if current_user.model_preference == 'gpt-4o-mini' else '' }}>gpt-4o-mini</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Save</button>
-    </form>
 </div>
+
 <script src="/static/js/settings_script.js?last_updated={{ last_updated }}"></script>
 {% endblock %}
