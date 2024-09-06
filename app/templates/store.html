@@ -15,7 +15,7 @@
                     <div style="display: grid; row-gap: 1em; ">
                     	{% if current_user.is_authenticated %}
 	                    	{% if not current_user.claimed_signup_bonus %}
-	                        	<button class="btn-primary-fill-light" id="buy-2000-credits" data-credit-amount="2000" onclick="purchaseCredits(this, true)"><span style="font-weight: bold;">New Users!<br></span>Get 2,000 credits for $1!</button>
+	                        	<button class="btn-primary-fill-light" id="buy-20000-credits" data-credit-amount="20000" onclick="purchaseCredits(this, true)"><span style="font-weight: bold;">New Users!<br></span>Get 20,000 credits for $10!</button>
 								<hr style="margin-top: 0; margin-bottom:1em; color: #387EE3; opacity: 1;width: 100%;">
 	                        {% endif %}
 	                        <button class="btn-primary-fill-light" id="buy-5000-credits" data-credit-amount="5000" onclick="purchaseCredits(this)">Buy 5,000 credits for $5</button>
@@ -23,7 +23,7 @@
 	                        <button class="btn-primary-fill-light" id="buy-20000-credits" data-credit-amount="20000" onclick="purchaseCredits(this)">Buy 20,000 credits for $20</button>
 	                        <button class="btn-primary-fill-light" id="buy-50000-credits" data-credit-amount="50000" onclick="purchaseCredits(this)">Buy 50,000 credits for $50</button>
                         {% else %}
-                        	<a style="text-align: center; line-height: 1.2;" href="/register" class="btn-primary-fill-light" disabled><span style="font-weight: bold; font-size: 24px">Sign-up now!<br></span>New Users Get 2,000 credits for $1!</a>
+                        	<a style="text-align: center; line-height: 1.2;" href="/register" class="btn-primary-fill-light" disabled><span style="font-weight: bold; font-size: 24px">Sign-up now!<br></span>New Users Get 20,000 credits for $10!</a>
 							<hr style="margin-top: 0; margin-bottom:1em; color: #387EE3; opacity: 1;width: 100%;">
 	                        <button class="btn-primary-fill-light" disabled>Buy 5,000 credits for $5</button>
 	                        <button class="btn-primary-fill-light" disabled>Buy 10,000 credits for $10</button>
@@ -188,8 +188,8 @@ function purchaseCredits(btn, special_deal=false) {
       	price = price / 2;
     }
 
-    if (document.getElementById("buy-2000-credits")) {
-    	document.getElementById("buy-2000-credits").disabled = true;
+    if (document.getElementById("buy-20000-credits")) {
+    	document.getElementById("buy-20000-credits").disabled = true;
     }
     document.getElementById("buy-5000-credits").disabled = true;
     document.getElementById("buy-10000-credits").disabled = true;

@@ -24,7 +24,7 @@ window.current_user_email = "{{ current_user.email }}";
 
 .form-control:focus {
 	background-color: #fff;
-}
+}/
 
 .settings-subtitle {
     font-size: 1.8rem;
@@ -86,7 +86,7 @@ window.current_user_email = "{{ current_user.email }}";
 
     {% if not current_user.email_verified %}
     <div class="alert alert-warning" role="alert">
-        Your email address has not been verified. Please check your email for a verification link{% if not current_user.claimed_verification_bonus %} and get <b>500 free credits</b> for verifying!{% else %}.{% endif %}
+        Your email address has not been verified. Please check your email for a verification link{% if not current_user.claimed_verification_bonus %} and get <b>5,000 free credits</b> for verifying!{% else %}.{% endif %}
     </div>
     <button id="resend-verification-email" class="btn-settings" style="width: 100%; margin-bottom: 2rem;">Send Verification</button>
     {% endif %}

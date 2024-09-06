@@ -681,7 +681,7 @@ def payment_success():
 		checkout_session = stripe.checkout.Session.retrieve(session_id)
 		determined_amount_credits = checkout_session.amount_total * 10
 
-		if determined_amount_credits == 1000:
+		if determined_amount_credits == 10000:
 			determined_amount_credits = determined_amount_credits * 2
 			current_user.claimed_signup_bonus = True
 			db.session.commit()
