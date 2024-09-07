@@ -75,10 +75,10 @@ def mobile_middleware(app):
 
 def should_skip_request():
     skip_conditions = [
-        '/static/' in request.url,
-        'favicon' in request.endpoint,
-        'serviceWorker' in request.url,
-        'og-image.png' in request.url,
+        '/static/' in request.url or "",
+        'favicon' in request.endpoint or "",
+        'serviceWorker' in request.url or "",
+        'og-image.png' in request.url or "",
         any(crawler in request.headers.get('User-Agent', '').lower() for crawler in 
             ['googlebot', 'bingbot', 'yandex', 'baiduspider', 'slurp', 'duckduckbot', 'facebookexternalhit', 'twitterbot'])
     ]
