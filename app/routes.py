@@ -2,7 +2,7 @@ from flask import jsonify, current_app
 from sqlalchemy import text
 from app import db
 import traceback
-from flask import request, render_template, redirect, url_for, flash, g
+from flask import request, render_template, redirect, url_for, flash, g, Response
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import socketio, mail
@@ -731,3 +731,22 @@ def tutorial():
 		return render_template('tutorial.html', next=next_url, set_preferences_after=set_preferences_after)
 	else:
 		return render_template('tutorial.html', set_preferences_after=set_preferences_after)
+
+
+@bp.route('/robots.txt')
+def robots():
+    robots_txt = """
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /admin
+Disallow: /api
+Allow: /contact
+Allow: /store
+Allow: /privacy_policy
+Allow: /terms_of_service
+Allow: /tutorial
+Allow: /static
+"""
+    return Response(robots_txt.strip(), mimetype='text/plain')
