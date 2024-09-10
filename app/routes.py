@@ -542,16 +542,25 @@ def handle_exception(e):
 			f'IP Address: {request.remote_addr}'
 		)
 		return redirect(url_for('main.login', next=request.url))
-	logger.error(
-		f'An error occurred (error page displayed): {e}\n'
-		f'File: {e.__traceback__.tb_frame.f_code.co_filename}\n'
-		f'Line: {e.__traceback__.tb_lineno}\n'
-		f'Stack Trace: {traceback.format_exc()}\n'
-		f'Request Path: {request.path}\n'
-		f'Method: {request.method}\n'
-		f'User Agent: {request.user_agent}\n'
-		f'IP Address: {request.remote_addr}'
-	)
+	elif request.path == '/' and request.method == 'POST':
+		logger.info(
+			f'POST request on home page: {e}\n'
+			f'Request Path: {request.path}\n'
+			f'Method: {request.method}\n'
+			f'User Agent: {request.user_agent}\n'
+			f'IP Address: {request.remote_addr}'
+		)
+	else:
+		logger.error(
+			f'An error occurred (error page displayed): {e}\n'
+			f'File: {e.__traceback__.tb_frame.f_code.co_filename}\n'
+			f'Line: {e.__traceback__.tb_lineno}\n'
+			f'Stack Trace: {traceback.format_exc()}\n'
+			f'Request Path: {request.path}\n'
+			f'Method: {request.method}\n'
+			f'User Agent: {request.user_agent}\n'
+			f'IP Address: {request.remote_addr}'
+		)
 	return render_template('500.html', error=str(e)), 500
 
 
