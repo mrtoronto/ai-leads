@@ -13,7 +13,7 @@ class Query(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	guid = db.Column(db.String(36), default=lambda: str(uuid.uuid4()), unique=True)
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-	user_query = db.Column(db.String(255), nullable=False)
+	user_query = db.Column(db.String(2000), nullable=False)
 	reformatted_query = db.Column(db.String(255))
 	finished = db.Column(db.Boolean, default=False)
 	run_notes = db.Column(db.Text)
