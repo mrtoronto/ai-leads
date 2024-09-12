@@ -19,7 +19,7 @@ class CreditLedger(db.Model):
 	user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 	amount = db.Column(db.Float, nullable=False)
 	cost_usd = db.Column(db.Float)
-	created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(pytz.utc))
+	created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(pytz.utc))
 	transaction_type = db.Column(db.String(50), nullable=False)
 	transaction_description = db.Column(db.String(255), nullable=True)
 
