@@ -357,7 +357,62 @@ def admin_logged_in_journeys():
         return redirect(url_for('main.index'))
     return render_template('admin_journeys.html', logged_in_only=True)
 
+@bp.route('/admin/queries')
+@login_required
+def admin_queries():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    queries = Query.query.order_by(Query.created_at.desc()).all()
+    return render_template('admin_queries.html', queries=queries)
 
+@bp.route('/admin/sources')
+@login_required
+def admin_sources():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    sources = LeadSource.query.order_by(LeadSource.created_at.desc()).all()
+    return render_template('admin_sources.html', sources=sources)
+
+@bp.route('/admin/leads')
+@login_required
+def admin_leads():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    leads = Lead.query.order_by(Lead.created_at.desc()).all()
+    return render_template('admin_leads.html', leads=leads)
+
+@bp.route('/admin/user/<int:user_id>/queries')
+@login_required
+def admin_user_queries(user_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    user = User.query.get_or_404(user_id)
+    queries = Query.query.filter_by(user_id=user_id).order_by(Query.created_at.desc()).all()
+    return render_template('admin_queries.html', queries=queries, user=user)
+
+@bp.route('/admin/user/<int:user_id>/sources')
+@login_required
+def admin_user_sources(user_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    user = User.query.get_or_404(user_id)
+    sources = LeadSource.query.filter_by(user_id=user_id).order_by(LeadSource.created_at.desc()).all()
+    return render_template('admin_sources.html', sources=sources, user=user)
+
+@bp.route('/admin/user/<int:user_id>/leads')
+@login_required
+def admin_user_leads(user_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    user = User.query.get_or_404(user_id)
+    leads = Lead.query.filter_by(user_id=user_id).order_by(Lead.created_at.desc()).all()
+    return render_template('admin_leads.html', leads=leads, user=user)
 
 @bp.route('/admin/user/<int:user_id>', methods=['GET', 'POST'])
 @login_required

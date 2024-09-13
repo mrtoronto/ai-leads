@@ -112,7 +112,7 @@ class Query(db.Model):
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('queries_updated', {'queries': [self.to_dict()]}, to=f'user_{self.user_id}')
+				socketio_obj.emit('queries_updated', {'queries': [self.to_dict(cost=True)]}, to=f'user_{self.user_id}')
 
 	def get_leads(self):
 		return Lead.query.filter_by(query_id=self.id).all()
@@ -130,7 +130,7 @@ class Query(db.Model):
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('queries_updated', {'queries': [self.to_dict()]}, to=f'user_{self.user_id}')
+				socketio_obj.emit('queries_updated', {'queries': [self.to_dict(cost=True)]}, to=f'user_{self.user_id}')
 
 		for lead in self.get_leads():
 			if not lead.hidden:
@@ -149,7 +149,7 @@ class Query(db.Model):
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('queries_updated', {'queries': [self.to_dict()]}, to=f'user_{self.user_id}')
+				socketio_obj.emit('queries_updated', {'queries': [self.to_dict(cost=True)]}, to=f'user_{self.user_id}')
 
 
 	def _unhide(self, socketio_obj=None, app_obj=None):
@@ -158,7 +158,7 @@ class Query(db.Model):
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('queries_updated', {'queries': [self.to_dict()]}, to=f"user_{self.user_id}")
+				socketio_obj.emit('queries_updated', {'queries': [self.to_dict(cost=True)]}, to=f"user_{self.user_id}")
 
 		for lead_source in self.get_sources():
 			if lead_source.auto_hidden:
@@ -170,4 +170,4 @@ class Query(db.Model):
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('queries_updated', {'queries': [self.to_dict()]}, to=f"user_{self.user_id}")
+				socketio_obj.emit('queries_updated', {'queries': [self.to_dict(cost=True)]}, to=f"user_{self.user_id}")

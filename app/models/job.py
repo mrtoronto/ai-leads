@@ -62,7 +62,7 @@ class Job(db.Model):
 						unique_users.add(job.lead.user_id)
 
 
-				queries_updated = [q.to_dict() for q in queries_updated]
+				queries_updated = [q.to_dict(cost=True) for q in queries_updated]
 				sources_updated = [s.to_dict() for s in sources_updated]
 				leads_updated = [l.to_dict() for l in leads_updated]
 

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>All Leads</h1>
+<div style="margin: 2em;">
+    <a href="{{ url_for('main.admin_panel') }}">Back to admin panel</a>
+</div>
+
+<div class="table-responsive" style="padding: 2em; border-radius: 2em; background-color: var(--theme_container_color); color: var(--theme_text_color)">
+    <input type="text" id="admin-leads-search" placeholder="Search..." style="margin-bottom: 1em; padding: 0.5em; width: 100%; border-radius: 0.5em; border: 1px solid #ccc;">
+
+    <table id="admin-leads-table" class="table" style="color: var(--theme_text_color);">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User ID</th>
+                <th>Query ID</th>
+                <th>Name</th>
+                <th>URL</th>
+                <th>Created At</th>
+                <th>Valid</th>
+                <th>Hidden</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lead in leads %}
+            <tr>
+                <td>{{ lead.id }}</td>
+                <td>{{ lead.user_id }}</td>
+                <td>{{ lead.query_id }}</td>
+                <td>{{ lead.name }}</td>
+                <td>{{ lead.url }}</td>
+                <td>{{ lead.created_at }}</td>
+                <td>{{ lead.valid }}</td>
+                <td>{{ lead.hidden }}</td>
+                <td><a href="{{ url_for('main.view_lead', guid=lead.guid) }}">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('admin-leads-search');
+    const table = document.getElementById('admin-leads-table');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

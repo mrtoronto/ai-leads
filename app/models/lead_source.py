@@ -183,7 +183,7 @@ class LeadSource(db.Model):
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
-				socketio_obj.emit('queries_updated', {'queries': [self.query_obj.to_dict()]}, to=f'user_{self.user_id}')
+				socketio_obj.emit('queries_updated', {'queries': [self.query_obj.to_dict(cost=True)]}, to=f'user_{self.user_id}')
 
 		if app_obj and socketio_obj and updated_source:
 			with app_obj.app_context():
