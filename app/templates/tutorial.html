@@ -183,55 +183,58 @@ div:where(.swal2-container) {
                 reverseButtons: true,
                 allowOutsideClick: false,
                 allowEscapeKey: false,
-                allowEnterKey: false
+                allowEnterKey: false,
+                didOpen: (modal) => {
+                    document.addEventListener('keydown', handleKeyDown);
+                },
+                willClose: () => {
+                    document.removeEventListener('keydown', handleKeyDown);
+                }
             });
 
+            handleStepNavigation(result);
+        };
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'ArrowRight') {
+                Swal.clickConfirm();
+            } else if (e.key === 'ArrowLeft' && currentStep > 0) {
+                Swal.clickCancel();
+            }
+        };
+
+        const handleStepNavigation = (result) => {
             if (result.isConfirmed) {
                 currentStep++;
                 if (currentStep < steps.length) {
                     showStep();
                 } else {
-                    if (window.is_auth) {
-	                    if (window.setup_after) {
-	                    	window.location.href = "{{ url_for('main.setup_preferences', next=next) }}";
-	                    } else {
-		                	if (window.next_page) {
-								window.location.href = window.next_page;
-							} else {
-		                 		window.location.href = "/settings";
-							}
-
-	                    }
-
-                    } else {
-						if (window.next_page) {
-							window.location.href = window.next_page;
-						} else {
-							window.location.href = "/";
-						}
-                    }
+                    navigateToNextPage();
                 }
             } else if (result.dismiss === Swal.DismissReason.cancel) {
                 currentStep--;
                 showStep();
             } else if (result.isDenied) {
-                if (window.is_auth) {
-	                if (window.setup_after) {
-	                 	window.location.href = "{{ url_for('main.setup_preferences', next=next) }}";
-	                } else {
-	                	if (window.next_page) {
-							window.location.href = window.next_page;
-						} else {
-	                 		window.location.href = "/settings";
-						}
-	                }
+                navigateToNextPage();
+            }
+        };
 
+        const navigateToNextPage = () => {
+            if (window.is_auth) {
+                if (window.setup_after) {
+                    window.location.href = "{{ url_for('main.setup_preferences', next=next) }}";
                 } else {
-              		if (window.next_page) {
-						window.location.href = window.next_page;
-					} else {
-						window.location.href = "/";
-                	}
+                    if (window.next_page) {
+                        window.location.href = window.next_page;
+                    } else {
+                        window.location.href = "/settings";
+                    }
+                }
+            } else {
+                if (window.next_page) {
+                    window.location.href = window.next_page;
+                } else {
+                    window.location.href = "/";
                 }
             }
         };

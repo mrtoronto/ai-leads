@@ -45,6 +45,11 @@
         {% else %}
         <p class="text-center mt-3">Need an account? <a href="{{ url_for('main.register') }}">Register here</a></p>
         {% endif %}
+        {% if next %}
+        <p class="text-center mt-3">Forgot your password? <a href="{{ url_for('main.password_reset_request', next=next) }}">Reset it here</a></p>
+        {% else %}
+        <p class="text-center mt-3">Forgot your password? <a href="{{ url_for('main.password_reset_request') }}">Reset it here</a></p>
+        {% endif %}
     </div>
 </div>
 
