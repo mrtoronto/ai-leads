@@ -133,9 +133,8 @@ class User(UserMixin, db.Model):
 
 		if query_id:
 			request = Query.get_by_id(query_id)
-			lead_sources = LeadSource.query.filter_by(user_id=self.id, hidden=False, query_id=query_id).order_by(LeadSource.valid.desc(), LeadSource.checked, LeadSource.id.desc()).all()
+			lead_sources = LeadSource.query.filter_by(hidden=False, query_id=query_id).order_by(LeadSource.valid.desc(), LeadSource.checked, LeadSource.id.desc()).all()
 			leads = Lead.query.filter_by(
-				user_id=self.id,
 				hidden=False,
 				query_id=query_id
 			).order_by(
