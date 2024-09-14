@@ -2,7 +2,9 @@ import { socket } from "./socket.js";
 
 $(document).ready(function () {
 
-		$('#rewriteQueryBtn').on('click', function () {
+    let justRewritten = false;
+
+    $('#rewriteQueryBtn').on('click', function () {
         if (!window.is_auth) {
             Swal.fire({
                 icon: 'error',
@@ -56,9 +58,11 @@ $(document).ready(function () {
         const icon = button.find('i');
         icon.removeClass('fa-spinner fa-spin').addClass('fa-lightbulb');
         button.prop('disabled', false);
+
+        justRewritten = true;
     });
 
-		const advancedOptionsContainer = $('#advancedOptionsContainer');
+    const advancedOptionsContainer = $('#advancedOptionsContainer');
     const showAdvancedOptionsBtn = $('.showAdvancedOptionsBtn');
     const autoCheckCheckbox = $('#autoCheck');
     const autoHideCheckbox = $('#autoHide');
@@ -122,7 +126,6 @@ $(document).ready(function () {
             event.preventDefault();
             const query = document.querySelector('#query').value;
             const nResults = document.querySelector('#n_results').value;
-            // const exampleLeads = document.querySelector('#exampleLeads').value;
             const autoCheck = document.querySelector('#autoCheck').checked;
             const autoHide = document.querySelector('#autoHide').checked;
             const budget = document.querySelector('#budget').value;
@@ -147,7 +150,6 @@ $(document).ready(function () {
                     confirmButtonColor: '#3E8CFF'
                 });
                 return;
-
             }
 
             if ((query === '') || (query === null) || (query === undefined) || (query.trim() === '')) {
@@ -162,40 +164,236 @@ $(document).ready(function () {
                 return;
             }
 
-            fetch("/submit_request", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    query: query,
-                    exampleLeads: exampleLeads,
-                    autoCheck: autoCheck,
-                    autoHide: autoHide,
-                    budget: budget,
-                    nResults: nResults,
-                    location: location,
-                    priceEstimate: priceEstimate
-                })
-            }).then(response => response.json())
-                .then(data => {
-                    if (data.message) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success',
-                            text: data.message,
-                            showConfirmButton: true,
-                            confirmButtonText: 'Go to Query',
-                            confirmButtonColor: '#3E8CFF'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = `/query/${data.guid}`;
-                            }
-                        });
-                    }
-                }).catch((error) => {
-                    console.error('Error:', error);
+            if (justRewritten) {
+                justRewritten = false;
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: data.message,
+                    showConfirmButton: true,
+                    allowOutsideClick: false,
+                    confirmButtonText: 'Go to Query',
+                    confirmButtonColor: '#3E8CFF'
+                }).then((result) => {
+                    submitQueryWithoutCheck(query);
                 });
+            } else {
+                // Show spinner
+                Swal.fire({
+                    title: 'Validating query...',
+                    html: 'Please wait while we check your query.',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    willOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                fetch("/submit_request", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        exampleLeads: exampleLeads,
+                        autoCheck: autoCheck,
+                        autoHide: autoHide,
+                        budget: budget,
+                        nResults: nResults,
+                        location: location,
+                        priceEstimate: priceEstimate
+                    })
+                }).then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.guid) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success',
+                                text: data.message,
+                                showConfirmButton: true,
+                                allowOutsideClick: false,
+                                confirmButtonText: 'Go to Query',
+                                confirmButtonColor: '#3E8CFF'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = `/query/${data.guid}`;
+                                }
+                            });
+                        } else if (data.alternative_queries) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Hold up!',
+                                html: `
+                                    <p>${data.message}</p>
+                                    <p>What do you think of these instead?</p>
+                                    <p>
+                                        ${data.alternative_queries.map((q, index) => `<a href="#" class="alternative-query" data-index="${index}"><strong>${q}</strong></a><hr>`).join('')}
+                                    </p>
+                                    <p>Click on a query to use it, or proceed with your original query.</p>
+                                `,
+                                showCancelButton: true,
+                                confirmButtonText: 'Proceed with original',
+                                cancelButtonText: 'Cancel',
+                                confirmButtonColor: '#3E8CFF',
+                                cancelButtonColor: '#d33'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    submitQueryWithoutCheck(query);
+                                }
+                            });
+
+                            // Add click event listeners to the alternative queries
+                            document.querySelectorAll('.alternative-query').forEach(link => {
+                                link.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    const selectedQuery = data.alternative_queries[this.dataset.index];
+                                    document.querySelector('#query').value = selectedQuery;
+                                    Swal.close();
+                                    submitQueryWithoutCheck(selectedQuery);
+                                });
+                            });
+                        }
+                    }).catch((error) => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while processing your request.',
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#3E8CFF'
+                        });
+                    });
+            }
         });
     }
 });
+
+// Function to submit the query without rechecking
+function submitQuery(queryText) {
+    const exampleLeads = [];
+    $('.example-lead-input').each(function() {
+        const value = $(this).val().trim();
+        if (value) {
+            exampleLeads.push(value);
+        }
+    });
+    const formData = {
+        query: queryText,
+        exampleLeads: exampleLeads,
+        autoCheck: $('#autoCheck').is(':checked'),
+        autoHide: $('#autoHide').is(':checked'),
+        budget: $('#budget').val(),
+        nResults: $('#n_results').val(),
+        location: $('#location').val(),
+        priceEstimate: $('#priceEstimate').val(),
+    };
+
+    fetch("/submit_request", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    }).then(response => response.json())
+    .then(data => {
+        if (data.guid) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Query Submitted',
+                text: 'Your query has been successfully submitted.',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                window.location.href = `/query/${data.guid}`;
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An error occurred while submitting your query.',
+                showConfirmButton: true,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#3E8CFF'
+            });
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while submitting your query.',
+            showConfirmButton: true,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#3E8CFF'
+        });
+    });
+}
+
+// New function to submit the query without validation
+function submitQueryWithoutCheck(queryText) {
+    const exampleLeads = [];
+    $('.example-lead-input').each(function() {
+        const value = $(this).val().trim();
+        if (value) {
+            exampleLeads.push(value);
+        }
+    });
+    const formData = {
+        query: queryText,
+        exampleLeads: exampleLeads,
+        autoCheck: $('#autoCheck').is(':checked'),
+        autoHide: $('#autoHide').is(':checked'),
+        budget: $('#budget').val(),
+        nResults: $('#n_results').val(),
+        location: $('#location').val(),
+        priceEstimate: $('#priceEstimate').val(),
+        skip_validation: true
+    };
+
+    fetch("/submit_request", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    }).then(response => response.json())
+    .then(data => {
+        if (data.guid) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: data.message,
+                showConfirmButton: true,
+                allowOutsideClick: false,
+                confirmButtonText: 'Go to Query',
+                confirmButtonColor: '#3E8CFF'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `/query/${data.guid}`;
+                }
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An error occurred while submitting your query.',
+                showConfirmButton: true,
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#3E8CFF'
+            });
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while submitting your query.',
+            showConfirmButton: true,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#3E8CFF'
+        });
+    });
+}

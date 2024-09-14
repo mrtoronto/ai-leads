@@ -148,7 +148,6 @@ class User(UserMixin, db.Model):
 		elif source_id:
 			source = LeadSource.get_by_id(source_id)
 			leads = Lead.query.filter_by(
-				user_id=self.id,
 				hidden=False,
 				source_id=source_id
 			).order_by(

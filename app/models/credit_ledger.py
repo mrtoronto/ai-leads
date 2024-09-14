@@ -8,6 +8,7 @@ class CreditLedgerType:
 	CHECK_QUERY = 'check_query_source'
 	CHECK_LEAD = 'check_lead'
 	REWRITE_QUERY = 'rewrite_query'
+	VALIDATE_QUERY = 'validate_query'
 	CHECK_SOURCE = 'check_source'
 	PAID = 'paid'
 

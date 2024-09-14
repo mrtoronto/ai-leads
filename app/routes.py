@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import socketio, mail
 from app.models import User, Lead, Query, LeadSource, Job, CreditLedger
 from app.models.credit_ledger import CreditLedgerType
+from app.llm._rewrite import validate_query, generate_queries
 from app.tasks import queue_check_lead_task, queue_search_request
 from flask import Blueprint
 import redis
@@ -234,44 +235,63 @@ def logout():
 @bp.route('/submit_request', methods=['POST'])
 @login_required
 def submit_request():
-	data = request.get_json() or {}
-	query = data.get('query')
-	if not query:
-		return jsonify({"error": "Query is required"}), 400
+    data = request.get_json() or {}
+    query = data.get('query')
+    if not query:
+        return jsonify({"error": "Query is required"}), 400
 
-	if current_user.credits < 1:
-		socketio.emit('credit_error', {'message': 'Not enough credits to run a search.'}, to=f'user_{current_user.id}')
-		return jsonify({"error": "You do not have enough credits to run this search."}), 400
+    if current_user.credits < 1:
+        socketio.emit('credit_error', {'message': 'Not enough credits to run a search.'}, to=f'user_{current_user.id}')
+        return jsonify({"error": "You do not have enough credits to run this search."}), 400
+    
+    skip_validation = data.get('skip_validation', False)
+    
+    if not skip_validation:
+        is_good_query = validate_query({
+            'user_query': query,
+            'user': current_user,
+            'location': data.get('location'),
+            'example_leads': data.get('exampleLeads', [])
+        }, socketio_obj=socketio, app_obj=current_app)
 
-	new_request = Query(
-		user_id=current_user.id,
-		user_query=query,
-		auto_check=data.get('autoCheck', False),
-		auto_hide_invalid=data.get('autoHide', False),
-		budget=float(data.get('budget', 0)) if data.get('budget') else None,
-		location=data.get('location'),
-		n_results_requested=data.get('nResults')
-	)
-	new_request.save()
+        if not is_good_query:
+            alternative_queries = generate_queries({
+                'user_query': query,
+                'user': current_user,
+				'location': data.get('location'),
+				'example_leads': data.get('exampleLeads', [])
+			}, socketio_obj=socketio, app_obj=current_app)
+            return jsonify({"message": "This query might not perform well....", "alternative_queries": alternative_queries}), 200
 
-	# Handle example leads
-	example_leads = data.get('exampleLeads')
-	if example_leads:
-		for url in example_leads:
-			if url and url.strip():
-				url = url.strip()
-				new_lead_obj = Lead._add(
-					url=url,
-					user_id=current_user.id,
-					query_id=new_request.id,
-					source_id=None,
-					example_lead=True
-				)
-				if new_lead_obj:
-					queue_check_lead_task(new_lead_obj.id)
-	else:
-		queue_search_request(new_request.id)
-	return jsonify({"message": "Search queued!", "guid": new_request.guid}), 200
+    new_request = Query(
+        user_id=current_user.id,
+        user_query=query,
+        auto_check=data.get('autoCheck', False),
+        auto_hide_invalid=data.get('autoHide', False),
+        budget=float(data.get('budget', 0)) if data.get('budget') else None,
+        location=data.get('location'),
+        n_results_requested=data.get('nResults')
+    )
+    new_request.save()
+
+    # Handle example leads
+    example_leads = data.get('exampleLeads')
+    if example_leads:
+        for url in example_leads:
+            if url and url.strip():
+                url = url.strip()
+                new_lead_obj = Lead._add(
+                    url=url,
+                    user_id=current_user.id,
+                    query_id=new_request.id,
+                    source_id=None,
+                    example_lead=True
+                )
+                if new_lead_obj:
+                    queue_check_lead_task(new_lead_obj.id)
+    else:
+        queue_search_request(new_request.id)
+    return jsonify({"message": "Search queued!", "guid": new_request.guid}), 200
 
 @bp.route('/query/<guid>')
 @login_required
