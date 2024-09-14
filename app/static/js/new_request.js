@@ -224,14 +224,15 @@ $(document).ready(function () {
                         } else if (data.alternative_queries) {
                             Swal.fire({
                                 icon: 'warning',
-                                title: 'Hold up!',
+                                title: 'Hold up...',
                                 html: `
                                     <p>${data.message}</p>
                                     <p>What do you think of these instead?</p>
                                     <p>
+                                        <hr>
                                         ${data.alternative_queries.map((q, index) => `<a href="#" class="alternative-query" data-index="${index}"><strong>${q}</strong></a><hr>`).join('')}
                                     </p>
-                                    <p>Click on a query to use it, or proceed with your original query.</p>
+                                    <p>Click on a query to use it, or proceed with your original query below.</p>
                                 `,
                                 showCancelButton: true,
                                 confirmButtonText: 'Proceed with original',

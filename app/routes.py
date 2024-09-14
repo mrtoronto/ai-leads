@@ -261,7 +261,7 @@ def submit_request():
 				'location': data.get('location'),
 				'example_leads': data.get('exampleLeads', [])
 			}, socketio_obj=socketio, app_obj=current_app)
-            return jsonify({"message": "This query might not perform well....", "alternative_queries": alternative_queries}), 200
+            return jsonify({"message": "Our models show this query might not perform well...", "alternative_queries": alternative_queries}), 200
 
     new_request = Query(
         user_id=current_user.id,
