@@ -9,6 +9,8 @@ from langchain.prompts import PromptTemplate
 from app.utils import _tidy_url
 from app.models import Lead, LeadSource, CreditLedgerType
 
+from urllib.parse import urlparse
+
 import logging
 
 logger = logging.getLogger('BDB-2EB')
@@ -123,7 +125,8 @@ class PromptTemplate():
 
 source_lead_collection_prompt = PromptTemplate([
 	"""You are a GPT trained to collect leads from a source of leads. The user provided the contents of a page potentially containing leads.""",
-	"""Filter the content and return the metadata relevant to the user.""",
+	"""Filter the content and return the data relevant to the user. """,
+	"""Links are the most important part of the data. Your goal is to return relevant data to continue the users search.""",
 	"""## Description of Leads and Lead Sources
 
 Metadata includes page content and URLs. Relevant links include leads and lead sources.
@@ -137,7 +140,9 @@ Only URLs are relevant. The following are not relevant:
 	- Twitter, Facebook, Instagram or other social media profiles
 	- Maps or directions
 
-Internal links within a site are valid. We will handle transforming them into a full URL.""",
+Internal links within a site are valid. We will handle transforming them into a full URL.
+
+If there are many internal links, only include the most relevant ones to the users search.""",
 	"""This user describes their product as "{user_industry}".""",
 	"""The user describes their ideal customer as: {user_description}""",
 	"""The query made by the user is: {query_text}""",
@@ -271,123 +276,166 @@ def _llm(data, template, parser, parse_output=True, previous_leads=[], model_nam
 		return None, 0
 
 
+SKIP_DOMAINS = [
+	'instagram.com', 
+	'facebook.com', 
+	'twitter.com',
+	'linkedin.com',
+	'youtube.com',
+	'tiktok.com',
+	'pinterest.com',
+	'zillow.com',
+	'realtor.com',
+	'trulia.com',
+	'/facebook/',
+	'/twitter/',
+	'/linkedin/',
+]
+
+SKIP_PHRASES = [
+    '/privacy',
+    '/terms',
+    '/careers',
+    '/copyright',
+    '/disclaimer',
+    '/cookie',
+    '/policy',
+    '/notice',
+    '/faq',
+    '/help',
+    '/login',
+    '/signup',
+    '/cdn',
+    '/register',
+    '/account',
+    '/sitemap',
+    '/contact',
+    '/about',
+    '/about-us',
+    '/team',
+    '/jobs',
+    '/apply',
+    '/submit',
+    '/unsubscribe',
+    '/preferences',
+    '/settings',
+    '/feedback',
+    '/support',
+    '/legal',
+    '/accessibility',
+    '/advertising',
+    '/partners',
+    '/affiliates',
+    '/press',
+    '/media',
+    '/news',
+    '/events',
+    '/webinars',
+    '/downloads',
+    '/resources',
+    '/newsletter',
+    '/subscribe',
+    '/search',
+    '/404',
+    '/500',
+    '/maintenance',
+    '/status',
+    '/api',
+    '/docs',
+    '/developer',
+    '/blog/page',
+    '/archive',
+    '/rss',
+    '/feed',
+    '/xml',
+    '/print',
+    '/share',
+]
+
+def remove_script_and_style(soup):
+    for element in soup(['script', 'style']):
+        element.decompose()
+
+def extract_text_and_links(soup, link):
+    raw_text = []
+    links = []
+    for element in soup.find_all(['a', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'span', 'div']):
+        if element.name == 'a' and 'href' in element.attrs:
+            link_text = element.get_text(separator=' ', strip=True)
+            link_url = element.get('href')
+            if link_url and not link_url.startswith('javascript:'):
+                placeholder_link_text = f"[PLACEHOLDER_LINK_{len(links)}]"
+                raw_text.append(placeholder_link_text)
+                links.append((link_url, link_text, len(raw_text) - 1, placeholder_link_text))
+        else:
+            text = element.get_text(separator=' ', strip=True)
+            if text:
+                raw_text.append(text)
+    return ' '.join(raw_text).split(), links
+
+def process_links(raw_text, links, base_url):
+    processed_links = []
+    for link_url, link_text, pos, placeholder_text in links:
+        if link_url.startswith('tel:') or link_url.startswith('mailto:'):
+            continue
+        start = max(0, pos - 20)
+        end = min(len(raw_text), pos + 21)
+        if link_url[0] == '/':
+            link_url = _tidy_url(base_url, link_url)
+        context = ' '.join(raw_text[start:pos]) + f" {link_text} " + ' '.join(raw_text[pos+1:end])
+        processed_links.append({
+            "url": link_url,
+            "url_id": placeholder_text,
+            "context": context
+        })
+    return processed_links
+
+def filter_and_sort_links(processed_links, base_url):
+    base_domain = urlparse(base_url).netloc
+    sorted_links = sorted(processed_links, key=lambda x: urlparse(x['url']).netloc == base_domain)
+    sorted_links = [v for v in sorted_links if v['url'] not in ['#']]
+    seen = set()
+    unique_links = []
+    for link in sorted_links:
+        parsed_url = urlparse(link['url'])
+        path = parsed_url.path
+        if path not in seen:
+            seen.add(path)
+            unique_links.append(link)
+    sorted_links = unique_links
+    sorted_links = [v for v in sorted_links if not any(domain in v['url'].lower() for domain in SKIP_DOMAINS)]
+    sorted_links = [v for v in sorted_links if not any(phrase in v['url'].lower() for phrase in SKIP_PHRASES)]
+    return sorted_links
+
+def get_visible_content(link):
+    headers = {'User-Agent': random.choice(user_agents)}
+    session = requests.Session()
+    try:
+        resp = session.get(link, headers=headers, timeout=10, allow_redirects=True)
+        resp.raise_for_status()
+    except requests.exceptions.RequestException:
+        return None, None
+
+    if resp.status_code != 200 or not resp.text:
+        return None, None
+
+    soup = BeautifulSoup(resp.text, 'html.parser')
+    remove_script_and_style(soup)
+
+    raw_text, links = extract_text_and_links(soup, link)
+    processed_links = process_links(raw_text, links, link)
+    sorted_links = filter_and_sort_links(processed_links, link)
+
+    og_image = soup.find('meta', property='og:image')
+    og_image_url = og_image.get('content') if og_image and og_image.get('content') else None
+
+    return str(sorted_links), og_image_url
+
 def get_visible_links(link):
-	headers = {
-		'User-Agent': random.choice(user_agents)
-	}
-	session = requests.Session()
-	try:
-		resp = session.get(link, headers=headers, timeout=10, allow_redirects=True)
-		resp.raise_for_status()  # Raises an HTTPError for bad responses
-	except requests.exceptions.RequestException as e:
-		return None, None
-
-	if resp.status_code != 200:
-		return None, None
-	html = resp.text
-
-	if not html:
-		return None, None
-
-	soup = BeautifulSoup(html, 'html.parser')
-
-	# Remove all script and style elements
-	for script_or_style in soup(['script', 'style']):
-		script_or_style.decompose()
-
-	# Extract text and links
-	visible_text_with_links = []
-	raw_text = []
-	links = []
-
-	for element in soup.descendants:
-		if isinstance(element, str):
-			text = element.strip()
-			if text:
-				raw_text.append(text)
-		elif element.name == 'a' and 'href' in element.attrs:
-			link_text = element.get_text(separator=' ', strip=True)
-			link_url = element.get('href')
-			placeholder_link_text = f"[PLACEHOLDER_LINK_{len(links)}]"
-			raw_text.append(placeholder_link_text)
-			links.append((link_url, link_text, len(raw_text) - 1, placeholder_link_text))
-
-	raw_text = ' '.join(raw_text).split()
-
-	for link_obj in links:
-		link_url, link_text, pos, placeholder_text = link_obj
-		if not link_url:
-			continue
-		if link_url.startswith('tel:') or link_url.startswith('mailto:'):
-			continue
-		start = max(0, pos - 20)
-		end = min(len(raw_text), pos + 21)
-
-		if link_url[0] == '/':
-			link_url = _tidy_url(link, link_url)
-
-		context = ' '.join(raw_text[start:pos]) + f" {link_text} " + ' '.join(raw_text[pos+1:end])
-		visible_text_with_links.append({
-			"url": link_url,
-			"url_id": placeholder_text,
-			"context": context
-		})
-
-	# visible_text_with_links = '\n\n'.join(visible_text_with_links)
-
-	# Get OpenGraph image
-	og_image = soup.find('meta', property='og:image')
-	og_image_url = og_image.get('content') if og_image and og_image.get('content') else None
-
-	return str(visible_text_with_links), og_image_url
+    return get_visible_content(link)
 
 def get_visible_text_and_links(link):
-	headers = {
-		'User-Agent': random.choice(user_agents)
-	}
-	session = requests.Session()
-	try:
-		resp = session.get(link, headers=headers, timeout=10, allow_redirects=True)
-		resp.raise_for_status()  # Raises an HTTPError for bad responses
-	except requests.exceptions.RequestException as e:
-		return None, None
-
-	if resp.status_code != 200:
-		return None, None
-	html = resp.text
-
-	if not html:
-		return None, None
-
-	soup = BeautifulSoup(html, 'html.parser')
-	rendered_text = []
-
-	# Remove all script and style elements
-	for script_or_style in soup(['script', 'style']):
-		script_or_style.decompose()
-
-	# Extract text and links
-	for element in soup.descendants:
-		if isinstance(element, str):
-			text = element.strip()
-			if text:
-				rendered_text.append(text)
-		elif element.name == 'a' and 'href' in element.attrs:
-			link_text = element.get_text(separator=' ', strip=True)
-			link_url = element.get('href')
-			rendered_text.append(f"{link_text} ({link_url})")
-
-	# Get OpenGraph image
-	og_image = soup.find('meta', property='og:image')
-	if og_image and og_image.get('content'):
-		og_image_url = og_image.get('content')
-	else:
-		og_image_url = None
-
-	rendered_text = ' '.join(rendered_text)
-	rendered_text = rendered_text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
-	return rendered_text, og_image_url
-
+    return get_visible_content(link)
 
 def _llm_validate_lead(link, user, query):
 	"""
