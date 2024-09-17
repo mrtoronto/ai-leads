@@ -471,25 +471,25 @@ def _llm_validate_lead(link, user, query):
 			invalid_link=True
 		), opengraph_img_url, 0
 
-def collect_leads_from_url(url, query, user, previous_leads, url_collection_mult=3, app_obj=None, socketio_obj=None):
-	print(f'Collecting leads from URL: {url}')
-	if user.credits < 1:
-		return CollectionOutput(
-			not_enough_credits=True
-		), None, 0
+def collect_leads_from_url(url, query, user, previous_leads, url_collection_mult=3, app_obj=None, socketio_obj=None, session=None):
+    print(f'Collecting leads from URL: {url}')
+    if user.credits < 1:
+        return CollectionOutput(
+            not_enough_credits=True
+        ), None, 0
 
-	visible_text, opengraph_img_url = get_visible_links(url)
-	if visible_text:
-		data = _get_default_input_data(user, visible_text, query)
-		data['previous_leads'] = previous_leads
-		output, tokens_used_usd = _llm(
-			data=data,
-			template=source_lead_collection_prompt,
-			parser=collection_parser,
-			model_name=(user.model_preference or 'gpt-4o-mini')
-		)
-		return output, opengraph_img_url, tokens_used_usd
-	else:
-		return CollectionOutput(
-			invalid_link=True
-		), opengraph_img_url, 0
+    visible_text, opengraph_img_url = get_visible_links(url)
+    if visible_text:
+        data = _get_default_input_data(user, visible_text, query)
+        data['previous_leads'] = previous_leads
+        output, tokens_used_usd = _llm(
+            data=data,
+            template=source_lead_collection_prompt,
+            parser=collection_parser,
+            model_name=(user.model_preference or 'gpt-4o-mini')
+        )
+        return output, opengraph_img_url, tokens_used_usd
+    else:
+        return CollectionOutput(
+            invalid_link=True
+        ), opengraph_img_url, 0

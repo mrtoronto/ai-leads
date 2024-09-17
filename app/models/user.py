@@ -82,33 +82,38 @@ class User(UserMixin, db.Model):
 	def get_by_username(cls, username):
 		return cls.query.filter_by(username=username).first()
 
-	def save(self):
+	def save(self, session=None):
+		session = session or db.session
 		if not self.id:
-			db.session.add(self)
-		db.session.commit()
+			session.add(self)
+		session.commit()
 
-	def move_credits(self, amount, cost_usd, trxn_type, trxn_description="", app_obj=None, socketio_obj=None):
-		self.credits += amount
-		self.save()
+	def move_credits(self, amount, cost_usd, trxn_type, trxn_description="", app_obj=None, socketio_obj=None, session=None):
+		session = session or db.session
 
+		# Merge the user object with the current session
+		user = session.merge(self)
+		
+		user.credits += amount
+		
 		entry = CreditLedger(
-			user_id=self.id,
+			user_id=user.id,
 			amount=amount,
 			cost_usd=cost_usd,
 			transaction_type=trxn_type,
 			transaction_description=trxn_description
 		)
-		entry.save()
+		session.add(entry)
+		session.commit()
 
-		credits_remaining = self.credits >= 0
+		credits_remaining = user.credits >= 0
 
 		if socketio_obj and app_obj:
 			with app_obj.app_context():
-				print(f"Sending update_credits to user_{self.id}")
-				socketio_obj.emit('update_credits', {'credits': self.credits}, to=f'user_{self.id}')
+				print(f"Sending update_credits to user_{user.id}")
+				socketio_obj.emit('update_credits', {'credits': user.credits}, to=f'user_{user.id}')
 
 		return entry, credits_remaining
-
 
 	def get_initial_data(self, data):
 		get_requests = data.get('get_requests', True)

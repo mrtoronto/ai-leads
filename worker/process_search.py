@@ -7,6 +7,8 @@ from flask_socketio import emit
 from worker import _make_min_app
 from local_settings import SERP_API_KEY
 import requests
+from sqlalchemy.orm import joinedload
+
 
 import logging
 logger = logging.getLogger('BDB-2EB')
@@ -49,33 +51,69 @@ def search_serpapi(query):
 	else:
 		return None
 
-def search_and_validate_leads(new_query, previous_leads, app_obj, socketio_obj, query_job_obj):
+def search_and_validate_leads(new_query_id, previous_leads, app_obj, socketio_obj, query_job_obj, session):
 	"""
 	Runs a search query and checks each source found in the query for leads and other lead sources
 	"""
+	new_query = session.query(Query).get(new_query_id)
+	if not new_query:
+		return [], "Query not found", 0
 
-	if new_query.user.credits < 1:
+	user = session.query(User).get(new_query.user_id)
+	if user.credits < 1:
 		return [], "Insufficient credits", 0
-	search_results = search_serpapi(new_query)
 
-	# print(search_results)
+	search_results = search_serpapi(new_query)
 	if not search_results:
 		return [], "Failed to search SERP API", 0
 
 	leads = []
+
+	if 'mini' in (user.model_preference or 'gpt-4o-mini'):
+		mult = app_obj.config['PRICING_MULTIPLIERS']['check_source_mini']
+	else:
+		mult = app_obj.config['PRICING_MULTIPLIERS']['check_source']
+
+	total_tokens_used_usd = 0
 	for result in search_results.get('organic_results', []):
 		url = result.get('link')
-
 		collected_leads, image_url, tokens_used_usd = collect_leads_from_url(
 			url=url,
 			query=new_query,
-			user=new_query.user,
+			user=user,
 			previous_leads=previous_leads,
 			app_obj=app_obj,
-			socketio_obj=socketio_obj
+			socketio_obj=socketio_obj,
+			session=session
+		)
+		total_tokens_used_usd += tokens_used_usd
+		
+		if new_query.total_cost_credits:
+			new_query.total_cost_credits += tokens_used_usd * mult * 1000
+		else:
+			new_query.total_cost_credits = tokens_used_usd * mult * 1000
+		if new_query.unique_cost_credits:
+			new_query.unique_cost_credits += tokens_used_usd * mult * 1000
+		else:
+			new_query.unique_cost_credits = tokens_used_usd * mult * 1000
+
+		user.move_credits(
+			amount=mult * -1000 * tokens_used_usd,
+			cost_usd=tokens_used_usd,
+			trxn_type=CreditLedgerType.CHECK_QUERY,
+			socketio_obj=socketio_obj,
+			app_obj=app_obj,
+			session=session
 		)
 
-		logger.info(collected_leads)
+		if new_query.budget and new_query.total_cost_credits and new_query.total_cost_credits > new_query.budget:
+			new_query.over_budget = True
+
+		session.commit()
+
+		if socketio_obj and app_obj:
+			with app_obj.app_context():
+				socketio_obj.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True, cost=True)]}, to=f'user_{new_query.user_id}')
 
 		if collected_leads and collected_leads.not_enough_credits:
 			return [], "Insufficient credits"
@@ -91,7 +129,8 @@ def search_and_validate_leads(new_query, previous_leads, app_obj, socketio_obj, 
 			checked=True,
 			name=collected_leads.name,
 			description=collected_leads.description,
-			valid=(True if collected_leads.name else False)
+			valid=(True if collected_leads.name else False),
+			session=session
 		)
 
 		if new_source_obj and socketio_obj and app_obj:
@@ -105,104 +144,96 @@ def search_and_validate_leads(new_query, previous_leads, app_obj, socketio_obj, 
 					user_id=new_query.user_id,
 					query_id=new_query.id,
 					source_id=None,
+					session=session
 				)
 				if new_lead_obj and app_obj:
-
-					if new_lead_obj.query_id and new_lead_obj.query_obj.auto_check:
-						new_lead_obj.checking = True
-						new_lead_obj.save()
-
-						app_obj.config['high_priority_queue'].enqueue('worker.check_lead.check_lead_task', new_lead_obj.id)
-
-						new_job = Job(
-							lead_id=new_lead_obj.id,
-							_type=JobTypes.LEAD_CHECK,
-						)
-
-						new_job.save()
-
-					if socketio_obj:
-						with app_obj.app_context():
-							socketio_obj.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{new_query.user_id}')
+					with app_obj.app_context():
+						socketio_obj.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{new_query.user_id}')
 
 		if collected_leads.lead_sources:
 			for lead_source in collected_leads.lead_sources:
 				new_source_obj = LeadSource.check_and_add(
-					url=lead_source.url,
-					user_id=new_query.user_id,
-					query_id=new_query.id
+					lead_source.url,
+					new_query.user_id,
+					new_query.id,
+					checked=False,
+					session=session
 				)
 				if new_source_obj and app_obj:
-
 					if new_source_obj.query_id and new_source_obj.query_obj.auto_check:
-
 						new_source_obj.checking = True
-						new_source_obj.save()
-
-						app_obj.config['high_priority_queue'].enqueue('worker.check_lead_source.check_lead_source_task', new_source_obj.id)
-
+						session.commit()
 						new_job = Job(
 							source_id=new_source_obj.id,
 							_type=JobTypes.SOURCE_CHECK,
 						)
-
-						new_job.save()
+						session.add(new_job)
+						session.commit()
+						app_obj.config['high_priority_queue'].enqueue('worker.check_lead_source.check_lead_source_task', new_source_obj.id)
 
 					if socketio_obj:
 						with app_obj.app_context():
 							socketio_obj.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{new_query.user_id}')
 
 		new_query.n_results_retrieved += 1
-		new_query.save()
+		session.commit()
 
-		if socketio_obj and app_obj:
-			with app_obj.app_context():
-				socketio_obj.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True, cost=True)]}, to=f'user_{new_query.user_id}')
+		if socketio_obj:
+			socketio_obj.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True, cost=True)]}, to=f'user_{new_query.user_id}')
 
-		if 'mini' in (new_query.user.model_preference or 'gpt-4o-mini'):
-			mult = app_obj.config['PRICING_MULTIPLIERS']['check_source_mini']
-		else:
-			mult = app_obj.config['PRICING_MULTIPLIERS']['check_source']
+	if new_query.total_cost_credits:
+		new_query.total_cost_credits += total_tokens_used_usd * mult * 1000
+	else:
+		new_query.total_cost_credits = total_tokens_used_usd * mult * 1000
+	if new_query.unique_cost_credits:
+		new_query.unique_cost_credits += total_tokens_used_usd * mult * 1000
+	else:
+		new_query.unique_cost_credits = total_tokens_used_usd * mult * 1000
 
-		query_job_obj.total_cost_credits += tokens_used_usd * mult * 1000
-		query_job_obj.unique_cost_credits += tokens_used_usd * mult * 1000
-		query_job_obj.save()
+	user.move_credits(
+		amount=mult * -1000 * total_tokens_used_usd,
+		cost_usd=total_tokens_used_usd,
+		trxn_type=CreditLedgerType.CHECK_QUERY,
+		socketio_obj=socketio_obj,
+		app_obj=app_obj,
+		session=session
+	)
 
-		new_query.user.move_credits(
-			amount=mult * -1000 * tokens_used_usd,
-			cost_usd=tokens_used_usd,
-			trxn_type=CreditLedgerType.CHECK_QUERY,
-			socketio_obj=worker_socketio,
-			app_obj=app_obj
-		)
+	if new_query.budget and query_job_obj.total_cost_credits and query_job_obj.total_cost_credits > new_query.budget:
+		new_query.over_budget = True
 
-		if new_query.budget and query_job_obj.total_cost_credits > new_query.budget:
-			new_query.over_budget = True
-			new_query.save()
-			break
+	session.commit()
 
 	new_query.n_results_requested = new_query.n_results_retrieved
-	new_query.save()
+	session.commit()
 
-	if socketio_obj and app_obj:
-		with app_obj.app_context():
-			socketio_obj.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True, cost=True)]}, to=f'user_{new_query.user_id}')
+	if socketio_obj:
+		socketio_obj.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True, cost=True)]}, to=f'user_{new_query.user_id}')
 
 	return True, ""
 
 
 
 
-def search_request_task(query_id):
+from app import db
 
+def search_request_task(query_id):
 	min_app = _make_min_app()
 	if not min_app:
 		logger.error("Failed to create app context")
 		return
+
 	with min_app.app_context():
+		session = db.session
+
+		new_query = session.query(Query).options(joinedload(Query.user)).get(query_id)
+		if not new_query:
+			logger.error(f"Query with id {query_id} not found")
+			return
+
 		job = get_current_job()
 
-		query_job_obj = Job.query.filter_by(query_id=query_id).first()
+		query_job_obj = session.query(Job).filter_by(query_id=query_id).first()
 		if query_job_obj:
 			query_job_obj._started(job.id if job else None)
 		else:
@@ -210,83 +241,64 @@ def search_request_task(query_id):
 				query_id=query_id,
 				_type=JobTypes.QUERY_CHECK,
 			)
-			new_job.save()
+			session.add(new_job)
+			session.commit()
 			new_job._started(job.id if job else None)
 			query_job_obj = new_job
-		request = Query.get_by_id(query_id)
 
-		if not request:
+		if new_query.finished:
 			return
-
-		if request.finished:
-			return
-		if request.hidden:
-			request._finished(
+		if new_query.hidden:
+			new_query._finished(
 				socketio_obj=worker_socketio,
-				app_obj=min_app
+				app_obj=min_app,
+				session=session
 			)
 			return
 
-		request_user = request.user
+		request_user = new_query.user
 		previously_liked_leads = Lead.get_liked_leads(request_user.id, 5)
 
 		previous_leads = [f'{lead.name} - {lead.description}' for lead in previously_liked_leads]
 		previous_leads = '\n'.join(previous_leads) + '\n'
 		previous_leads = previous_leads.strip()
 
-		if request:
-			logger.info(f'Searching for leads for query: {request.user_query}')
-			# rephrased_query = rewrite_query(request, socketio_obj=worker_socketio)
-			# if rephrased_query:
-			# 	logger.info(f'Rephrased query: {rephrased_query.rewritten_query}')
-			# 	request.reformatted_query = rephrased_query.rewritten_query
-			# 	request.save()
-			# else:
-			# 	logger.error(f'Failed to rephrase query: {request.user_query}')
+		logger.info(f'Searching for leads for query: {new_query.user_query}')
 
-			# request.reformatted_query = request.user_query
-			# request.save()
+		token_charge = min_app.config['PRICING_MULTIPLIERS']['query']
 
+		request_user.move_credits(
+			amount=token_charge * -1,
+			cost_usd=0.01,
+			trxn_type=CreditLedgerType.QUERY,
+			socketio_obj=worker_socketio,
+			app_obj=min_app,
+			session=session
+		)
 
-			# worker_socketio.emit('queries_updated', {'queries': [request.to_dict(example_leads=True)]}, to=f'user_{request.user_id}')
+		new_query.total_cost_credits += token_charge
+		new_query.unique_cost_credits += token_charge
+		session.commit()
 
-			with min_app.app_context():
+		success, error = search_and_validate_leads(
+			new_query.id, previous_leads, min_app, worker_socketio, query_job_obj, session
+		)
 
-				token_charge = min_app.config['PRICING_MULTIPLIERS']['query']
-
-				request.user.move_credits(
-					amount=token_charge * -1,
-					cost_usd=0.01,
-					trxn_type=CreditLedgerType.QUERY,
-					socketio_obj=worker_socketio,
-					app_obj=min_app
-				)
-
-			query_job_obj.total_cost_credits += token_charge
-			query_job_obj.unique_cost_credits += token_charge
-			query_job_obj.save()
-
-			success, error = search_and_validate_leads(
-				request,
-				previous_leads,
+		if error:
+			new_query._finished(
+				run_notes=f'Error // {error}',
+				socketio_obj=worker_socketio,
 				app_obj=min_app,
-				socketio_obj=worker_socketio,
-				query_job_obj=query_job_obj
+				session=session
 			)
+			worker_socketio.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True, cost=True)]}, to=f'user_{new_query.user_id}')
+			return
 
-			if error:
-				request._finished(
-					run_notes=f'Error // {error}',
-					socketio_obj=worker_socketio,
-					app_obj=min_app
-				)
-				worker_socketio.emit('queries_updated', {'queries': [request.to_dict(example_leads=True, cost=True)]}, to=f'user_{request.user_id}')
-				return
+		new_query._finished(
+			socketio_obj=worker_socketio,
+			app_obj=min_app,
+			session=session
+		)
+		worker_socketio.emit('queries_updated', {'queries': [new_query.to_dict(example_leads=True, cost=True)]}, to=f'user_{new_query.user_id}')
 
-			request._finished(
-				socketio_obj=worker_socketio,
-				app_obj=min_app
-			)
-			worker_socketio.emit('queries_updated', {'queries': [request.to_dict(example_leads=True, cost=True)]}, to=f'user_{request.user_id}')
-
-		return
+	return

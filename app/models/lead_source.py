@@ -27,6 +27,9 @@ class LeadSource(db.Model):
 	image_url = db.Column(db.String(1000))
 	quality_score = db.Column(db.Float)
 
+	total_cost_credits = db.Column(db.Float, default=0)
+	unique_cost_credits = db.Column(db.Float, default=0)
+
 	hidden = db.Column(db.Boolean, default=False)
 	hidden_at = db.Column(db.DateTime)
 	auto_hidden = db.Column(db.Boolean, default=False)
@@ -63,7 +66,9 @@ class LeadSource(db.Model):
 			'place_in_queue': self._get_place_in_queue(),
 			'image_url': self.image_url,
 			'quality_score': self.quality_score,
-			'n_leads': self.leads.count()
+			'n_leads': self.leads.count(),
+			'total_cost_credits': self.total_cost_credits,
+			'unique_cost_credits': self.unique_cost_credits,
 		}
 
 	@classmethod
@@ -109,10 +114,11 @@ class LeadSource(db.Model):
 
 		return updates, failed_updates, user.last_trained_source_model_at
 
-	def save(self):
+	def save(self, session=None):
+		session = session or db.session
 		if not self.id:
-			db.session.add(self)
-		db.session.commit()
+			session.add(self)
+		session.commit()
 
 	@classmethod
 	def get_hidden_sources(cls, user_id):
@@ -123,14 +129,15 @@ class LeadSource(db.Model):
 		return cls.query.filter_by(user_id=user_id, hidden=False, valid=True).all()
 
 	@classmethod
-	def check_and_add(cls, url, user_id, query_id, image_url=None, checked=False, name=None, description=None, valid=False):
+	def check_and_add(cls, url, user_id, query_id, image_url=None, checked=False, name=None, description=None, valid=False, session=None):
+		session = session or db.session
 		url = get_standard_url(url)
 		if not _real_url_check(url):
 			return None
-		existing_source = cls.query.filter_by(url=url, hidden=False).first()
+		existing_source = session.query(cls).filter_by(url=url, hidden=False).first()
 		if existing_source:
 			return None
-		existing_hidden_query_source = cls.query.filter_by(url=url, query_id=query_id, hidden=True).first()
+		existing_hidden_query_source = session.query(cls).filter_by(url=url, query_id=query_id, hidden=True).first()
 		if existing_hidden_query_source:
 			return None
 		new_source = cls(
@@ -143,19 +150,12 @@ class LeadSource(db.Model):
 			name=name,
 			description=description
 		)
-		try:
-			new_source.save()
+		session.add(new_source)
+		session.commit()
+		return new_source
 
-			if new_source.query_id and new_source.query_obj.auto_hide_invalid and new_source.checked and not new_source.valid:
-				new_source._hide()
-
-			return new_source
-		except Exception as e:
-			print(f'Failed to save source {url} - {e}')
-			db.session.rollback()
-			return None
-
-	def _finished(self, checked=True, socketio_obj=None, app_obj=None):
+	def _finished(self, checked=True, socketio_obj=None, app_obj=None, session=None):
+		session = session or db.session
 		if self.checking or self.checked != checked:
 			updated_source = True
 		else:
@@ -163,23 +163,23 @@ class LeadSource(db.Model):
 
 		self.checking = False
 		self.checked = checked
-		self.save()
+		self.save(session=session)
 
-		### Finish all jobs
+		# Finish all jobs
 		for job in self.jobs.filter_by(finished=False).all():
-			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
+			job._finished(socketio_obj=socketio_obj, app_obj=app_obj, session=session)
 
 		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
-			self._hide(app_obj=app_obj, socketio_obj=socketio_obj)
+			self._hide(app_obj=app_obj, socketio_obj=socketio_obj, session=session)
 
 		if self.query_obj.over_budget:
-			### If query is overbudget, finish all started leads and sources
-			for lead in self.query_obj.filter_by(checking=True).all():
-				lead._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
-			for source in self.query_obj.filter_by(checking=True).all():
-				source._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj)
+			# If query is overbudget, finish all started leads and sources
+			for lead in self.query_obj.leads.filter_by(checking=True).all():
+				lead._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj, session=session)
+			for source in self.query_obj.sources.filter_by(checking=True).all():
+				source._finished(checked=False, socketio_obj=socketio_obj, app_obj=app_obj, session=session)
 
-			db.session.commit()
+		session.commit()
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
@@ -189,12 +189,13 @@ class LeadSource(db.Model):
 			with app_obj.app_context():
 				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f'user_{self.user_id}')
 
-	def _hide(self, auto_hidden=False, app_obj=None, socketio_obj=None):
+	def _hide(self, auto_hidden=False, app_obj=None, socketio_obj=None, session=None):
+		session = session or db.session
 		self.hidden = True
 		self.checking = False
 		self.auto_hidden = auto_hidden
 		self.hidden_at = datetime.now(pytz.utc)
-		db.session.commit()
+		session.commit()
 
 		if socketio_obj and app_obj:
 			with app_obj.app_context():
@@ -202,22 +203,23 @@ class LeadSource(db.Model):
 
 		for lead in self.get_leads():
 			if not lead.hidden:
-				lead._hide(auto_hidden=True, app_obj=app_obj, socketio_obj=socketio_obj)
+				lead._hide(auto_hidden=True, app_obj=app_obj, socketio_obj=socketio_obj, session=session)
 
-			lead._finished(checked=lead.checked, socketio_obj=socketio_obj, app_obj=app_obj)
+			lead._finished(checked=lead.checked, socketio_obj=socketio_obj, app_obj=app_obj, session=session)
 
 		for job in self.jobs.filter_by(finished=False).all():
-			job._finished(app_obj=app_obj, socketio_obj=socketio_obj)
+			job._finished(app_obj=app_obj, socketio_obj=socketio_obj, session=session)
 
 		if socketio_obj and app_obj:
 			with app_obj.app_context():
 				socketio_obj.emit('sources_updated', {'sources': [self.to_dict()]}, to=f"user_{self.user_id}")
 
-	def _unhide(self, app_obj=None, socketio_obj=None):
+	def _unhide(self, app_obj=None, socketio_obj=None, session=None):
+		session = session or db.session
 		self.hidden = False
 		self.hidden_at = None
 		self.auto_hidden = False
-		db.session.commit()
+		session.commit()
 
 		if socketio_obj and app_obj:
 			with app_obj.app_context():
@@ -225,7 +227,7 @@ class LeadSource(db.Model):
 
 		for lead in self.get_leads():
 			if lead.auto_hidden:
-				lead._unhide(app_obj=app_obj, socketio_obj=socketio_obj)
+				lead._unhide(app_obj=app_obj, socketio_obj=socketio_obj, session=session)
 
 		if socketio_obj and app_obj:
 			with app_obj.app_context():

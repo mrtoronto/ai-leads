@@ -37,9 +37,10 @@ class Job(db.Model):
 			db.session.add(self)
 		db.session.commit()
 
-	def _finished(self, app_obj=None, socketio_obj=None):
+	def _finished(self, app_obj=None, socketio_obj=None, session=None):
+		session = session or db.session
 		self.finished = True
-		db.session.commit()
+		session.commit()
 
 		if app_obj and socketio_obj:
 			### Get all unstarted, unfinished jobs, emit their updated place in the queue
@@ -79,7 +80,7 @@ class Job(db.Model):
 
 
 		self.finished_at = datetime.now(pytz.utc)
-		db.session.commit()
+		session.commit()
 
 		if self.started_at:
 			elapsed_time = self.finished_at - self.started_at

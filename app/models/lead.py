@@ -34,6 +34,9 @@ class Lead(db.Model):
 	image_url = db.Column(db.String(1000))
 	jobs = db.relationship('Job', backref='lead', lazy='dynamic')
 
+	total_cost_credits = db.Column(db.Float, default=0)
+	unique_cost_credits = db.Column(db.Float, default=0)
+
 	hidden_at = db.Column(db.DateTime)
 	hidden = db.Column(db.Boolean, default=False)
 	auto_hidden = db.Column(db.Boolean, default=False)
@@ -79,6 +82,8 @@ class Lead(db.Model):
 			'image_url': self.image_url,
 			'lead_source': self.lead_source.to_dict() if self.lead_source else None,
 			'query_obj': self.query_obj.to_dict() if self.query_obj else None,
+			'total_cost_credits': self.total_cost_credits,
+			'unique_cost_credits': self.unique_cost_credits,
 		}
 
 
@@ -122,10 +127,11 @@ class Lead(db.Model):
 	def get_visible_leads(cls, user_id):
 		return cls.query.filter(cls.user_id == user_id, cls.hidden == False, cls.valid == True).all()
 
-	def save(self):
+	def save(self, session=None):
+		session = session or db.session
 		if not self.id:
-			db.session.add(self)
-		db.session.commit()
+			session.add(self)
+		session.commit()
 
 	@classmethod
 	def batch_update_quality_scores(cls, user_id, user, model, lead_ids=None):
@@ -161,17 +167,18 @@ class Lead(db.Model):
 		return updates, failed_updates, user.last_trained_source_model_at
 
 	@classmethod
-	def check_and_add(cls, url, user_id, query_id, source_id, image_url=None, example_lead=False):
+	def check_and_add(cls, url, user_id, query_id, source_id, image_url=None, example_lead=False, session=None):
+		session = session or db.session
 		url = get_standard_url(url)
 		base_url = get_base_url(url)
 
 		if not _useful_url_check(url):
 			return None
 
-		existing_lead = cls.query.filter_by(base_url=base_url, hidden=False).first()
+		existing_lead = session.query(cls).filter_by(base_url=base_url, hidden=False).first()
 		if existing_lead:
 			return None
-		existing_hidden_query_lead = cls.query.filter_by(base_url=base_url, query_id=query_id, hidden=True).first()
+		existing_hidden_query_lead = session.query(cls).filter_by(base_url=base_url, query_id=query_id, hidden=True).first()
 		if existing_hidden_query_lead:
 			return None
 
@@ -185,12 +192,12 @@ class Lead(db.Model):
 			example_lead=example_lead
 		)
 		try:
-			new_lead.save()
-
+			session.add(new_lead)
+			session.commit()
 			return new_lead
 		except Exception as e:
 			print(f'Error adding lead: {e}')
-			db.session.rollback()
+			session.rollback()
 			return None
 
 	@classmethod
@@ -215,25 +222,26 @@ class Lead(db.Model):
 			db.session.rollback()
 			return None
 
-	def _hide(self, auto_hidden=False, app_obj=None, socketio_obj=None):
+	def _hide(self, auto_hidden=False, app_obj=None, socketio_obj=None, session=None):
+		session = session or db.session
 		self.hidden = True
 		self.checking = False
 		self.auto_hidden = auto_hidden
 		self.hidden_at = datetime.now(pytz.utc)
-		self.save()
-
+		self.save(session=session)
 
 		for job in self.jobs.filter_by(finished=False).all():
-			job._finished(app_obj=app_obj, socketio_obj=socketio_obj)
+			job._finished(app_obj=app_obj, socketio_obj=socketio_obj, session=session)
 
 		if app_obj and socketio_obj:
 			socketio_obj.emit('leads_updated', {'leads': [self.to_dict()]}, to=f'user_{self.user_id}')
 
-	def _unhide(self, app_obj=None, socketio_obj=None):
+	def _unhide(self, app_obj=None, socketio_obj=None, session=None):
+		session = session or db.session
 		self.hidden = False
 		self.hidden_at = None
 		self.auto_hidden = False
-		self.save()
+		self.save(session=session)
 
 		if app_obj and socketio_obj:
 			with app_obj.app_context():
@@ -241,22 +249,25 @@ class Lead(db.Model):
 
 		return self
 
-	def _finished(self, checked=True, socketio_obj=None, app_obj=None):
+	def _finished(self, checked=True, socketio_obj=None, app_obj=None, session=None):
+		session = session or db.session
 		if checked != self.checked or self.checking:
 			lead_updated = True
 		else:
 			lead_updated = False
 		self.checked = checked
 		self.checking = False
-		self.save()
+		self.save(session=session)
 
-		### Finish all jobs
+		# Finish all jobs
 		for job in self.jobs.filter_by(finished=False).all():
-			job._finished(socketio_obj=socketio_obj, app_obj=app_obj)
+			job._finished(socketio_obj=socketio_obj, app_obj=app_obj, session=session)
 
-		### Hide if invalid
+		# Hide if invalid
 		if self.query_id and self.query_obj.auto_hide_invalid and self.checked and not self.valid:
-			self._hide(app_obj=app_obj, socketio_obj=socketio_obj)
+			self._hide(app_obj=app_obj, socketio_obj=socketio_obj, session=session)
+
+		session.commit()
 
 		if app_obj and socketio_obj and lead_updated:
 			with app_obj.app_context():
