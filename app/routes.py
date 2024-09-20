@@ -647,14 +647,16 @@ def contact():
 		subject = request.form['subject']
 		message = request.form['message']
 
-		send_email(
-			current_app.config['MAIL_DEFAULT_SENDER'],
-			f"New Contact Form Submission: {subject}",
-			'contact_email',
-			name=name,
-			email=email,
-			message=message
-		)
+		if name != "RobertAvast":
+
+			send_email(
+				current_app.config['MAIL_DEFAULT_SENDER'],
+				f"New Contact Form Submission: {subject}",
+				'contact_email',
+				name=name,
+				email=email,
+				message=message
+			)
 
 		flash('Your message has been sent successfully.', 'success')
 		return redirect(url_for('main.contact'))
