@@ -842,26 +842,15 @@ function initializeHovers() {
 }
 
 function initializeSelectAll(extra_tables=[]) {
-		let tables = ['requests', 'sources', 'leads', 'liked-leads'];
-		tables = tables.concat(extra_tables);
-
+    let tables = ['requests', 'sources', 'leads', 'liked-leads'];
+    tables = tables.concat(extra_tables);
 
     tables.forEach(tableId => {
-        const selectAllCheckbox = document.getElementById(`${tableId}-select-all`);
-        const dropdownMenu = document.querySelector(`#${tableId}-dropdown + .dropdown-menu`);
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function() {
-            const rows = Array.from(document.querySelectorAll(`#${tableId}-table .table-row:not(.table-header)`))
-                .filter(row => row.style.display !== 'none');
-            rows.forEach(row => {
-                row.classList.toggle('table-row-selected', this.checked);
-            });
-                updateSelectedCount(tableId);
-            });
-        }
+        const selectDropdownMenu = document.querySelector(`#${tableId}-select-dropdown + .dropdown-menu`);
+        const actionsDropdownMenu = document.querySelector(`#${tableId}-actions-dropdown + .dropdown-menu`);
 
-        if (dropdownMenu) {
-            dropdownMenu.addEventListener('click', function(e) {
+        if (selectDropdownMenu) {
+            selectDropdownMenu.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 let clicked_button = false;
@@ -874,17 +863,33 @@ function initializeSelectAll(extra_tables=[]) {
                     clicked_button = true;
                 } else if (e.target.classList.contains('select-unchecked')) {
                     unselectAllRows(tableId);
-                		selectUncheckedRows(tableId);
+                    selectUncheckedRows(tableId);
                     clicked_button = true;
                 } else if (e.target.classList.contains('select-checked')) {
                     unselectAllRows(tableId);
-                		selectCheckedRows(tableId);
+                    selectCheckedRows(tableId);
                     clicked_button = true;
                 } else if (e.target.classList.contains('select-invalid')) {
                     unselectAllRows(tableId);
                     selectInvalidRows(tableId);
                     clicked_button = true;
-                } else if (e.target.classList.contains('check-all')) {
+                }
+
+                updateSelectedCount(tableId);
+
+                if (clicked_button) {
+                    selectDropdownMenu.classList.remove('show');
+                }
+            });
+        }
+
+        if (actionsDropdownMenu) {
+            actionsDropdownMenu.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                let clicked_button = false;
+
+                if (e.target.classList.contains('check-all')) {
                     checkAllSelected(tableId);
                     clicked_button = true;
                 } else if (e.target.classList.contains('hide-all')) {
@@ -897,11 +902,11 @@ function initializeSelectAll(extra_tables=[]) {
                     unhideAllSelected(tableId);
                     clicked_button = true;
                 }
+
                 updateSelectedCount(tableId);
 
                 if (clicked_button) {
-                	// close the menu
-										dropdownMenu.classList.remove('show');
+                    actionsDropdownMenu.classList.remove('show');
                 }
             });
         }
@@ -912,13 +917,11 @@ function selectAllRows(tableId) {
 	const rows = Array.from(document.querySelectorAll(`#${tableId}-table .table-row:not(.table-header)`))
 					.filter(row => row.style.display !== 'none');
     rows.forEach(row => row.classList.add('table-row-selected'));
-    document.getElementById(`${tableId}-select-all`).checked = true;
 }
 
 function unselectAllRows(tableId) {
     const rows = document.querySelectorAll(`#${tableId}-table .table-row:not(.table-header)`);
     rows.forEach(row => row.classList.remove('table-row-selected'));
-    document.getElementById(`${tableId}-select-all`).checked = false;
 }
 
 function selectUncheckedRows(tableId) {

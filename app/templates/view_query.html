@@ -1,15 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+
+	.check-sources-btn {
+		width: 20%;
+	}
+
+	.status-buttons {
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		gap: 1em;
+		flex-wrap: wrap;
+	}
+
+	@media (max-width: 768px) {
+		.check-sources-btn {
+			width: 45%;
+		}
+	}
+</style>
 <div class="container d-flex justify-content-center align-items-center">
     <div style="width: 100%;">
-    	{% include "subtemplates/_sub_navbar.html" %}
-		<div class="query-container mt-5">
-			<div class="loading-icon-container">
-				<img class="loading-icon" src="/static/assets/chunk-loader.svg">
-			</div>
-		</div>
-	    <div id="query-leads-table-container"></div>
-	    <div id="query-sources-table-container"></div>
+        {% include "subtemplates/_sub_navbar.html" %}
+        <div class="query-container mt-5">
+            <div class="loading-icon-container">
+                <img class="loading-icon" src="/static/assets/chunk-loader.svg">
+            </div>
+        </div>
+        <div id="query-sources-status-bar-container"></div>
+        <div id="query-leads-table-container"></div>
     </div>
 </div>
 

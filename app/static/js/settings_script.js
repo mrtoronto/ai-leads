@@ -88,7 +88,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 			socket.on('email_updated', function (response) {
 				if (response.success) {
-					console.log('Email updated successfully!')
 					Swal.fire({
 						icon: 'success',
 						title: 'Success',
@@ -97,7 +96,6 @@ document.addEventListener('DOMContentLoaded', function() {
 						location.reload();
 					});
 				} else {
-					console.log('Email updated failed!')
 					Swal.fire({
 						icon: 'error',
 						title: 'Error',

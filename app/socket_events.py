@@ -62,7 +62,7 @@ def handle_check_lead_source(data):
 		queue_check_lead_source_task(lead_source_id)
 		socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f"user_{lead_source.user_id}")
 	else:
-		socketio.emit('error', {'message': 'Lead source not found or already checked'}, to=f"user_{lead_source.user_id}")
+		socketio.emit('source_check_update_error', {'source_id': lead_source_id, 'message': 'Lead source not found or already checked'}, to=f"user_{lead_source.user_id}")
 
 @socketio.on('liked_lead')
 @time_socket_event
@@ -171,7 +171,6 @@ def handle_unhide_source(data):
 		lead_source._unhide(app_obj=current_app, socketio_obj=socketio)
 
 		socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f"user_{lead_source.user_id}")
-		socketio.emit('leads_updated', {'leads': [l.to_dict() for l in unhidden_leads]}, to=f"user_{lead_source.user_id}")
 
 
 @socketio.on('create_lead_source')

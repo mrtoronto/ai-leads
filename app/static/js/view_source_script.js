@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
     );
 
     fetchData({'source_id': sourceId}).then(data => {
-    		console.log(data);
         const container = document.querySelector('.source-container');
         container.innerHTML = '';
 

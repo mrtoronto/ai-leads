@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-	console.log(window.is_mobile);
 
 	const dynamicText = $('.hero-dynamic-text')[0];
 	const textArray = [

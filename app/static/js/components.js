@@ -81,31 +81,36 @@ export function createQueryDetailsComponent(query) {
     `);
 }
 
-export function createTableComponent(title, id_prefix, dropdownActionClasses=[]) {
-		const tableId = `${id_prefix}-table`;
-		const selectAllId = `${id_prefix}-select-all`;
-		const dropdownId = `${id_prefix}-dropdown`;
-		const searchId = `${id_prefix}-search`;
-    const actionMenu = dropdownActionClasses.length > 0 ? `
-        <div class="select-all-container">
-            <span class="selected-count" id="${tableId}-selected-count"></span>
-            <input type="checkbox" class="select-all-checkbox" id="${selectAllId}">
-            <label for="${selectAllId}">Select All</label>
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="${dropdownId}" data-bs-toggle="dropdown" aria-expanded="false">
-                    Actions
-                </button>
+export function createTableComponent(title, id_prefix) {
+    const dropdownActionClasses = ['select-all', 'select-checked', 'select-unchecked', 'select-invalid','check-all', 'export-csv',  'unselect-all', 'hide-all', 'unhide-all'];
+    const tableId = `${id_prefix}-table`;
+    const actionsDropdownId = `${id_prefix}-actions-dropdown`;
+    const selectDropdownId = `${id_prefix}-select-dropdown`;
+    const searchId = `${id_prefix}-search`;
+    
+    const actionClasses = dropdownActionClasses.filter(cls => ['check-all', 'export-csv', 'hide-all', 'unhide-all'].includes(cls));
+    const selectClasses = dropdownActionClasses.filter(cls => ['select-all', 'select-checked', 'select-unchecked', 'select-invalid', 'unselect-all'].includes(cls));
 
-                <ul class="dropdown-menu" aria-labelledby="${dropdownId}">
-                    ${dropdownActionClasses.reduce((acc, actionClass, index) => {
-                        if (actionClass === '') {
-                            return `${acc}<li><hr class="dropdown-divider"></li>`;
-                        }
-                        return `${acc}<li><a class="dropdown-item ${actionClass}" href="#">${getActionDisplayName(actionClass)}</a></li>`;
-                    }, '')}
-                </ul>
-            </div>
-        </div>` : '';
+    const actionMenu = dropdownActionClasses.length > 0 ? `
+    <div class="select-all-container">
+        <span class="selected-count" id="${tableId}-selected-count"></span>
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="${selectDropdownId}" data-bs-toggle="dropdown" aria-expanded="false">
+                Select
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="${selectDropdownId}">
+                ${selectClasses.map(actionClass => `<li><a class="dropdown-item ${actionClass}" href="#">${getActionDisplayName(actionClass)}</a></li>`).join('')}
+            </ul>
+        </div>
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="${actionsDropdownId}" data-bs-toggle="dropdown" aria-expanded="false">
+                Actions
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="${actionsDropdownId}">
+                ${actionClasses.map(actionClass => `<li><a class="dropdown-item ${actionClass}" href="#">${getActionDisplayName(actionClass)}</a></li>`).join('')}
+            </ul>
+        </div>
+    </div>` : '';
 
     return `
         <div class="mt-5">
@@ -186,4 +191,26 @@ function updateLikeButton(buttonSelector, item) {
     } else {
     		console.error(`Could not find button with selector: ${buttonSelector}[data-id="${item.id}"]`);
     }
+}
+
+export function createSourceStatusBar() {
+    return createCardComponent('Lead Sources', `
+        <div id="query-sources-status-bar">
+            <div id="source-progress-counter" class="mb-2" style="display: flex; justify-content: flex-start; align-items: center;">
+                <b>Scanned</b>: <span class="spinner-border spinner-border-sm ms-1" role="status" aria-hidden="true"></span>
+            </div>
+            <div class="progress mb-3">
+                <div id="checked-sources-bar" class="progress-bar checked-sources-bar" role="progressbar" style="width: 0%"></div>
+                <div id="in-progress-sources-bar" class="progress-bar in-progress-sources-bar" role="progressbar" style="width: 0%"></div>
+                <div id="unchecked-sources-bar" class="progress-bar" role="progressbar" style="width: 0%; background-color: rgba(172, 177, 207, 0.451);"></div>
+            </div>
+            <hr>
+            <div class="status-buttons">
+                <button id="check-10-sources" class="btn btn-primary check-sources-btn">Scan 10</button>
+                <button id="check-50-sources" class="btn btn-primary check-sources-btn">Scan 50</button>
+                <button id="check-100-sources" class="btn btn-primary check-sources-btn">Scan 100</button>
+                <button id="check-all-sources" class="btn btn-primary check-sources-btn">Scan All</button>
+            </div>
+        </div>
+    `, 'bg-light text-dark mb-4');
 }

@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Display any flashed messages from the server
-    console.log(window.flash_messages);
     if (window.flash_messages) {
         window.flash_messages.forEach(function(flash) {
             const category = flash[0];

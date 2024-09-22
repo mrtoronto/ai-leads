@@ -334,6 +334,7 @@ small {
     display: flex;
     align-items: center;
     margin-bottom: 12px;
+    gap: 0.5em;
 }
 
 .table-search-input {
@@ -550,6 +551,7 @@ small {
   .select-all-container {
     flex-direction: column;
     text-align: right;
+    align-items: center;
   }
 
   .select-all-container label {
@@ -742,4 +744,13 @@ small {
 
 .swal2-show {
     animation: swal2-show 0.6s;
+}
+
+
+.checked-sources-bar {
+    background-color: #00800042 !important;
+}
+
+.in-progress-sources-bar {
+    background-color: #ffff0038 !important;
 }

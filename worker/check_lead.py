@@ -282,9 +282,10 @@ def check_lead_task(lead_id):
 
                 session.commit()
 
-            with session.begin():
-                latest_query = session.merge(latest_query)
-                worker_socketio.emit('queries_updated', {'queries': [latest_query.to_dict(cost=True, example_leads=True)]}, to=f'user_{latest_query.user_id}')
+            if not session.is_active:
+                with session.begin():
+                    latest_query = session.merge(latest_query)
+                    worker_socketio.emit('queries_updated', {'queries': [latest_query.to_dict(cost=True, example_leads=True)]}, to=f'user_{latest_query.user_id}')
 
             worker_socketio.emit('leads_updated', {'leads': [lead.to_dict()]}, to=f'user_{lead.user_id}')
 

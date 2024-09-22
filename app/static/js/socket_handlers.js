@@ -7,7 +7,6 @@ import { createQueryDetailsComponent } from "./components.js";
 // Request-related events
 function handleRequestEvents(tableId='requests') {
 		tableId = tableId + '-table';
-		console.log('tableId:', tableId);
     socket.on('queries_updated', async data => { for (const request of data.queries) { updateRow(tableId, request) } });
 }
 
@@ -38,7 +37,6 @@ function handleLeadEvents(tableId='leads', query_id=null, source_id=null) {
 // Modify the handleQueryCardUpdate function
 function handleQueryCardUpdate(selector, queryId) {
     socket.on('queries_updated', async data => {
-    		console.log('data:', data);
         for (const query of data.queries) {
             if (query.id == queryId) {
                 const cardContainer = document.querySelector(selector);

@@ -171,7 +171,7 @@ def check_lead_source_task(lead_source_id):
                             query_id=lead_source.query_id
                         )
                         if new_source_obj:
-                            worker_socketio.emit('sources_updated', {'sources': [lead_source.to_dict()]}, to=f'user_{lead_source.user_id}')
+                            worker_socketio.emit('sources_updated', {'sources': [new_source_obj.to_dict()]}, to=f'user_{lead_source.user_id}')
 
             lead_source._finished(
                 socketio_obj=worker_socketio,

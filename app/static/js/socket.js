@@ -41,35 +41,34 @@ function initializeSocket() {
   });
 
 	socket.on('update_credits', function (data) {
-    console.log(data);
 
-    // Get the current value of the credit counter
-    const currentValue = parseInt($('#creditValue').text().replace(/[^0-9.-]+/g, ""), 10);
+		// Get the current value of the credit counter
+		const currentValue = parseInt($('#creditValue').text().replace(/[^0-9.-]+/g, ""), 10);
 
-		if (data.credits > currentValue) {
-			return;
-		}
+			if (data.credits > currentValue) {
+				return;
+			}
 
-    // Create a new CountUp instance
-    const countUp = new CountUp(
-    		'creditValue',
-       	data.credits,
-        {
-        		duration: 4,
-        		startVal: currentValue,
-          	decimalPlaces: 0,
-		        useEasing: true,
-		        useGrouping: true,
-		        separator: ','
-		    }
-    );
-
-    // Start the animation
-    countUp.start((complete) => {
-				if (complete) {
-					$('#creditSuffix').text(`${data.credits > 1 ? '⚡' : data.credits === 0 ? '😢' : ''}`);
+		// Create a new CountUp instance
+		const countUp = new CountUp(
+				'creditValue',
+			data.credits,
+			{
+					duration: 4,
+					startVal: currentValue,
+				decimalPlaces: 0,
+					useEasing: true,
+					useGrouping: true,
+					separator: ','
 				}
-    });
+		);
+
+		// Start the animation
+		countUp.start((complete) => {
+					if (complete) {
+						$('#creditSuffix').text(`${data.credits > 1 ? '⚡' : data.credits === 0 ? '😢' : ''}`);
+					}
+		});
 	});
 
 
