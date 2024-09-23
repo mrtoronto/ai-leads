@@ -416,8 +416,10 @@ def handle_send_admin_message(data):
 
 		### If its been > 1 hour since the last message in the chat,
 		### send an email to the user
-		last_message = chat.messages[-1]
-		time_diff = datetime.now(pytz.utc) - last_message.created_at
+		last_message = chat.messages.order_by(Message.timestamp.desc()).first()
+		if last_message is None:
+			return  # Handle the case where there are no messages in the chat
+		time_diff = datetime.now(pytz.utc) - last_message.timestamp.astimezone(pytz.utc)
 		if time_diff.total_seconds() > 3600:
 			send_email(
 				chat.user.email, 'New Support Chat Response', 'new_chat_response'
