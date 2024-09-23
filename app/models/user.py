@@ -36,6 +36,7 @@ class User(UserMixin, db.Model):
 	queries = db.relationship('Query', backref='user', lazy='dynamic')
 	leads = db.relationship('Lead', backref='user', lazy='dynamic')
 	sources = db.relationship('LeadSource', backref='user', lazy='dynamic')
+	chats = db.relationship('Chat', backref='user', lazy='dynamic')
 
 	def __init__(self, username=None, email=None, password=None, id=None, **kwargs):
 		self.id = id

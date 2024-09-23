@@ -1,5 +1,7 @@
 import re
 from app import socketio, db
+from datetime import datetime
+import pytz
 from flask import current_app
 from flask_login import login_required, current_user
 from app.models import LeadSource, Lead, Query, User, Journey, Chat, Message
@@ -385,8 +387,15 @@ def handle_send_message(data):
 		socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message.to_dict()}, to="admin_room")
 
 		if send_message_back:
-			new_content = "We've received your message and will get back to you soon. Thanks for contacting us!"
+			pst_time = datetime.now(pytz.timezone('US/Pacific'))
+			current_hour = pst_time.hour
+			if 23 <= current_hour or current_hour < 6:
+				new_content = "The admins are (probably) asleep and will be back to you in the morning."
+			else:
+				new_content = "The admins have been contacted and will be with you shortly."
 			new_message_back = Message(chat_id=chat_id, user_id=current_user.id, content=new_content, is_admin=is_admin)
+			db.session.add(new_message_back)
+			db.session.commit()
 			socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message_back.to_dict()}, to=f"user_{current_user.id}")
 			socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message_back.to_dict()}, to="admin_room")
 
@@ -401,6 +410,16 @@ def handle_send_admin_message(data):
 		if chat.resolved:
 			chat.resolved = False
 			db.session.commit()
+
+		### If its been > 1 hour since the last message in the chat,
+		### send an email to the user
+		last_message = chat.messages[-1]
+		time_diff = datetime.now(pytz.utc) - last_message.created_at
+		if time_diff.total_seconds() > 3600:
+			send_email(
+				chat.user.email, 'New Support Chat Response', 'new_chat_response'
+			)
+
 		new_message = Message(chat_id=chat_id, user_id=current_user.id, content=content, is_admin=True)
 		db.session.add(new_message)
 		db.session.commit()
