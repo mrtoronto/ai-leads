@@ -504,13 +504,21 @@ def reset_password(token):
 @bp.route('/send_verification_email', methods=['GET', 'POST'])
 @login_required
 def send_verification_email():
-	if current_user.email_verified:
-		return jsonify(message='Your email address has already been verified.'), 200
-	else:
-		token = generate_confirmation_token(current_user.email)
-		confirm_url = url_for('main.confirm_email', token=token, _external=True)
-		send_email(current_user.email, 'Confirm Your Email', 'confirm_email', confirm_url=confirm_url)
-		return jsonify(message='Verification email sent successfully'), 200
+    if current_user.email_verified:
+        if request.method == 'GET':
+            flash('Your email address has already been verified.', 'info')
+            return redirect(url_for('main.settings'))
+        else:
+            return jsonify(message='Your email address has already been verified.'), 200
+    else:
+        token = generate_confirmation_token(current_user.email)
+        confirm_url = url_for('main.confirm_email', token=token, _external=True)
+        send_email(current_user.email, 'Confirm Your Email', 'confirm_email', confirm_url=confirm_url)
+        if request.method == 'GET':
+            flash('Verification email sent successfully', 'success')
+            return redirect(url_for('main.settings'))
+        else:
+            return jsonify(message='Verification email sent successfully'), 200
 
 @bp.route('/password_reset_request', methods=['GET', 'POST'])
 def password_reset_request():

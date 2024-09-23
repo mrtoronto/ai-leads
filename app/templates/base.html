@@ -58,6 +58,7 @@
     window.is_auth = {{ current_user.is_authenticated | tojson | safe }};
     window.is_mobile = {{ 'true' if is_mobile == True else 'false' }};
     window.is_admin = {{ 'true' if current_user.is_admin == True else 'false' }};
+    window.is_verified = {{ 'true' if current_user.email_verified == True else 'false' }};
     </script>
 </head>
 <body>
