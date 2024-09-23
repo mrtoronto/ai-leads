@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Admin Dashboard</h1>
+<div style="margin: 2em;">
+    <a href="{{ url_for('main.admin_panel') }}">Back to admin panel</a>
+</div>
+
+<div class="table-responsive" style="padding: 2em; border-radius: 2em; background-color: var(--theme_container_color); color: var(--theme_text_color)">
+    <table class="table" style="color: var(--theme_text_color);">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Last 5 Pages Visited</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>
+                    <div>ID: <a href="{{ url_for('main.admin_user_journeys', user_id=user_id) }}">{{ user.id }}</a></div>
+                    <div>Email: {{ user.email }}</div>
+                    <div>Created At: {{ user.created_at }}</div>
+                </td>
+                <td>
+                    <ul>
+                        {% for page in user.last_pages %}
+                        <li>{{ page.location }} - {{ page.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -341,13 +341,19 @@ def handle_rewrite_query(data):
 def handle_get_all_journeys(data):
 		if not current_user.is_authenticated or not current_user.is_admin:
 				return
+		
+		user_id = data.get('user_id', None)
 
 		logged_in_only = data.get('logged_in_only', False)
 
+		
 		query = Journey.query.order_by(Journey.created_at.desc())
 
+		if user_id:
+			query = query.filter(Journey.user_id == user_id)
+
 		if logged_in_only:
-				query = query.filter(Journey.user_id.isnot(None))
+			query = query.filter(Journey.user_id.isnot(None))
 
 		journeys = query.all()
 		journey_data = [journey.to_dict() for journey in journeys]

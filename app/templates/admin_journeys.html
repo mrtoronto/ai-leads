@@ -21,7 +21,9 @@
 </div>
 
 <script type="module">
+    window.user_id = {{ user_id }};
+    window.logged_in_only = {{ 'true' if logged_in_only == 'True' else 'false' }};
     import { initJourneyScript } from "{{ url_for('static', filename='js/journey_script.js') }}";
-    initJourneyScript({{ logged_in_only|tojson }});
+    initJourneyScript();
 </script>
 {% endblock %}

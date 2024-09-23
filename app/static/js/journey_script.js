@@ -70,10 +70,10 @@ function loadMore() {
     loadMoreButton.style.display = currentOffset >= displayedJourneys.length ? 'none' : 'block';
 }
 
-export function initJourneyScript(isLoggedInOnly) {
-    loggedInOnly = isLoggedInOnly;
+export function initJourneyScript() {
+    loggedInOnly = window.logged_in_only;
 
-    socket.emit('get_all_journeys', { logged_in_only: loggedInOnly });
+    socket.emit('get_all_journeys', { logged_in_only: loggedInOnly, user_id: window.user_id });
 
     socket.on('all_journeys_response', function(data) {
         if (data.status === "success") {

@@ -6,7 +6,7 @@ from flask import request, render_template, redirect, url_for, flash, g, Respons
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import socketio, mail
-from app.models import User, Lead, Query, LeadSource, Job, CreditLedger
+from app.models import User, Lead, Query, LeadSource, Job, CreditLedger, Journey
 from app.models.credit_ledger import CreditLedgerType
 from app.llm._rewrite import validate_query, generate_queries
 from app.tasks import queue_check_lead_task, queue_search_request
@@ -383,6 +383,30 @@ def admin_logged_in_journeys():
         flash('You do not have permission to access this page.')
         return redirect(url_for('main.index'))
     return render_template('admin_journeys.html', logged_in_only=True)
+
+@bp.route('/admin/journeys/<int:user_id>')
+@login_required
+def admin_user_journeys(user_id):
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    return render_template('admin_journeys.html', user_id=user_id)
+
+# New route for the admin dashboard
+@bp.route('/admin/journeys_aggregated')
+@login_required
+def admin_journeys_aggregated():
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.')
+        return redirect(url_for('main.index'))
+    
+    users = User.query.join(Journey).group_by(User.id).order_by(db.func.max(Journey.created_at).desc()).all()
+    
+    for user in users:
+        user.last_pages = user.journeys.order_by(Journey.created_at.desc()).limit(20).all()
+        user.last_activity = max(page.created_at for page in user.last_pages) if user.last_pages else None
+
+    return render_template('admin_journeys_aggregated.html', users=users)
 
 @bp.route('/admin/queries')
 @login_required
