@@ -374,7 +374,7 @@ def admin_journeys():
     if not current_user.is_admin:
         flash('You do not have permission to access this page.')
         return redirect(url_for('main.index'))
-    return render_template('admin_journeys.html', logged_in_only=False)
+    return render_template('admin_journeys.html', logged_in_only=False, user_id=None)
 
 @bp.route('/admin/logged_in_journeys')
 @login_required
@@ -382,7 +382,7 @@ def admin_logged_in_journeys():
     if not current_user.is_admin:
         flash('You do not have permission to access this page.')
         return redirect(url_for('main.index'))
-    return render_template('admin_journeys.html', logged_in_only=True)
+    return render_template('admin_journeys.html', logged_in_only=True, user_id=None)
 
 @bp.route('/admin/journeys/<int:user_id>')
 @login_required
@@ -390,7 +390,7 @@ def admin_user_journeys(user_id):
     if not current_user.is_admin:
         flash('You do not have permission to access this page.')
         return redirect(url_for('main.index'))
-    return render_template('admin_journeys.html', user_id=user_id)
+    return render_template('admin_journeys.html', user_id=user_id, logged_in_only=False)
 
 # New route for the admin dashboard
 @bp.route('/admin/journeys_aggregated')
@@ -406,7 +406,7 @@ def admin_journeys_aggregated():
         user.last_pages = user.journeys.order_by(Journey.created_at.desc()).limit(20).all()
         user.last_activity = max(page.created_at for page in user.last_pages) if user.last_pages else None
 
-    return render_template('admin_journeys_aggregated.html', users=users)
+    return render_template('admin_journeys_aggregated.html', users=users, logged_in_only=False, user_id=None)
 
 @bp.route('/admin/queries')
 @login_required

@@ -18,7 +18,7 @@
             {% for user in users %}
             <tr>
                 <td>
-                    <div>ID: <a href="{{ url_for('main.admin_user_journeys', user_id=user_id) }}">{{ user.id }}</a></div>
+                    <div>ID: <a href="{{ url_for('main.admin_user_journeys', user_id=user.id) }}">{{ user.id }}</a></div>
                     <div>Email: {{ user.email }}</div>
                     <div>Created At: {{ user.created_at }}</div>
                 </td>
