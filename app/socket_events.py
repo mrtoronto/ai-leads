@@ -379,14 +379,17 @@ def handle_send_message(data):
 				"matt@ai-leads.xyz", 'New Chat', 'new_chat'
 			)
 
+		### If admin has only sent 1 message in chat, respond to user
+		if chat.messages.count() == 1 and chat.messages[0].is_admin:
 			send_message_back = True
+
 		new_message = Message(chat_id=chat_id, user_id=current_user.id, content=content, is_admin=is_admin)
 		db.session.add(new_message)
 		db.session.commit()
 		socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message.to_dict()}, to=f"user_{current_user.id}")
 		socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message.to_dict()}, to="admin_room")
 
-		if send_message_back:
+		if send_message_back and not is_admin:
 			pst_time = datetime.now(pytz.timezone('US/Pacific'))
 			current_hour = pst_time.hour
 			if 23 <= current_hour or current_hour < 6:
