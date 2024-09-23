@@ -57,6 +57,7 @@
     window.flash_messages = {{ get_flashed_messages(with_categories=true) | tojson | safe }};
     window.is_auth = {{ current_user.is_authenticated | tojson | safe }};
     window.is_mobile = {{ 'true' if is_mobile == True else 'false' }};
+    window.is_admin = {{ 'true' if current_user.is_admin == True else 'false' }};
     </script>
 </head>
 <body>
@@ -147,5 +148,6 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/js/flash_script.js" type="text/javascript"></script>
+    <script type="module" src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </body>
 </html>

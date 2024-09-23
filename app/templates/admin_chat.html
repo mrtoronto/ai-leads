@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Admin Chat Panel</h1>
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Unresolved Chats</h2>
+            <div id="unresolved-chats-list"></div>
+        </div>
+        <div class="col-md-8">
+            <div id="admin-chat-window" style="display: none;">
+                <div class="chat-header">
+                    <h3>Chat with User</h3>
+                    <button id="resolve-chat-btn" class="btn btn-success">Resolve Chat</button>
+                </div>
+                <div class="chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" placeholder="Type a message...">
+                    <button class="btn btn-primary">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="module" src="/static/js/admin-chat.js"></script>
+{% endblock %}

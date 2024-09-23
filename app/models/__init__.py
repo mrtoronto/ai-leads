@@ -6,3 +6,4 @@ from app.models.lead_source import LeadSource
 from app.models.query import Query
 from app.models.user import User
 from app.models.journey import Journey
+from app.models.chat import Chat, Message

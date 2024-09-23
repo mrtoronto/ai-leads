@@ -334,6 +334,13 @@ def view_lead(guid):
 def faqs():
 	return render_template('faqs.html', title='FAQs')
 
+@bp.route('/admin/chats')
+@login_required
+def admin_chats():
+    if not current_user.is_admin:
+        return redirect(url_for('main.index'))
+    return render_template('admin_chat.html', title='Admin Chat Panel')
+
 
 @bp.route('/admin')
 @login_required

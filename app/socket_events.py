@@ -2,12 +2,13 @@ import re
 from app import socketio, db
 from flask import current_app
 from flask_login import login_required, current_user
-from app.models import LeadSource, Lead, Query, User, Journey
+from app.models import LeadSource, Lead, Query, User, Journey, Chat, Message
 from flask_socketio import join_room, emit
 import logging
 import time
 from app.llm._rewrite import rewrite_query
 from functools import wraps
+from app.routes import send_email
 
 logger = logging.getLogger('BDB-2EB')
 @socketio.on('connect')
@@ -316,36 +317,143 @@ def handle_check_email_availability(data):
 @socketio.on('rewrite_query')
 @login_required
 def handle_rewrite_query(data):
-    user = current_user
-    query_text = data['query']
-    example_leads = data['exampleLeads']
-    location = data.get('location', None)
+		user = current_user
+		query_text = data['query']
+		example_leads = data['exampleLeads']
+		location = data.get('location', None)
 
 
-    query_data = {
-        'user_query': query_text,
-        'user': user,
-        'example_leads': example_leads,
-        'location': location
-    }
+		query_data = {
+				'user_query': query_text,
+				'user': user,
+				'example_leads': example_leads,
+				'location': location
+		}
 
-    new_query = rewrite_query(query_data, socketio_obj=socketio, app_obj=current_app)
+		new_query = rewrite_query(query_data, socketio_obj=socketio, app_obj=current_app)
 
-    socketio.emit('new_rewritten_query', {'new_query': new_query}, to=f"user_{user.id}")
+		socketio.emit('new_rewritten_query', {'new_query': new_query}, to=f"user_{user.id}")
 
 @socketio.on('get_all_journeys')
 @time_socket_event
 def handle_get_all_journeys(data):
-    if not current_user.is_authenticated or not current_user.is_admin:
-        return
+		if not current_user.is_authenticated or not current_user.is_admin:
+				return
 
-    logged_in_only = data.get('logged_in_only', False)
+		logged_in_only = data.get('logged_in_only', False)
 
-    query = Journey.query.order_by(Journey.created_at.desc())
+		query = Journey.query.order_by(Journey.created_at.desc())
 
-    if logged_in_only:
-        query = query.filter(Journey.user_id.isnot(None))
+		if logged_in_only:
+				query = query.filter(Journey.user_id.isnot(None))
 
-    journeys = query.all()
-    journey_data = [journey.to_dict() for journey in journeys]
-    socketio.emit('all_journeys_response', {'status': 'success', 'records': journey_data}, to=f"user_{current_user.id}")
+		journeys = query.all()
+		journey_data = [journey.to_dict() for journey in journeys]
+		socketio.emit('all_journeys_response', {'status': 'success', 'records': journey_data}, to=f"user_{current_user.id}")
+
+@socketio.on('start_chat')
+@login_required
+def handle_start_chat():
+		new_chat = Chat(user_id=current_user.id)
+		db.session.add(new_chat)
+		db.session.commit()
+		socketio.emit('chat_started', {'chat_id': new_chat.id}, to=f"user_{current_user.id}")
+		socketio.emit('new_chat_for_admin', new_chat.to_dict(), room='admin_room')
+
+@socketio.on('send_message')
+@login_required
+def handle_send_message(data):
+		chat_id = data['chat_id']
+		content = data['message']
+		is_admin = data.get('is_admin', False)
+		chat = Chat.query.get(chat_id)
+		### Skips initial bot messages
+		send_message_back = False
+		if chat.resolved:
+			chat.resolved = False
+			db.session.commit()
+
+			send_email(
+				"matt@ai-leads.xyz", 'New Chat', 'new_chat'
+			)
+
+			send_message_back = True
+		new_message = Message(chat_id=chat_id, user_id=current_user.id, content=content, is_admin=is_admin)
+		db.session.add(new_message)
+		db.session.commit()
+		socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message.to_dict()}, to=f"user_{current_user.id}")
+		socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message.to_dict()}, to="admin_room")
+
+		if send_message_back:
+			new_content = "We've received your message and will get back to you soon. Thanks for contacting us!"
+			new_message_back = Message(chat_id=chat_id, user_id=current_user.id, content=new_content, is_admin=is_admin)
+			socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message_back.to_dict()}, to=f"user_{current_user.id}")
+			socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message_back.to_dict()}, to="admin_room")
+
+@socketio.on('send_admin_message')
+@login_required
+def handle_send_admin_message(data):
+		if not current_user.is_admin:
+			return
+		chat_id = data['chat_id']
+		content = data['message']
+		chat = Chat.query.get(chat_id)
+		if chat.resolved:
+			chat.resolved = False
+			db.session.commit()
+		new_message = Message(chat_id=chat_id, user_id=current_user.id, content=content, is_admin=True)
+		db.session.add(new_message)
+		db.session.commit()
+		socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message.to_dict()}, to="admin_room")
+		socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message.to_dict()}, to=f"user_{chat.user_id}")
+
+@socketio.on('get_chat_messages')
+@login_required
+def handle_get_chat_messages(data):
+		chat_id = data['chat_id']
+		chat = Chat.query.get(chat_id)
+		if chat and (chat.user_id == current_user.id or current_user.is_admin):
+				messages = [message.to_dict() for message in chat.messages]
+				socketio.emit('chat_messages', {'chat_id': chat_id, 'messages': messages}, to=f"user_{current_user.id}")
+
+@socketio.on('check_unresolved_chat')
+@login_required
+def handle_check_unresolved_chat():
+		unresolved_chat = Chat.query.filter_by(user_id=current_user.id, resolved=False).first()
+		if unresolved_chat:
+				socketio.emit('unresolved_chat', {'chat_id': unresolved_chat.id}, to=f"user_{current_user.id}")
+
+@socketio.on('get_unresolved_chats')
+@login_required
+def handle_get_unresolved_chats():
+		if current_user.is_admin:
+				unresolved_chats = Chat.query.filter_by(resolved=False).all()
+				chat_data = [chat.to_dict() for chat in unresolved_chats]
+				socketio.emit('unresolved_chats', {'chats': chat_data}, to=f'user_{current_user.id}')
+
+@socketio.on('join_admin_room')
+@login_required
+def handle_join_admin_room():
+		if current_user.is_admin:
+				join_room('admin_room')
+				# Optionally send existing unresolved chats upon joining
+				unresolved_chats = Chat.query.filter_by(resolved=False).all()
+				chat_data = [chat.to_dict() for chat in unresolved_chats]
+				emit('unresolved_chats', {'chats': chat_data}, room='admin_room')
+
+@socketio.on('resolve_chat')
+@login_required
+def handle_resolve_chat(data):
+		if not current_user.is_admin:
+				return
+		chat_id = data.get('chat_id')
+		chat = Chat.query.get(chat_id)
+		if chat:
+				chat.resolved = True
+				db.session.commit()
+				user_room = f"user_{chat.user_id}"
+				admin_room = 'admin_room'
+				
+				# Notify the user and all admins that the chat has been resolved
+				emit('chat_resolved', {'chat_id': chat_id}, room=user_room)
+				emit('chat_resolved', {'chat_id': chat_id}, room=admin_room)
