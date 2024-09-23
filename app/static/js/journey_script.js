@@ -6,7 +6,7 @@ let currentOffset = 0;
 const pageSize = 50;
 let currentQuery = '';
 let durationFilter = '';
-let loggedInOnly = false;
+let loggedInOnly = window.logged_in_only;
 
 const journeyTableBody = document.getElementById('journey_table_body');
 const loadMoreButton = document.getElementById('load_more');
@@ -71,7 +71,6 @@ function loadMore() {
 }
 
 export function initJourneyScript() {
-    loggedInOnly = window.logged_in_only;
 
     socket.emit('get_all_journeys', { logged_in_only: loggedInOnly, user_id: window.user_id });
 
