@@ -396,7 +396,7 @@ def handle_send_message(data):
 				new_content = "The admins are (probably) asleep and will be back to you in the morning."
 			else:
 				new_content = "The admins have been contacted and will be with you shortly."
-			new_message_back = Message(chat_id=chat_id, user_id=current_user.id, content=new_content, is_admin=is_admin)
+			new_message_back = Message(chat_id=chat_id, user_id=current_user.id, content=new_content, is_admin=True)
 			db.session.add(new_message_back)
 			db.session.commit()
 			socketio.emit('message_received', {'chat_id': chat_id, 'message': new_message_back.to_dict()}, to=f"user_{current_user.id}")
