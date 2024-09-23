@@ -327,7 +327,9 @@ def view_lead(guid):
 	elif lead.user_id != current_user.id:
 		flash('You are not authorized to view this lead.')
 		return redirect(url_for('main.index'))
-	return render_template('view_lead.html', lead=lead, title=f'Lead: {lead.name[:50] + "..." if len(lead.name) > 50 else lead.name}')
+	lead_name = lead.name if lead.name else "Unnamed"
+	truncated_name = (lead_name[:50] + "...") if len(lead_name) > 50 else lead_name
+	return render_template('view_lead.html', lead=lead, title=f'Lead: {truncated_name}')
 
 
 @bp.route('/faqs')
