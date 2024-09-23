@@ -17,7 +17,7 @@ function initializeUserChat() {
     chatWindow.style.display = 'none';
     chatWindow.innerHTML = `
         <div class="chat-header">
-            <h3>Support Chat</h3>
+            <h3>Support</h3>
             <button class="close-chat">×</button>
         </div>
         <div class="chat-messages"></div>
