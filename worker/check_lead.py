@@ -1,7 +1,7 @@
 from app import worker_socketio, create_minimal_app
 from app.models import LeadSource, Lead, ModelTypes, User, CreditLedgerType, Job, JobTypes
 from rq import get_current_job
-from app.llm import _llm_validate_lead, collect_leads_from_url
+from app.llm import _llm_validate_lead, filter_leads_sources
 from app.models.query import Query
 from app.utils import _tidy_url, _useful_url_check
 from flask_socketio import emit
@@ -189,46 +189,58 @@ def check_lead_task(lead_id):
             lead.checking = False
             lead.save(session=session)
 
-            if final_validation_output.lead_sources:
-                for new_lead_source in final_validation_output.lead_sources:
-                    if new_lead_source and new_lead_source.url and _useful_url_check(new_lead_source.url):
-                        new_source = LeadSource.check_and_add(
-                            url=new_lead_source.url,
-                            user_id=lead.user_id,
-                            query_id=lead.query_id,
-                            session=session
-                        )
-                        if new_source:
-                            worker_socketio.emit('sources_updated', {'sources': [new_source.to_dict()]}, to=f'user_{lead.user_id}')
+            if lead.relevant:
 
-            ### If lead check had leads in to,
-            ### Add lead as a source and save new leads to that source
-            if final_validation_output.leads:
-                new_source = LeadSource.check_and_add(
-                    url=lead.url,
-                    user_id=lead.user_id,
-                    query_id=lead.query_id,
-                    checked=True,
-                    valid=True,
-                    name=lead.name,
-                    description=lead.description,
-                    image_url=lead.image_url,
-                    session=session
+                filtered_leads_sources, tokens_used = filter_leads_sources(
+                    leads=final_validation_output.leads, 
+                    sources=final_validation_output.lead_sources, 
+                    query=lead.query_obj,
+                    user=lead_user
                 )
-                if new_source:
-                    worker_socketio.emit('sources_updated', {'sources': [new_source.to_dict()]}, to=f'user_{lead.user_id}')
+                total_tokens_used_usd += tokens_used
 
-                for new_lead in final_validation_output.leads:
-                    if new_lead and new_lead.url and _useful_url_check(new_lead.url):
-                        new_lead_obj = Lead.check_and_add(
-                            url=new_lead.url,
-                            user_id=lead.user_id,
-                            query_id=lead.query_id,
-                            source_id=new_source.id if new_source else lead.source_id,
-                            session=session
-                        )
-                        if new_lead_obj:
-                            worker_socketio.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{lead.user_id}')
+                if filtered_leads_sources.sources:
+                    for new_lead_source in filtered_leads_sources.sources:
+                        if new_lead_source and new_lead_source.url and _useful_url_check(new_lead_source.url):
+                            new_source = LeadSource.check_and_add(
+                                url=new_lead_source.url,
+                                user_id=lead.user_id,
+                                query_id=lead.query_id,
+                                session=session
+                            )
+                            if new_source:
+                                worker_socketio.emit('sources_updated', {'sources': [new_source.to_dict()]}, to=f'user_{lead.user_id}')
+
+                ### If lead check had leads in to,
+                ### Add lead as a source and save new leads to that source
+                if filtered_leads_sources.leads:
+                    new_source = LeadSource.check_and_add(
+                        url=lead.url,
+                        user_id=lead.user_id,
+                        query_id=lead.query_id,
+                        checked=True,
+                        valid=True,
+                        name=lead.name,
+                        description=lead.description,
+                        image_url=lead.image_url,
+                        session=session
+                    )
+                    if new_source:
+                        worker_socketio.emit('sources_updated', {'sources': [new_source.to_dict()]}, to=f'user_{lead.user_id}')
+
+                    for new_lead in filtered_leads_sources.leads:
+                        if new_lead and new_lead.url and _useful_url_check(new_lead.url):
+                            new_lead_obj = Lead.check_and_add(
+                                url=new_lead.url,
+                                user_id=lead.user_id,
+                                query_id=lead.query_id,
+                                source_id=new_source.id if new_source else lead.source_id,
+                                session=session
+                            )
+                            if new_lead_obj:
+                                worker_socketio.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{lead.user_id}')
+            else:
+                lead._hide(app_obj=min_app, session=session, socketio_obj=worker_socketio)
 
             lead._finished(
                 socketio_obj=worker_socketio,

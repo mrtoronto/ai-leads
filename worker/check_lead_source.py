@@ -1,7 +1,7 @@
 from app import worker_socketio, create_minimal_app
 from app.models import LeadSource, Lead, User, ModelTypes, UserModels, CreditLedgerType, Job
 from rq import get_current_job
-from app.llm import collect_leads_from_url
+from app.llm import collect_leads_from_url, filter_leads_sources
 from app.utils import _tidy_url, _useful_url_check
 from flask_socketio import emit
 from worker import _make_min_app
@@ -24,6 +24,7 @@ def check_lead_source_task(lead_source_id):
         session = Session()
 
         try:
+            total_tokens_used = 0
             job = get_current_job()
 
             source_job_obj = session.query(Job).filter_by(source_id=lead_source_id, finished=False).order_by(Job.id.desc()).first()
@@ -66,48 +67,9 @@ def check_lead_source_task(lead_source_id):
                 lead_source.query_obj,
                 lead_source_user,
                 previous_leads,
-                app_obj=min_app,
-                socketio_obj=worker_socketio
             )
 
-            if 'mini' in (lead_source_user.model_preference or 'gpt-4o-mini'):
-                mult = min_app.config['PRICING_MULTIPLIERS']['check_source_mini']
-            else:
-                mult = min_app.config['PRICING_MULTIPLIERS']['check_source']
-
-            # Fetch the latest data
-            latest_source = session.query(LeadSource).with_for_update().get(lead_source_id)
-            latest_query = session.query(Query).with_for_update().get(latest_source.query_id)
-            latest_user = session.query(User).with_for_update().get(latest_source.user_id)
-
-            latest_user.move_credits(
-                amount=mult * -1000 * tokens_used,
-                cost_usd=tokens_used,
-                trxn_type=CreditLedgerType.CHECK_SOURCE,
-                socketio_obj=worker_socketio,
-                app_obj=min_app,
-                session=session
-            )
-            
-            if latest_query.total_cost_credits:
-                latest_query.total_cost_credits += tokens_used * mult * 1000
-            else:
-                latest_query.total_cost_credits = tokens_used * mult * 1000
-            if latest_query.unique_cost_credits:
-                latest_query.unique_cost_credits += tokens_used * mult * 1000
-            else:
-                latest_query.unique_cost_credits = tokens_used * mult * 1000
-            if latest_source.total_cost_credits:
-                latest_source.total_cost_credits += tokens_used * mult * 1000
-            else:
-                latest_source.total_cost_credits = tokens_used * mult * 1000
-            
-            if latest_source.unique_cost_credits:
-                latest_source.unique_cost_credits += tokens_used * mult * 1000
-            else:
-                latest_source.unique_cost_credits = tokens_used * mult * 1000
-
-            session.commit()
+            total_tokens_used += tokens_used
 
             if not validation_output:
                 lead_source._finished(
@@ -149,8 +111,56 @@ def check_lead_source_task(lead_source_id):
 
             lead_source.save()
 
-            if validation_output.leads:
-                for new_lead in validation_output.leads:
+            filtered_leads_sources, tokens_used = filter_leads_sources(
+                leads=validation_output.leads, 
+                sources=validation_output.lead_sources, 
+                query=lead_source.query_obj,
+                user=lead_source_user
+            )
+
+            total_tokens_used += tokens_used
+
+            if 'mini' in (lead_source_user.model_preference or 'gpt-4o-mini'):
+                mult = min_app.config['PRICING_MULTIPLIERS']['check_source_mini']
+            else:
+                mult = min_app.config['PRICING_MULTIPLIERS']['check_source']
+
+            # Fetch the latest data
+            latest_source = session.query(LeadSource).with_for_update().get(lead_source_id)
+            latest_query = session.query(Query).with_for_update().get(latest_source.query_id)
+            latest_user = session.query(User).with_for_update().get(latest_source.user_id)
+
+            latest_user.move_credits(
+                amount=mult * -1000 * tokens_used,
+                cost_usd=tokens_used,
+                trxn_type=CreditLedgerType.CHECK_SOURCE,
+                socketio_obj=worker_socketio,
+                app_obj=min_app,
+                session=session
+            )
+            
+            if latest_query.total_cost_credits:
+                latest_query.total_cost_credits += tokens_used * mult * 1000
+            else:
+                latest_query.total_cost_credits = tokens_used * mult * 1000
+            if latest_query.unique_cost_credits:
+                latest_query.unique_cost_credits += tokens_used * mult * 1000
+            else:
+                latest_query.unique_cost_credits = tokens_used * mult * 1000
+            if latest_source.total_cost_credits:
+                latest_source.total_cost_credits += tokens_used * mult * 1000
+            else:
+                latest_source.total_cost_credits = tokens_used * mult * 1000
+            
+            if latest_source.unique_cost_credits:
+                latest_source.unique_cost_credits += tokens_used * mult * 1000
+            else:
+                latest_source.unique_cost_credits = tokens_used * mult * 1000
+
+            session.commit()
+
+            if filtered_leads_sources.leads:
+                for new_lead in filtered_leads_sources.leads:
                     if new_lead and new_lead.url and _useful_url_check(new_lead.url):
                         new_lead_obj = Lead.check_and_add(
                             url=new_lead.url,
@@ -162,8 +172,8 @@ def check_lead_source_task(lead_source_id):
                         if new_lead_obj:
                             worker_socketio.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{lead_source.user_id}')
 
-            if validation_output.lead_sources:
-                for new_lead_source in validation_output.lead_sources:
+            if filtered_leads_sources.sources:
+                for new_lead_source in filtered_leads_sources.sources:
                     if new_lead_source and new_lead_source.url and _useful_url_check(new_lead_source.url):
                         new_source_obj = LeadSource.check_and_add(
                             url=new_lead_source.url,

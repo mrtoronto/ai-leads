@@ -82,9 +82,6 @@ def search_and_validate_leads(new_query_id, previous_leads, app_obj, socketio_ob
 			query=new_query,
 			user=user,
 			previous_leads=previous_leads,
-			app_obj=app_obj,
-			socketio_obj=socketio_obj,
-			session=session
 		)
 		total_tokens_used_usd += tokens_used_usd
 		
