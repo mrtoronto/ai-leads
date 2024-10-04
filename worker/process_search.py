@@ -1,5 +1,6 @@
 from app import worker_socketio, create_minimal_app, db
 from app.models import LeadSource, Lead, Query, User, CreditLedgerType,Journey, Job, JobTypes
+from worker.check_lead import check_lead_task
 from rq import get_current_job
 from app.llm import collect_leads_from_url
 from app.llm._rewrite import rewrite_query
@@ -66,8 +67,6 @@ def search_and_validate_leads(new_query_id, previous_leads, app_obj, socketio_ob
 	search_results = search_serpapi(new_query)
 	if not search_results:
 		return [], "Failed to search SERP API", 0
-
-	leads = []
 
 	if 'mini' in (user.model_preference or 'gpt-4o-mini'):
 		mult = app_obj.config['PRICING_MULTIPLIERS']['check_source_mini']
@@ -140,12 +139,37 @@ def search_and_validate_leads(new_query_id, previous_leads, app_obj, socketio_ob
 					url=lead.url,
 					user_id=new_query.user_id,
 					query_id=new_query.id,
+					checking=True,
 					source_id=None,
 					session=session
 				)
-				if new_lead_obj and app_obj:
-					with app_obj.app_context():
-						socketio_obj.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{new_query.user_id}')
+				if new_lead_obj:
+					new_job = Job(
+						lead_id=new_lead_obj.id,
+						_type=JobTypes.LEAD_CHECK,
+					)
+					new_job.save()
+					
+					
+					if app_obj:
+						with app_obj.app_context():
+							socketio_obj.emit('leads_updated', {'leads': [new_lead_obj.to_dict()]}, to=f'user_{new_query.user_id}')
+					
+					try:
+						check_lead_task(new_lead_obj.id)
+					except Exception as e:
+						logger.error(f'Error queuing lead check for lead {new_lead_obj.id}: {e}')
+						new_lead_obj._finished(
+							socketio_obj=socketio_obj,
+							app_obj=app_obj,
+							session=session
+						)
+						new_job._finished(
+							socketio_obj=socketio_obj,
+							app_obj=app_obj,
+							session=session
+						)
+						session.commit()
 
 		if collected_leads.lead_sources:
 			for lead_source in collected_leads.lead_sources:

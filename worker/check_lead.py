@@ -7,7 +7,6 @@ from app.utils import _tidy_url, _useful_url_check
 from flask_socketio import emit
 from app import db
 from worker import _make_min_app
-from worker.process_search import search_request_task
 # from app.tasks import queue_search_request
 
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -309,7 +308,7 @@ def check_lead_task(lead_id):
                     example_leads = parent_query.leads.filter_by(example_lead=True).all()
 
                     if all([l.checked for l in example_leads]):
-                        min_app.config['high_priority_queue'].enqueue(search_request_task, lead.query_obj.id)
+                        min_app.config['high_priority_queue'].enqueue('worker.process_search.search_request_task', lead.query_obj.id)
 
                         new_job = Job(
                             query_id=lead.query_obj.id,

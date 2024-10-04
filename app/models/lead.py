@@ -167,7 +167,7 @@ class Lead(db.Model):
 		return updates, failed_updates, user.last_trained_source_model_at
 
 	@classmethod
-	def check_and_add(cls, url, user_id, query_id, source_id, image_url=None, example_lead=False, session=None):
+	def check_and_add(cls, url, user_id, query_id, source_id, image_url=None, example_lead=False, session=None, checking=False):
 		session = session or db.session
 		url = get_standard_url(url)
 		base_url = get_base_url(url)
@@ -189,7 +189,8 @@ class Lead(db.Model):
 			query_id=query_id,
 			source_id=source_id,
 			image_url=image_url,
-			example_lead=example_lead
+			example_lead=example_lead,
+			checking=checking
 		)
 		try:
 			session.add(new_lead)
