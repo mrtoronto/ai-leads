@@ -135,8 +135,15 @@ small {
     width: 100%;
     justify-content: space-between;
     gap: 1em;
+    transition: background-color 0.3s, opacity 1s ease, height 1s ease;
+    opacity: 1;
+    min-height: 50px; /* Set a minimum height to ensure the transition has a starting point */
+    overflow: hidden; /* Ensure content doesn't overflow during height transition */
+}
 
-    transition: background-color 0.3s;
+.fade-out {
+    opacity: 0;
+    height: 0;
 }
 
 .table-row:last-child {

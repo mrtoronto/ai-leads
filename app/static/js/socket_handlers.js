@@ -29,8 +29,8 @@ function handleLeadEvents(tableId='leads', query_id=null, source_id=null) {
     	if ((query_id && lead.query_id == query_id) || (source_id && lead.source_id == source_id)) {
     		updateRow(tableId, lead);
      	} else if (!query_id && !source_id) {
-		 		updateRow(tableId, lead);
-		 	}
+            updateRow(tableId, lead);
+        }
     } });
 }
 

@@ -92,10 +92,11 @@ def check_lead_task(lead_id):
                 session.commit()
                 return
 
-            if (first_validation_output.next_link or first_validation_output.contact_page) and not first_validation_output.email_address:
+            if (first_validation_output.next_link or first_validation_output.contact_page) and not first_validation_output.email_address and first_validation_output.relevant_to_user:
                 loop_idx = 0
                 validation_output = first_validation_output
-                while (validation_output.next_link or validation_output.contact_page) and not (validation_output.email_address):
+                while (validation_output.next_link or validation_output.contact_page) and \
+                    not (validation_output.email_address):
                     next_link = (validation_output.next_link or validation_output.contact_page or "")
 
                     if next_link.startswith('/') and lead.url:

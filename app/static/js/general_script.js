@@ -375,7 +375,7 @@ const updateRow = (tableId, newData) => {
     const columns = getTableColumnsById(tableId);
 
     if (addRowById(tableId, newData) && row) {
-    		row = addClassToTableRow(row, newData);
+        row = addClassToTableRow(row, newData);
         // Update existing row
         const cells = row.getElementsByClassName('table-cell');
         let visibleIndex = 0;
@@ -398,9 +398,9 @@ const updateRow = (tableId, newData) => {
             }
         });
     } else if (addRowById(tableId, newData)) {
-			addRow(tableId, newData);
+        addRow(tableId, newData);
     } else {
-			handleHideEvent(tableId, rowId);
+        handleHideEvent(tableId, rowId);
     }
 
     updateCounts();
@@ -470,21 +470,27 @@ const addRow = (tableId, newData) => {
 const handleHideEvent = (tableId, rowId) => {
     const table = document.getElementById(tableId);
     if (table) {
-	    const row = table.querySelector(`.table-row[data-id="${rowId}"]`);
-	    if (row) {
-	        row.remove();
-	    }
+        const row = table.querySelector(`.table-row[data-id="${rowId}"]`);
+        if (row) {
+            // Add a class to trigger the fade-out and height transition
+            row.classList.add('fade-out');
+
+            // Listen for the end of the transition to remove the row
+            row.addEventListener('transitionend', () => {
+                row.remove();
+
+                // Check if the table is empty after removal
+                if (!table.querySelector('.table-row')) {
+                    const noDataMessage = document.createElement('div');
+                    noDataMessage.className = 'no-data-message';
+                    noDataMessage.innerHTML = 'No Data Found';
+                    table.querySelector('.table-body-container').appendChild(noDataMessage);
+                }
+
+                updateCounts();
+            }, { once: true });
+        }
     }
-
-    // if table is empty, add .no-data-message with text "No Data Found"
-    if (!table.querySelector('.table-row')) {
-				const noDataMessage = document.createElement('div');
-				noDataMessage.className = 'no-data-message';
-				noDataMessage.innerHTML = 'No Data Found';
-				table.querySelector('.table-body-container').appendChild(noDataMessage);
-		}
-
-    updateCounts();
 };
 
 function createAllTables(data) {
